@@ -1,0 +1,10 @@
+@font-face {
+	font-family: 'Chevin-Bold';
+	src:
+		url('/.external/fonts/webfonts/ChevinBold/Chevin-Bold.eot?#iefix') format('embedded-opentype'),
+		url('/.external/fonts/webfonts/ChevinBold/Chevin-Bold.woff') format('woff'),
+		url('/.external/fonts/webfonts/ChevinBold/Chevin-Bold.ttf') format('truetype'),
+		url('/.external/fonts/webfonts/ChevinBold/Chevin-Bold.svg#Chevin-Bold') format('svg');
+	font-weight: normal;
+	font-style: normal;
+}

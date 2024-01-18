@@ -1,0 +1,11 @@
+@font-face {
+	font-family: 'chevinlightregular';
+	src: url('chevinlight-webfont.eot');
+	src: url('chevinlight-webfont.eot?#iefix') format('embedded-opentype'),
+	url('chevinlight-webfont.woff2') format('woff2'),
+	url('chevinlight-webfont.woff') format('woff'),
+	url('chevinlight-webfont.ttf') format('truetype'),
+	url('chevinlight-webfont.svg#chevinlightregular') format('svg');
+	font-weight: normal;
+	font-style: normal;
+}
