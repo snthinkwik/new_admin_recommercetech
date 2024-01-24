@@ -125,6 +125,9 @@ return [
 
     'cipher' => 'AES-256-CBC',
 
+    'pagination' => env('APP_PAGINATION', 50),
+    'pagination_api' => env('APP_PAGINATION_API', 1000),
+
     /*
     |--------------------------------------------------------------------------
     | Maintenance Mode Driver
@@ -209,6 +212,9 @@ return [
     */
 
     'aliases' => Facade::defaultAliases()->merge([
+        'BsForm'    => 'App\Support\Facades\BsForm',
+        'Setting'   => 'anlutro\LaravelSettings\Facade',
+        'DNS1D'     => 'App\Support\Facades\DNS1DFacade',
         // 'ExampleClass' => App\Example\ExampleClass::class,
     ])->toArray(),
 
