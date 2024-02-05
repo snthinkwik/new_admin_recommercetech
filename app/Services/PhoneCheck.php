@@ -28,7 +28,6 @@ class PhoneCheck implements PhoneCheckContract {
 			'ApiKey' => $this->key
 		];
 
-		$data = json_decode(json_encode($data));
 
 		$ch = curl_init($this->urlDevice);
 		curl_setopt($ch, CURLOPT_POST, true);
@@ -37,7 +36,9 @@ class PhoneCheck implements PhoneCheckContract {
 		$res = curl_exec($ch);
 		curl_close($ch);
 
+
 		$res = json_decode($res); // response is json
+
 
 		return $res;
 	}

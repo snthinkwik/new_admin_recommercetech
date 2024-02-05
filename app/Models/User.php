@@ -3,16 +3,16 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Address;
-use App\BillingAddress;
-use App\Country;
-use App\Customer;
+use App\Models\Address;
+use App\Models\BillingAddress;
+use App\Models\Country;
+use App\Models\Customer;
 
 use App\Models\Database\Scopes\ValueEquals;
-use App\Invoice;
+use App\Models\Invoice;
 use App\Models\Unlock\Order;
-use App\Sale;
-use App\Stock;
+use App\Models\Sale;
+use App\Models\Stock;
 use App\Models\UserDocument;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -229,7 +229,7 @@ class User extends Authenticatable
 
     public function basket()
     {
-        return $this->belongsToMany('App\Stock', "baskets")->withPivot('created_at');
+        return $this->belongsToMany(\App\Models\Stock::class, "baskets")->withPivot('created_at');
     }
 
     public function address()

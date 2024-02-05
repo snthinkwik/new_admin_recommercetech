@@ -96,6 +96,29 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    'sales_address' => 'support@recomm.co.uk', // That's correct.
+    'finance_address' => 'finance@recomm.co.uk',
+    'support_address' => 'support@recomm.co.uk',
+    'sale_cc' => [
+        'address' => 'chris@recomm.co.uk',
+        'name' => 'Chris Eaton',
+    ],
+
+    'sales_old_address' => 'sales@recomm.co.uk',
+    'help_address' =>  'help@recomm.co.uk',
+    'support_trg' =>'support@trg-uk.net',
+    'toria_address'=>'toria@recomm.co.uk',
+
+    'sam_hargreaves' => [
+        'address' => 'support@recomm.co.uk', // That's correct.
+        'name' => 'Chris Eaton',
+    ],
+
+    'chris_eaton' => [
+        'address' => 'chris@recomm.co.uk',
+        'name' => 'Chris Eaton'
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Markdown Mail Settings

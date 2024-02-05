@@ -1,0 +1,25 @@
+@for $i from 0 through 100  {
+	@if ($i <= 50 and $i % 5 == 0 or $i % 10 == 0) {
+		// Single edge margins and paddings.
+		.mt#{$i} { margin-top:      #{$i}px !important; }
+		.ml#{$i} { margin-left:     #{$i}px !important; }
+		.mr#{$i} { margin-right:    #{$i}px !important; }
+		.mb#{$i} { margin-bottom:   #{$i}px !important; }
+
+		.pt#{$i} { padding-top:     #{$i}px !important; }
+		.pl#{$i} { padding-left:    #{$i}px !important; }
+		.pr#{$i} { padding-right:   #{$i}px !important; }
+		.pb#{$i} { padding-bottom:  #{$i}px !important; }
+
+		// Horizontal/vertical margins and paddings.
+		.mh#{$i} { margin-left:  #{$i}px !important; margin-right:   #{$i}px !important; }
+		.mv#{$i} { margin-top:   #{$i}px !important; margin-bottom:  #{$i}px !important; }
+
+		.ph#{$i} { padding-left: #{$i}px !important; padding-right:  #{$i}px !important; }
+		.pv#{$i} { padding-top:  #{$i}px !important; padding-bottom: #{$i}px !important; }
+
+		// All edges margins and paddings.
+		.m#{$i}  { margin:  #{$i}px !important; }
+		.p#{$i}  { padding: #{$i}px !important; }
+	}
+}

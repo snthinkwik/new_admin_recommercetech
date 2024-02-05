@@ -2,20 +2,20 @@
 
 namespace App\Models;
 
-use App\Colour;
+use App\Models\Colour;
 use App\Csv\Parser;
 use App\Http\Requests\StockItemRequest;
-use App\Mobicode\GsxCheck;
-use App\Network;
-use App\PhoneCheck;
-use App\Product;
-use App\RepairsItems;
-use App\Sku;
-use App\StockLog;
-use App\Supplier;
-use App\Unlock;
-use App\UnlockMapping;
-use App\User;
+use App\Models\Mobicode\GsxCheck;
+use App\Models\Network;
+use App\Models\PhoneCheck;
+use App\Models\Product;
+use App\Models\RepairsItems;
+use App\Models\Sku;
+use App\Models\StockLog;
+use App\Models\Supplier;
+use App\Models\Unlock;
+use App\Models\UnlockMapping;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -661,42 +661,42 @@ class Stock extends Model
 
     public function unlock()
     {
-        return $this->hasOne('App\Unlock');
+        return $this->hasOne(Unlock::class);
     }
 
     public function imei_report()
     {
-        return $this->hasOne('App\ImeiReport');
+        return $this->hasOne(ImeiReport::class);
     }
 
     public function batch()
     {
-        return $this->belongsTo('App\Batch');
+        return $this->belongsTo(Batch::class);
     }
 
     public function lock_check()
     {
-        return $this->hasOne('App\LockCheck');
+        return $this->hasOne(LockCheck::class);
     }
 
     public function network_checks()
     {
-        return $this->hasMany('App\Mobicode\GsxCheck')->orderBy('id', 'desc');
+        return $this->hasMany(GsxCheck::class)->orderBy('id', 'desc');
     }
 
     public function sale_network_checks()
     {
-        return $this->hasMany('App\Mobicode\GsxCheck')->whereNotNull('sale_id');
+        return $this->hasMany(GsxCheck::class)->whereNotNull('sale_id');
     }
 
     public function capacity_colour_network_check()
     {
-        return $this->hasOne('App\Mobicode\GsxCheck')->where('service_id', GsxCheck::SERVICE_CAPACITY_COLOUR_CHECK);
+        return $this->hasOne(GsxCheck::class)->where('service_id', GsxCheck::SERVICE_CAPACITY_COLOUR_CHECK);
     }
 
     public function icloud_status_check()
     {
-        return $this->hasOne('App\Mobicode\GsxCheck')->where('service_id', GsxCheck::SERVICE_ICLOUD_STATUS_CHECK);
+        return $this->hasOne(GsxCheck::class)->where('service_id', GsxCheck::SERVICE_ICLOUD_STATUS_CHECK);
     }
 
 
@@ -751,7 +751,7 @@ class Stock extends Model
      */
     public function sale()
     {
-        return $this->belongsTo('App\Sale');
+        return $this->belongsTo(Sale::class);
     }
 
     /**
@@ -760,52 +760,52 @@ class Stock extends Model
      */
     public function sale_history()
     {
-        return $this->belongsToMany('App\Sale', 'new_sales_stock');
+        return $this->belongsToMany(Sale::class, 'new_sales_stock');
     }
 
     public function stockLogs()
     {
-        return $this->hasMany('App\StockLog')->orderBy('id', 'DESC');
+        return $this->hasMany(StockLog::class)->orderBy('id', 'DESC');
     }
 
     public function supplier()
     {
-        return $this->belongsTo('App\Supplier');
+        return $this->belongsTo(Supplier::class);
     }
 
     public function phone_check()
     {
-        return $this->hasOne('App\PhoneCheck');
+        return $this->hasOne(PhoneCheck::class);
     }
 
     public function saved_baskets()
     {
-        return $this->belongsToMany('App\SavedBasket', "saved_baskets_stock")->withPivot('created_at');
+        return $this->belongsToMany(SavedBasket::class, "saved_baskets_stock")->withPivot('created_at');
     }
 
     public function parts()
     {
-        return $this->belongsToMany('App\Part', 'new_stock_parts')->withPivot('cost', 'created_at');
+        return $this->belongsToMany(Part::class, 'new_stock_parts')->withPivot('cost', 'created_at');
     }
 
     public function stock_parts()
     {
-        return $this->hasMany('App\StockPart');
+        return $this->hasMany(StockPart::class);
     }
 
     public function product()
     {
-        return $this->belongsTo('App\Product');
+        return $this->belongsTo(Product::class);
     }
 
     public function stock_takes()
     {
-        return $this->hasMany('App\StockTake');
+        return $this->hasMany(StockTake::class);
     }
 
     public function repairs()
     {
-        return $this->hasMany('App\Repair', 'item_id', 'id');
+        return $this->hasMany(Repair::class, 'item_id', 'id');
     }
 
     public function scopeShownToUser(Builder $query, User $user)
@@ -1094,6 +1094,7 @@ class Stock extends Model
 
     public function getCapacityAttribute($value)
     {
+
         return $value ?: null;
     }
 
@@ -1547,7 +1548,7 @@ class Stock extends Model
         } elseif (strpos(strtolower($this->name), "iphone 6") !== false) {
             $colours = ['Space Grey', 'Silver', 'Gold'];
         } else {
-            $colours = Colour::orderBy('pr_colour')->lists('pr_colour');;
+            $colours = \App\Models\Colour::orderBy('pr_colour')->pluck('pr_colour')->toArray();
         }
 
 
@@ -1826,7 +1827,7 @@ class Stock extends Model
         $sku = '';
 
         foreach (self::$skuAttributes as $attrName) {
-            $sku .= Sku::getShort($attrName, $this->$attrName);
+            $sku .= \App\Models\Sku::getShort($attrName, $this->$attrName);
         }
 
         return $sku;
@@ -1834,7 +1835,8 @@ class Stock extends Model
 
     public function getPurchasePriceFormattedAttribute()
     {
-        return $this->purchase_price ? money_format(config('app.money_format'), $this->purchase_price) : '';
+      //  return $this->purchase_price ? money_format(config('app.money_format'), $this->purchase_price) : '';
+        return $this->purchase_price?$this->purchase_price:'';
     }
 
     public function getPurchasePriceNoCostsAttribute()
@@ -1850,7 +1852,8 @@ class Stock extends Model
             $unlockPrice = $this->unlock->cost_added;
         }
         $price = $this->purchase_price - $unlockPrice - $partsPrice;
-        return $price ? money_format(config('app.money_format'), $price) : "";
+      //  return $price ? money_format(config('app.money_format'), $price) : "";
+        return $price? $price:'';
     }
 
     public function getPurchaseForeignPriceFormattedAttribute()
@@ -1861,7 +1864,8 @@ class Stock extends Model
 
     public function getSalePriceFormattedAttribute()
     {
-        return $this->sale_price ? money_format(config('app.money_format'), $this->sale_price) : '';
+      //  return $this->sale_price ? money_format(config('app.money_format'), $this->sale_price) : '';
+        return $this->sale_price;
     }
 
     public function getNetworkFormattedAttribute()
@@ -1899,7 +1903,8 @@ class Stock extends Model
 
     public function getGrossProfitFormattedAttribute()
     {
-        return money_format(config('app.money_format'), $this->gross_profit);
+       // return money_format(config('app.money_format'), $this->gross_profit);
+        return  $this->gross_profit;
     }
 
     public function getGrossProfitPercentageAttribute()
@@ -1923,7 +1928,8 @@ class Stock extends Model
 
     public function getTotalGrossProfitFormattedAttribute()
     {
-        return money_format(config('app.money_format'), $this->total_gross_profit);
+      //  return money_format(config('app.money_format'), $this->total_gross_profit);
+        return $this->total_gross_profit;
     }
 
     public function getTotalGrossProfitPercentageAttribute()
@@ -1951,7 +1957,8 @@ class Stock extends Model
 
     public function getVatFormattedAttribute()
     {
-        return money_format(config('app.money_format'), $this->vat);
+      //  return money_format(config('app.money_format'), $this->vat);
+        return $this->vat;
     }
 
     public function getNetProfitAttribute()
@@ -1961,17 +1968,20 @@ class Stock extends Model
 
     public function getNetProfitFormattedAttribute()
     {
-        return money_format(config('app.money_format'), $this->net_profit);
+      //  return money_format(config('app.money_format'), $this->net_profit);
+        return  $this->net_profit;
     }
 
     public function getUnlockCostFormattedAttribute()
     {
-        return money_format(config('app.money_format'), $this->unlock_cost);
+       // return money_format(config('app.money_format'), $this->unlock_cost);
+        return  $this->unlock_cost;
     }
 
     public function getPartCostFormattedAttribute()
     {
-        return money_format(config('app.money_format'), $this->part_cost);
+      //  return money_format(config('app.money_format'), $this->part_cost);
+        return $this->part_cost;
     }
 
     public function getTotalCostsAttribute()
@@ -2020,16 +2030,18 @@ class Stock extends Model
     }
 
     public function repair_item(){
-        return $this->hasMany('App\RepairsItems','stock_id','id');
+        return $this->hasMany(RepairsItems::class,'stock_id','id');
     }
 
     public function getTotalCostsFormattedAttribute()
     {
-        return money_format(config('app.money_format'), $this->total_costs);
+       // return money_format(config('app.money_format'), $this->total_costs);
+        return $this->total_costs;
     }
 
     public function getTotalCostWithRepairFormattedAttribute(){
-        return money_format(config('app.money_format'), $this->total_cost_with_repair);
+       // return money_format(config('app.money_format'), $this->total_cost_with_repair);
+        return $this->total_cost_with_repair;
     }
 
     public function getOrderhubNewSkuAttribute()
@@ -2533,12 +2545,12 @@ class Stock extends Model
     }
 
     public function phoneCheckReports(){
-        return $this->hasOne('App\PhoneCheckReports','stock_id','id');
+        return $this->hasOne(PhoneCheckReports::class,'stock_id','id');
 
     }
 
     public function processingImage(){
-        return $this->hasMany('App\ImageProcessing','stock_id','id');
+        return $this->hasMany(ImageProcessing::class,'stock_id','id');
     }
 
 }
