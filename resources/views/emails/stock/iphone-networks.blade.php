@@ -1,0 +1,1 @@
+<p>Please complete a GSX report for the attached and then upload the results to Recomm stock.</p>

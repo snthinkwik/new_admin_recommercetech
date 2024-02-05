@@ -3,10 +3,11 @@
 namespace App\Models;
 
 use App\Commands\Sales\EmailSend;
-use App\Invoice;
-use App\SaleLog;
-use App\Stock;
-use App\User;
+use App\Models\Invoice;
+use App\Models\SaleLog;
+use App\Models\Stock;
+use App\Models\User;
+use App\Models\NewSalesStock;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -73,21 +74,21 @@ class Sale extends Model
 
     public function user()
     {
-        return $this->belongsTo('App\User');
+        return $this->belongsTo(User::class);
     }
 
     public function stock()
     {
-        return $this->belongsToMany(\App\Models\Stock::class, 'new_sales_stock');
+        return $this->belongsToMany(Stock::class, 'new_sales_stock');
     }
 
     public function newSalesStock(){
-        return $this->hasOne('App\NewSalesStock','sale_id','id');
+        return $this->hasOne(NewSalesStock::class,'sale_id','id');
     }
 
     public function ebay_orders()
     {
-        return $this->hasMany('App\EbayOrders','new_sale_id','id');
+        return $this->hasMany(EbayOrders::class,'new_sale_id','id');
     }
 
     /*public function parts()
@@ -109,17 +110,17 @@ class Sale extends Model
 
     public function created_by_user()
     {
-        return $this->belongsTo('App\User', 'created_by', 'id');
+        return $this->belongsTo(User::class, 'created_by', 'id');
     }
 
     public function sale_logs()
     {
-        return $this->hasMany('App\SaleLog');
+        return $this->hasMany(SaleLog::class);
     }
 
     public function batch()
     {
-        return $this->belongsTo('App\Batch');
+        return $this->belongsTo(Batch::class);
     }
 
     public function getPaidAttribute()
@@ -144,7 +145,8 @@ class Sale extends Model
 
     public function getAmountFormattedAttribute()
     {
-        return money_format(config('app.money_format'), $this->amount);
+       // return money_format(config('app.money_format'), $this->amount);
+        return $this->amount;
     }
 
     /**
@@ -213,10 +215,13 @@ class Sale extends Model
     {
         $profit = "";
         if($this->stock->sum('total_costs') > 0) {
-            $profit = money_format(config('app.money_format'), ($this->stock->sum('sale_price')-$this->stock->sum('total_costs')));
+//            $profit = money_format(config('app.money_format'), ($this->stock->sum('sale_price')-$this->stock->sum('total_costs')));
+
+            $profit = $this->stock->sum('sale_price')-$this->stock->sum('total_costs');
         }
         return $profit;
     }
+
 
     public function getAmountPaidFormattedAttribute()
     {

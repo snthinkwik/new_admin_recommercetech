@@ -1262,7 +1262,7 @@ function getCountry($code)
   }
 
   return $countryName;
-  
+
 }
 
 function getEbayRefreshTokenBaseToken($authorizationHeader,$refreshToken){
@@ -2482,7 +2482,7 @@ function getCategoryValidation($name){
 }
 
 function getSupplierMappingGrade($supplierId,$supplierCondition){
-    $supplier=\App\Supplier::find($supplierId);
+    $supplier=\App\Models\Supplier::find($supplierId);
     $grader='';
     if(isset($supplier->grade_mapping)){
         foreach (json_decode($supplier->grade_mapping) as $ty){
@@ -3498,13 +3498,13 @@ function getCountryCode($countryName){
   {
         "name":"Northern Ireland",
         "code":"GB"
-  
+
   },
   {
         "name":"Great Britain",
         "code":"GB"
   }
-  
+
 ]';
    foreach ( json_decode($country) as $key=>$value){
        if($countryName===$value->name){

@@ -70,6 +70,12 @@ return [
             'block_for' => null,
             'after_commit' => false,
         ],
+        'emails' => [
+            'driver' => 'database',
+            'table' => 'jobs',
+            'queue' => 'emails',
+            'expire' => 60,
+        ],
 
     ],
 

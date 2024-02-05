@@ -15,7 +15,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        //Need to check if it required or not becuse of without imei number not use full
+         $schedule->command('phone-check:create-checks')->cron('*/20 * * * *');
+         //************************************************************************
+
     }
 
     /**
