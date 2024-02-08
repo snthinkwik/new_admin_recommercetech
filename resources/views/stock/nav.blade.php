@@ -1,8 +1,8 @@
 <?php
 
-use App\Stock;
-$categoryAll=\App\Category::all();
-$supplierAll=\App\Supplier::all();
+use App\Models\Stock;
+$categoryAll=\App\Models\Category::all();
+$supplierAll=\App\Models\Supplier::all();
 
 $supplierList=[];
 $categoryList=[];

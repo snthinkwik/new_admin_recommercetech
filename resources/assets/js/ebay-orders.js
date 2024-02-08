@@ -98,7 +98,7 @@ class eBayOrders
                         $('th[name='+res.sort).append("<i class='fa fa-caret-down'></i>");
                     else if(res.sortO == 'ASC')
                         $('th[name='+res.sort).append("<i class='fa fa-caret-up'></i>");
-                    
+
                     $('.owner-select2-child').select2()
                     $('.owner-select2').select2()
                     $('.owner-filter-select2').select2()

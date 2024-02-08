@@ -7,6 +7,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Mail;
 use GuzzleHttp\Client;
 use Symfony\Component\DomCrawler\Crawler;
+use App\Models\Stock;
 
 /**
  * For instance artisan_call_background('command:subcommand', ['house', 'animal' => 'dog']) would result in this command:
@@ -760,7 +761,7 @@ function getQuickBookServiceProductName($quickBooksCategory,$vat_type,$customerL
 
 
 
-    if($platform===\App\Stock::PLATFROM_MOBILE_ADVANTAGE){
+    if($platform===Stock::PLATFROM_MOBILE_ADVANTAGE){
         if($vat_type==="Standard"){
             $vat="Vatable";
         }else{
@@ -782,7 +783,7 @@ function getQuickBookServiceProductName($quickBooksCategory,$vat_type,$customerL
         $location= $customerLocation;
     }
 
-    if($platform===\App\Stock::PLATFROM_MOBILE_ADVANTAGE){
+    if($platform===Stock::PLATFROM_MOBILE_ADVANTAGE){
         return $quickBooksCategory.' '."(".$vat.")";
     }else{
         return $location.' '.$quickBooksCategory.' '."(".$vat.")";
@@ -910,7 +911,7 @@ function getShippingCost($country,$sales_price,$platform ){
 
 function getStockDetatils($id){
 
-    $stock=\App\Stock::find($id);
+    $stock=Stock::find($id);
     if(is_null($stock)){
         return null;
     }
