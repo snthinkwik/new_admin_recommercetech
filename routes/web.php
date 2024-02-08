@@ -6,6 +6,7 @@ use App\Http\Controllers\StockController;
 use App\Http\Controllers\UnlocksController;
 use App\Http\Controllers\PartsController;
 use App\Http\Controllers\PhoneCheckReportController;
+use App\Http\Controllers\EbayOrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -212,23 +213,24 @@ Route::group(['middleware' => ['auth']], function () {
     // Administration
     Route::group(['prefix' => 'admin', 'middleware' => ['admin']], function () {
         Route::group(['prefix' => 'ebay'], function () {
-            Route::get('/', ['uses' => 'EbayOrderController@index', 'as' => 'admin.ebay-orders']);
-            Route::get('sync', ['uses' => 'EbayOrderController@syncToEbayOrder', 'as' => 'admin.ebay-order.sync']);
-            Route::get('view/{id}', ['uses' => 'EbayOrderController@view', 'as' => 'admin.ebay-orders.view']);
-            Route::post('dpd/import', ['uses' => 'EbayOrderController@dpdImport', 'as' => 'admin.dpd.import']);
-            Route::get('refunds', ['uses' => 'EbayOrderController@EbayRefund', 'as' => 'admin.ebay.refund']);
-            Route::get('/invoice/{id}', ['uses' => 'EbayOrderController@getInvoice', 'as' => 'admin.ebay.invoice']);
-            Route::get('/invoice-fees/{id}', ['uses' => 'EbayOrderController@getInvoiceFees', 'as' => 'admin.ebay.invoice-fees']);
-            Route::get('/credit-memo/{id}', ['uses' => 'EbayOrderController@getCreditMemo', 'as' => 'admin.ebay.credit-memo']);
-            Route::post('/assign-stock', ['uses' => 'EbayOrderController@AssignToStock', 'as' => 'admin.ebay.assign-stock']);
-            Route::post('/unassigned-stock', ['uses' => 'EbayOrderController@UnassignedToStock', 'as' => 'admin.ebay.unassigned-stock']);
-            Route::post('/update-rate', ['uses' => 'EbayOrderController@updateRate', 'as' => 'admin.ebay.update-rate']);
-            Route::post('/update-contact-info', ['uses' => 'EbayOrderController@updateEmailAndPhone', 'as' => 'admin.ebay.update-contact-info']);
+            Route::get('/', [EbayOrderController::class,'index'])->name('admin.ebay-orders');
+            Route::get('sync', [EbayOrderController::class,'syncToEbayOrder'])->name('admin.ebay-order.sync');
+            Route::get('view/{id}', [EbayOrderController::class,'view'])->name('admin.ebay-orders.view');
+            Route::post('dpd/import', [EbayOrderController::class,'dpdImport'])->name('admin.dpd.import');
+            Route::get('refunds', [EbayOrderController::class,'EbayRefund'])->name('admin.ebay.refund');
+            Route::get('/invoice/{id}', [EbayOrderController::class,'getInvoice'])->name('admin.ebay.invoice');
+            Route::get('/invoice-fees/{id}', [EbayOrderController::class,'getInvoiceFees'])->name('admin.ebay.invoice-fees');
+            Route::get('/credit-memo/{id}', [EbayOrderController::class,'getCreditMemo'])->name('admin.ebay.credit-memo');
+            Route::post('/assign-stock', [EbayOrderController::class,'AssignToStock'])->name('admin.ebay.assign-stock');
+            Route::post('/unassigned-stock', [EbayOrderController::class,'UnassignedToStock'])->name('admin.ebay.unassigned-stock');
+            Route::post('/update-rate', [EbayOrderController::class,'updateRate'])->name('admin.ebay.update-rate');
+            Route::post('/update-contact-info', [EbayOrderController::class,'updateEmailAndPhone'])->name('admin.ebay.update-contact-info');
+
             Route::group(['prefix' => 'ready_for_invoice'], function () {
-                Route::get('/', ['uses' => 'EbayOrderController@ready_for_invoice', 'as' => 'admin.ebay.ready-invoice.view']);
-                Route::get('export', ['uses' => 'EbayOrderController@export_ready_for_invoice_csv', 'as' => 'admin.ebay.ready-for-invoice.export']);
-                Route::get('manually-assigned', ['uses' => 'EbayOrderController@eBayFeeAssigment', 'as' => 'admin.ebay.ready-invoice.manually-assigned']);
-                Route::get('manual-fee-assignment/export', ['uses' => 'EbayFeesController@exportCSVManualEbayFeeAssignment', 'as' => 'admin.ebay.ready-invoice.manually-assigned.export']);
+                Route::get('/', [EbayOrderController::class,'ready_for_invoice'])->name('admin.ebay.ready-invoice.view');
+                Route::get('export', [EbayOrderController::class,'export_ready_for_invoice_csv'])->name('admin.ebay.ready-for-invoice.export');
+                Route::get('manually-assigned', [EbayOrderController::class,'eBayFeeAssigment'])->name('admin.ebay.ready-invoice.manually-assigned');
+                Route::get('manual-fee-assignment/export', [EbayFeesController::class,'exportCSVManualEbayFeeAssignment'])->name('admin.ebay.ready-invoice.manually-assigned.export');
             });
 
             Route::group(['prefix' => 'delivery-settings'], function () {
@@ -244,34 +246,34 @@ Route::group(['middleware' => ['auth']], function () {
             });
 
             Route::group(['prefix' => 'sku'], function () {
-                Route::get('/', ['uses' => 'EbaySkuController@index', 'as' => 'ebay.sku.index']);
-                Route::post('{id?}', ['uses' => 'EbaySkuController@postSave', 'as' => 'ebay.sku.save']);
-                Route::get('template', ['uses' => 'EbaySkuController@getTemplate', 'as' => 'ebay-sku.template']);
-                Route::get('cron', ['uses' => 'EbaySkuController@updateOwnerCron', 'as' => 'ebay-sku.cron']);
-                Route::post('import', ['uses' => 'EbaySkuController@postImport', 'as' => 'sku.import']);
-                Route::get('export', ['uses' => 'EbaySkuController@getExport', 'as' => 'ebay.sku.export']);
-                Route::post('update/location', ['uses' => 'EbaySkuController@addLocation', 'as' => 'ebay.sku.location']);
-                Route::post('update/shipping-method', ['uses' => 'EbaySkuController@updateShippingMethod', 'as' => 'ebay.update.shipping-method']);
-                Route::get('unassigned', ['uses' => 'EbaySkuController@ExportUnassignedSku', 'as' => 'ebay.export.unassigned']);
-                Route::get('show-unassinged', ['uses' => 'EbaySkuController@Unassigned', 'as' => 'ebay.sku.unassigned']);
-                Route::post('update/manual-owner-assignment', ['uses' => 'EbaySkuController@updateOwner', 'as' => 'ebay.update-owner']);
+                Route::get('/', [EbaySkuController::class,'index'])->name('ebay.sku.index');
+                Route::post('{id?}', [EbaySkuController::class,'postSave'])->name('ebay.sku.save');
+                Route::get('template', [EbaySkuController::class,'getTemplate'])->name('ebay-sku.template');
+                Route::get('cron', [EbaySkuController::class,'updateOwnerCron'])->name('ebay-sku.cron');
+                Route::post('import', [EbaySkuController::class,'postImport'])->name('sku.import');
+                Route::get('export', [EbaySkuController::class,'getExport'])->name('ebay.sku.export');
+                Route::post('update/location', [EbaySkuController::class,'addLocation'])->name('ebay.sku.location');
+                Route::post('update/shipping-method', [EbaySkuController::class,'updateShippingMethod'])->name('ebay.update.shipping-method');
+                Route::get('unassigned', [EbaySkuController::class,'ExportUnassignedSku'])->name('ebay.export.unassigned');
+                Route::get('show-unassinged', [EbaySkuController::class,'Unassigned'])->name('ebay.sku.unassigned');
+                Route::post('update/manual-owner-assignment', [EbaySkuController::class,'updateOwner'])->name('ebay.update-owner');
             });
 
-            Route::post("bulk-update", ['uses' => 'EbayOrderController@postBulkRetry', 'as' => 'ebay.bulk-update-status']);
-            Route::get('history-log', ['uses' => 'EbayOrderController@historyLog', 'as' => 'ebay.history-log']);
-            Route::get('stats', ['uses' => 'EbayOrderController@getStats', 'as' => 'ebay.stats']);
-            Route::put('owner-update', ['uses' => 'EbayOrderController@updateOwner', 'as' => 'ebay.owner.update']);
-            Route::put('sale-type-update', ['uses' => 'EbayOrderController@updateSaleType', 'as' => 'ebay.sale-type.update']);
-            Route::post('ebay-create-invoice', ['uses' => 'EbayOrderController@createBayInvoice', 'as' => 'ebay.create.invoice']);
-            Route::get('ebay-access-token', ['uses' => 'EbayOrderController@getUserAccessToken', 'as' => 'ebay.access-token']);
-            Route::get('refresh-ebay-access-token', ['uses' => 'EbayOrderController@GeneratedNewAccessToken', 'as' => 'refresh.ebay.access-token']);
-            Route::get('ebay-access-token-second', ['uses' => 'EbayOrderController@getUserAccessTokenSecond', 'as' => 'ebay.access-token-second']);
-            Route::get('refresh-ebay-access-second', ['uses' => 'EbayOrderController@GeneratedNewAccessTokenSecond', 'as' => 'refresh.ebay.access-token-second']);
-            Route::get('ebay-access-token-third', ['uses' => 'EbayOrderController@getUserAccessTokenThird', 'as' => 'ebay.access-token-third']);
-            Route::get('refresh-ebay-access-third', ['uses' => 'EbayOrderController@GeneratedNewAccessTokenThird', 'as' => 'refresh.ebay.access-token-third']);
-            Route::get('ebay-access-token-forth', ['uses' => 'EbayOrderController@getUserAccessTokenForth', 'as' => 'ebay.access-token-forth']);
-            Route::get('refresh-ebay-access-forth', ['uses' => 'EbayOrderController@GeneratedNewAccessTokenForth', 'as' => 'refresh.ebay.access-token-forth']);
-            Route::get('dpd-shipping', ['uses' => 'EbayOrderController@createShipping', 'as' => 'ebay.dpd']);
+            Route::post("bulk-update", [EbayOrderController::class,'postBulkRetry'])->name('ebay.bulk-update-status');
+            Route::get('history-log', [EbayOrderController::class,'historyLog'])->name('ebay.history-log');
+            Route::get('stats', [EbayOrderController::class,'getStats'])->name('ebay.stats');
+            Route::put('owner-update', [EbayOrderController::class,'updateOwner'])->name('ebay.owner.update');
+            Route::put('sale-type-update', [EbayOrderController::class,'updateSaleType'])->name('ebay.sale-type.update');
+            Route::post('ebay-create-invoice', [EbayOrderController::class,'createBayInvoice'])->name('ebay.create.invoice');
+            Route::get('ebay-access-token', [EbayOrderController::class,'getUserAccessToken'])->name('ebay.access-token');
+            Route::get('refresh-ebay-access-token', [EbayOrderController::class,'GeneratedNewAccessToken'])->name('refresh.ebay.access-token');
+            Route::get('ebay-access-token-second', [EbayOrderController::class,'getUserAccessTokenSecond'])->name('ebay.access-token-second');
+            Route::get('refresh-ebay-access-second', [EbayOrderController::class,'GeneratedNewAccessTokenSecond'])->name('refresh.ebay.access-token-second');
+            Route::get('ebay-access-token-third', [EbayOrderController::class,'getUserAccessTokenThird'])->name('ebay.access-token-third');
+            Route::get('refresh-ebay-access-third', [EbayOrderController::class,'GeneratedNewAccessTokenThird'])->name('refresh.ebay.access-token-third');
+            Route::get('ebay-access-token-forth', [EbayOrderController::class,'getUserAccessTokenForth'])->name('ebay.access-token-forth');
+            Route::get('refresh-ebay-access-forth', [EbayOrderController::class,'GeneratedNewAccessTokenForth'])->name('refresh.ebay.access-token-forth');
+            Route::get('dpd-shipping', [EbayOrderController::class,'createShipping'])->name('ebay.dpd');
 
 
         });

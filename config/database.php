@@ -2,6 +2,15 @@
 
 use Illuminate\Support\Str;
 
+$dateTimeZoneApp = new DateTimeZone(env('APP_TIMEZONE', 'Europe/London'));
+$dateTimeZoneUtc = new DateTimeZone("UTC");
+$dateTimeApp = new DateTime("now", $dateTimeZoneApp);
+$dateTimeUtc = new DateTime("now", $dateTimeZoneUtc);
+
+$hourOffset = round($dateTimeZoneApp->getOffset($dateTimeUtc) / 3600);
+$offsetString = $hourOffset > 0
+    ? "+" . str_pad($hourOffset, 2, '0', STR_PAD_LEFT) . ":00"
+    : "-" . str_pad($hourOffset, 2, '0', STR_PAD_LEFT) . ":00";
 return [
 
     /*
@@ -15,6 +24,8 @@ return [
     |
     */
 
+
+    'fetch' => PDO::FETCH_CLASS,
     'default' => env('DB_CONNECTION', 'mysql'),
 
     /*
@@ -56,7 +67,7 @@ return [
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',
             'prefix_indexes' => true,
-            'strict' => true,
+            'strict' => false,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
@@ -91,6 +102,20 @@ return [
             'prefix_indexes' => true,
             // 'encrypt' => env('DB_ENCRYPT', 'yes'),
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
+        ],
+        'stock_ebdb' => [
+            'driver'    => 'mysql',
+            'host'      => env('DB_STOCK_EBDB_HOST', 'localhost'),
+            'database'  => env('DB_STOCK_EBDB_DATABASE', 'forge'),
+            'username'  => env('DB_STOCK_EBDB_USERNAME', 'forge'),
+            'password'  => env('DB_STOCK_EBDB_PASSWORD', ''),
+            'charset'   => 'utf8',
+            'collation' => 'utf8_unicode_ci',
+            'prefix'    => '',
+            'strict'    => false,
+            'options' => array(
+                \PDO::MYSQL_ATTR_INIT_COMMAND => "SET time_zone = '$offsetString'"
+            )
         ],
 
     ],
