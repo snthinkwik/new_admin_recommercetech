@@ -119,6 +119,7 @@ class Click2Unlock implements Click2UnlockContract {
 
 	public function getBalance()
 	{
+
 		$query = http_build_query([
 			'key' => $this->key,
 		]);

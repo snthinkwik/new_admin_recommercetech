@@ -36,7 +36,7 @@ class GetBalance extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function handle()
 	{
 		$balance = $this->click2unlock->getBalance();
 		if(isset($balance->data->balance)) {

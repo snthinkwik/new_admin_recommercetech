@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands\ebay;
 
-use App\EbayFees;
-use App\EbayOrderLog;
-use App\EbayOrderItems;
-use App\EbayFeesLog;
+use App\Models\EbayFees;
+use App\Models\EbayOrderLog;
+use App\Models\EbayOrderItems;
+use App\Models\EbayFeesLog;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -40,7 +40,7 @@ class MatchedToOrderItemEbayFee extends Command {
      *
      * @return mixed
      */
-    public function fire() {
+    public function handle() {
 
         $OrderItem = EbayOrderItems::whereNotNull("sales_record_number")
                 ->whereNotNull("item_number")

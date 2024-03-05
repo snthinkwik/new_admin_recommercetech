@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Auth;
 
 class Sale extends Model
 {
@@ -342,7 +343,12 @@ class Sale extends Model
                         if(strpos($value,'error')){
                             $value='something went wrong';
                         }
-                        $changes .= "Changed \"$key\" from \"{$this->getOriginal($key)}\" to \"$value\".\n";
+                        if(!is_null($this->getOriginal($key))){
+                            if($this->getOriginal($key)!=='updated_at' || $this->getOriginal($key)!=='created_at' )
+                              $details=  json_encode($this->getOriginal($key));
+                            $changes .= "Changed \"$key\" from \"{ $details }\" to \"$value\".\n";
+                        }
+
                     }
                 }
                 if ($changes) {
@@ -377,6 +383,6 @@ class Sale extends Model
     }
 
     public function deliveryNote(){
-        return $this->hasOne('App\DeliveryNotes','sales_id','id');
+        return $this->hasOne(DeliveryNotes::class,'sales_id','id');
     }
 }

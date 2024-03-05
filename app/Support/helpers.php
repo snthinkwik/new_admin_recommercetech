@@ -8,6 +8,12 @@ use Illuminate\Support\Facades\Mail;
 use GuzzleHttp\Client;
 use Symfony\Component\DomCrawler\Crawler;
 use App\Models\Stock;
+use Money\Money;
+use Money\Currency;
+
+use Money\Currencies\ISOCurrencies;
+use Money\Parser\DecimalMoneyParser;
+
 
 /**
  * For instance artisan_call_background('command:subcommand', ['house', 'animal' => 'dog']) would result in this command:
@@ -16,7 +22,8 @@ use App\Models\Stock;
  * @param $command
  * @param array $argumentsAndOptions
  */
-function artisan_call_background($command, $argumentsAndOptions = []) {
+function artisan_call_background($command, $argumentsAndOptions = [])
+{
     if ($argumentsAndOptions && !is_array($argumentsAndOptions)) {
         $argumentsAndOptions = [$argumentsAndOptions];
     }
@@ -32,7 +39,8 @@ function artisan_call_background($command, $argumentsAndOptions = []) {
     exec("$cmd > /dev/null 2> /dev/null &");
 }
 
-function convert_file_encoding($path, $in = 'UTF-8', $out = 'ISO-8859-1') {
+function convert_file_encoding($path, $in = 'UTF-8', $out = 'ISO-8859-1')
+{
     shell_exec("iconv -f $in -t $out $path > $path.converted");
     unlink($path);
     rename("$path.converted", $path);
@@ -41,7 +49,8 @@ function convert_file_encoding($path, $in = 'UTF-8', $out = 'ISO-8859-1') {
 $progress_start_time;
 $progress_longest_msg_length;
 
-function progressReset() {
+function progressReset()
+{
     global $progress_start_time;
     $progress_start_time = null;
 }
@@ -50,12 +59,13 @@ function progressReset() {
  * @author http://snipplr.com/view/29548/
  * @author Netblink - some small modifications.
  *
- * @param int    $done  Number of items done (percent will be calculated)
- * @param int    $total Number of items total
- * @param int    $size  Size of the progress bar.
- * @param string $file  Path of the file where the progress should be output. Optional.
+ * @param int $done Number of items done (percent will be calculated)
+ * @param int $total Number of items total
+ * @param int $size Size of the progress bar.
+ * @param string $file Path of the file where the progress should be output. Optional.
  */
-function progress($done, $total, $currentMsg = null, $size = 30, $file = null, $indent = '') {
+function progress($done, $total, $currentMsg = null, $size = 30, $file = null, $indent = '')
+{
     global $progress_start_time, $progress_longest_msg_length;
     $currentMsg and strlen($currentMsg) > $progress_longest_msg_length and $progress_longest_msg_length = strlen($currentMsg);
     $currentMsg = str_pad($currentMsg, $progress_longest_msg_length);
@@ -75,7 +85,7 @@ function progress($done, $total, $currentMsg = null, $size = 30, $file = null, $
     } // To get better remaining time we'll calculate the rate based just on the last 100 iterations.
     $now = microtime(true);
 
-    $perc = $total ? (double) ($done / $total) : 1;
+    $perc = $total ? (double)($done / $total) : 1;
 
     $bar = floor($perc * $size);
 
@@ -130,13 +140,15 @@ function progress($done, $total, $currentMsg = null, $size = 30, $file = null, $
  * @param $text
  * @return bool
  */
-function is_honorific($text) {
+function is_honorific($text)
+{
     $honorifics = ['mr', 'ms', 'mrs', 'miss', 'sir', 'sire', 'madam', 'lord', 'lady', 'dr', 'professor'];
     $honorificsString = implode('|', $honorifics);
     return !!preg_match("/^\s*($honorificsString)\.?\s*$/i", $text);
 }
 
-function ordinal_suffix($number) {
+function ordinal_suffix($number)
+{
     $ends = array('th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th');
     return ($number % 100) >= 11 && ($number % 100) <= 13 ? $number . 'th' : $number . $ends[$number % 10];
 }
@@ -153,7 +165,8 @@ function ordinal_suffix($number) {
  *
  * @return $sql
  */
-function full_sql($builder) {
+function full_sql($builder)
+{
     $pdo = DB::connection()->getPdo();
     $sql = $builder->toSql();
     $bindings = $builder->getBindings();
@@ -179,7 +192,8 @@ function full_sql($builder) {
  *
  * @return string
  */
-function format_sql($sql) {
+function format_sql($sql)
+{
     if (!is_string($sql)) {
         $sql = full_sql($sql);
     }
@@ -197,20 +211,22 @@ function format_sql($sql) {
  * @param string|null $connection Database connection, if not default.
  * @return array
  */
-function enum_values($table, $column, $connection = null) {
+function enum_values($table, $column, $connection = null)
+{
     $pdo = DB::connection()->getPdo();
     $sTable = '`' . trim($pdo->quote($table), "'") . '`';
     $sColumn = $pdo->quote($column);
     $sql = "show columns from $sTable where field = $sColumn";
     $res = $connection ? DB::connection($connection)->select($sql) : DB::select($sql);
     $enumDef = substr($res[0]->Type, 5, -1);
-    $enumVals = array_map(function($a) {
+    $enumVals = array_map(function ($a) {
         return trim($a, "'");
     }, explode(',', $enumDef));
     return $enumVals;
 }
 
-function alert($message, $recipients = null) {
+function alert($message, $recipients = null)
+{
     if ($recipients !== null) {
         $recipients = is_array($recipients) ? $recipients : array_map('trim', explode(',', $recipients));
     } else {
@@ -222,16 +238,16 @@ function alert($message, $recipients = null) {
         if (config('app.env') === 'production') {
             $backup = Mail::getSwiftMailer();
             $mailgunForAlerts = new MailgunTransport(
-                    config('services.mailgun.alerts_secret'), config('services.mailgun.alerts_domain')
+                config('services.mailgun.alerts_secret'), config('services.mailgun.alerts_domain')
             );
             $mailer = new Swift_Mailer($mailgunForAlerts);
             Mail::setSwiftMailer($mailer);
         }
 
-        Mail::raw($message, function(Message $mail) use ($recipients, $message) {
+        Mail::raw($message, function (Message $mail) use ($recipients, $message) {
             $mail->subject(str_limit($message, 50));
             $mail->from(config('mail.from.address'), config('mail.from.name'))
-                    ->to($recipients);
+                ->to($recipients);
         });
 
         if (config('app.env') === 'production') {
@@ -240,7 +256,8 @@ function alert($message, $recipients = null) {
     }
 }
 
-function error_save($key, $message, $alert = true) {
+function error_save($key, $message, $alert = true)
+{
     Error::create(['key' => $key, 'text' => $message]);
     if ($alert) {
         alert($message);
@@ -255,7 +272,8 @@ function error_save($key, $message, $alert = true) {
  *                           and $namePrefix is "customer" then the input will be rewritten to <input name="customer[surname]">.
  * @return string
  */
-function strip_form($formHtml, $namePrefix = null) {
+function strip_form($formHtml, $namePrefix = null)
+{
     $stripped = preg_replace('#^<form[^>]*>|</form>$#', '', trim($formHtml));
     $stripped = preg_replace('#<input[^>]*name="_token"[^>]*>#', '', $stripped);
     if ($namePrefix) {
@@ -274,7 +292,8 @@ function strip_form($formHtml, $namePrefix = null) {
  * @param string $id
  * @return array
  */
-function lists(Collection $collection, $properties, $id = null) {
+function lists(Collection $collection, $properties, $id = null)
+{
     $result = [];
     $i = 0;
 
@@ -300,7 +319,8 @@ function lists(Collection $collection, $properties, $id = null) {
  * @param string $string
  * @return string
  */
-function convert_special_characters($data) {
+function convert_special_characters($data)
+{
     if (is_array($data)) {
         foreach ($data as &$s) {
             $s = str_replace("&ndash;", "-", $s);
@@ -331,16 +351,18 @@ if (!function_exists('database_path')) {
     /**
      * Get the database path.
      *
-     * @param  string  $path
+     * @param string $path
      * @return string
      */
-    function database_path($path = '') {
+    function database_path($path = '')
+    {
         return app()->databasePath() . ($path ? DIRECTORY_SEPARATOR . $path : $path);
     }
 
 }
 
-function checkUpdatedFields($current, $original) {
+function checkUpdatedFields($current, $original)
+{
     if ($original == null && $current == '') {
         return true;
     }
@@ -351,8 +373,8 @@ function checkUpdatedFields($current, $original) {
 
     // If one is numeric and one is float, e.g 5 and 5.00
     if (
-            (strpos($original, '.') !== false || strpos($current, '.') !== false) &&
-            (strpos($original, '.') === false || strpos($current, '.') === false)
+        (strpos($original, '.') !== false || strpos($current, '.') !== false) &&
+        (strpos($original, '.') === false || strpos($current, '.') === false)
     ) {
         if (strpos($original, '.') === false)
             $original .= '.00';
@@ -360,10 +382,11 @@ function checkUpdatedFields($current, $original) {
             $current .= '.00';
     }
 
-    return strcmp((string) $current, (string) $original) === 0;
+    return strcmp((string)$current, (string)$original) === 0;
 }
 
-function strpos_array($haystack, $needle, $offset = 0) {
+function strpos_array($haystack, $needle, $offset = 0)
+{
     if (!is_array($needle))
         $needle = array($needle);
     foreach ($needle as $n) {
@@ -373,7 +396,8 @@ function strpos_array($haystack, $needle, $offset = 0) {
     return false;
 }
 
-function array_diff_recursive($arr1, $arr2) {
+function array_diff_recursive($arr1, $arr2)
+{
     $outputDiff = [];
 
     foreach ($arr1 as $key => $value) {
@@ -407,7 +431,8 @@ function array_diff_recursive($arr1, $arr2) {
  * @return bool|int|string
  */
 
-function find_price_in_scrape($array, $keyName, $value) {
+function find_price_in_scrape($array, $keyName, $value)
+{
     foreach ($array as $index => $single) {
         if ($single[$keyName] == $value)
             return $single['currency_symbol'] . " " . $single['price'];
@@ -415,33 +440,35 @@ function find_price_in_scrape($array, $keyName, $value) {
     return FALSE;
 }
 
-function multiPropertySort(Collection $collection, array $sorting_instructions) {
+function multiPropertySort(Collection $collection, array $sorting_instructions)
+{
 
     return $collection->sort(function ($a, $b) use ($sorting_instructions) {
 
-                //stuff starts here to answer question...
+        //stuff starts here to answer question...
 
-                foreach ($sorting_instructions as $sorting_instruction) {
+        foreach ($sorting_instructions as $sorting_instruction) {
 
-                    $a[$sorting_instruction['column']] = (isset($a[$sorting_instruction['column']])) ? $a[$sorting_instruction['column']] : '';
-                    $b[$sorting_instruction['column']] = (isset($b[$sorting_instruction['column']])) ? $b[$sorting_instruction['column']] : '';
+            $a[$sorting_instruction['column']] = (isset($a[$sorting_instruction['column']])) ? $a[$sorting_instruction['column']] : '';
+            $b[$sorting_instruction['column']] = (isset($b[$sorting_instruction['column']])) ? $b[$sorting_instruction['column']] : '';
 
-                    if (empty($sorting_instruction['order']) or strtolower($sorting_instruction['order']) == 'asc') {
-                        $x = ($a[$sorting_instruction['column']] == $b[$sorting_instruction['column']] ? 0 : ($a[$sorting_instruction['column']] < $b[$sorting_instruction['column']] ? -1 : 1));
-                    } else {
-                        $x = ($b[$sorting_instruction['column']] == $a[$sorting_instruction['column']] ? 0 : ($b[$sorting_instruction['column']] < $a[$sorting_instruction['column']] ? -1 : 1));
-                    }
+            if (empty($sorting_instruction['order']) or strtolower($sorting_instruction['order']) == 'asc') {
+                $x = ($a[$sorting_instruction['column']] == $b[$sorting_instruction['column']] ? 0 : ($a[$sorting_instruction['column']] < $b[$sorting_instruction['column']] ? -1 : 1));
+            } else {
+                $x = ($b[$sorting_instruction['column']] == $a[$sorting_instruction['column']] ? 0 : ($b[$sorting_instruction['column']] < $a[$sorting_instruction['column']] ? -1 : 1));
+            }
 
-                    if ($x != 0) {
-                        return $x;
-                    }
-                }
+            if ($x != 0) {
+                return $x;
+            }
+        }
 
-                return 0;
-            })->values();
+        return 0;
+    })->values();
 }
 
-function getAccessToken($client_id, $client_secret) {
+function getAccessToken($client_id, $client_secret)
+{
     $content = "grant_type=client_credentials";
     $authorization = base64_encode("$client_id:$client_secret");
     $header = array("Authorization: Basic {$authorization}", "Content-Type: application/x-www-form-urlencoded");
@@ -461,7 +488,8 @@ function getAccessToken($client_id, $client_secret) {
     return json_decode($response);
 }
 
-function getOrderData($header, $offset = 1) {
+function getOrderData($header, $offset = 1)
+{
     $newDate = strtotime('-90 days', strtotime(date('Y-m-d')));
     $finalDate = date('Y-m-j', $newDate);
 
@@ -476,12 +504,13 @@ function getOrderData($header, $offset = 1) {
     if (!$result) {
         die("Connection Failure");
     }
-    $data = (array) json_decode($result);
+    $data = (array)json_decode($result);
 
     return $data; //return the results for use
 }
 
-function getEbayOrderData($header, $offset){
+function getEbayOrderData($header, $offset)
+{
     $curl = curl_init();
 
     curl_setopt_array($curl, array(
@@ -494,18 +523,19 @@ function getEbayOrderData($header, $offset){
     if (!$result) {
         die("Connection Failure");
     }
-    $data = (array) json_decode($result);
+    $data = (array)json_decode($result);
 
     return $data; //return the results for use
 
 }
 
-function getMobileAdvantageData($header,$offset){
+function getMobileAdvantageData($header, $offset)
+{
 
     $curl = curl_init();
 
     curl_setopt_array($curl, array(
-        CURLOPT_URL => "https://api.mobileadvantage.co.uk/v1/ext/order?q=&page=".$offset."&limit=50&sortMode=desc&sortBy=createdAt&startOrderTime=&endOrderTime=",
+        CURLOPT_URL => "https://api.mobileadvantage.co.uk/v1/ext/order?q=&page=" . $offset . "&limit=50&sortMode=desc&sortBy=createdAt&startOrderTime=&endOrderTime=",
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
         CURLOPT_HTTPHEADER => $header,
@@ -514,13 +544,14 @@ function getMobileAdvantageData($header,$offset){
     if (!$result) {
         die("Connection Failure");
     }
-    $data = (array) json_decode($result);
+    $data = (array)json_decode($result);
 
     return $data; //return the results for use
 
 }
 
-function updateIMEINumberMobileAdvantage($header,$data){
+function updateIMEINumberMobileAdvantage($header, $data)
+{
     $curl = curl_init();
 
     curl_setopt_array($curl, array(
@@ -528,24 +559,25 @@ function updateIMEINumberMobileAdvantage($header,$data){
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
         CURLOPT_HTTPHEADER => $header,
-        CURLOPT_CUSTOMREQUEST=> "PUT",
-        CURLOPT_POSTFIELDS=> $data
-));
+        CURLOPT_CUSTOMREQUEST => "PUT",
+        CURLOPT_POSTFIELDS => $data
+    ));
     $result = curl_exec($curl);
 
     if (!$result) {
         die("Connection Failure");
     }
-    $data = (array) json_decode($result);
+    $data = (array)json_decode($result);
 
     return $data; //return the results for use
 }
 
-function findEbayProduct($header, $offset,$ean){
+function findEbayProduct($header, $offset, $ean)
+{
     $curl = curl_init();
 
     curl_setopt_array($curl, array(
-        CURLOPT_URL => "https://api.ebay.com/buy/browse/v1/item_summary/search?gtin=".$ean."&offset=".$offset,
+        CURLOPT_URL => "https://api.ebay.com/buy/browse/v1/item_summary/search?gtin=" . $ean . "&offset=" . $offset,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
         CURLOPT_HTTPHEADER => $header,
@@ -554,26 +586,26 @@ function findEbayProduct($header, $offset,$ean){
     if (!$result) {
         die("Connection Failure");
     }
-    $data = (array) json_decode($result);
+    $data = (array)json_decode($result);
 
     return $data; //return the results for use
 
 }
 
 
-
-function getBackMarketOrderData($header, $offset = 1) {
+function getBackMarketOrderData($header, $offset = 1)
+{
 
 
     $ua = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.A.B.C Safari/525.13';
 
     $curl = curl_init();
     curl_setopt_array($curl, array(
-        CURLOPT_URL => "https://www.backmarket.fr/ws/orders?page=".$offset,
+        CURLOPT_URL => "https://www.backmarket.fr/ws/orders?page=" . $offset,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
         CURLOPT_HTTPHEADER => $header,
-        CURLOPT_USERAGENT=>$ua
+        CURLOPT_USERAGENT => $ua
     ));
 
     $result = curl_exec($curl);
@@ -581,17 +613,16 @@ function getBackMarketOrderData($header, $offset = 1) {
     if (!$result) {
         die("Connection Failure");
     }
-    $data = (array) json_decode($result);
+    $data = (array)json_decode($result);
 
     return $data; //return the results for use
-
-
 
 
 }
 
 
-function getBuyBoxData($header, $offset = 1){
+function getBuyBoxData($header, $offset = 1)
+{
 
     $ua = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.A.B.C Safari/525.13';
 
@@ -599,11 +630,11 @@ function getBuyBoxData($header, $offset = 1){
 
     curl_setopt_array($curl, array(
 
-        CURLOPT_URL => "https://www.backmarket.fr/ws/listings_bi/?page=".$offset,
+        CURLOPT_URL => "https://www.backmarket.fr/ws/listings_bi/?page=" . $offset,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
         CURLOPT_HTTPHEADER => $header,
-        CURLOPT_USERAGENT=>$ua
+        CURLOPT_USERAGENT => $ua
     ));
 
     $result = curl_exec($curl);
@@ -612,12 +643,12 @@ function getBuyBoxData($header, $offset = 1){
     if (!$result) {
         die("Connection Failure");
     }
-    $data = (array) json_decode($result);
+    $data = (array)json_decode($result);
 
-    if(isset($data['error']->code)){
+    if (isset($data['error']->code)) {
         //$this->error($data['error']->message);
 
-        return['status'=>"error",'message'=>$data['error']->message];
+        return ['status' => "error", 'message' => $data['error']->message];
 
 
     }
@@ -627,7 +658,8 @@ function getBuyBoxData($header, $offset = 1){
 
 }
 
-function getMaxPrice($header, $offset = 1){
+function getMaxPrice($header, $offset = 1)
+{
 
     $ua = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.A.B.C Safari/525.13';
 
@@ -635,11 +667,11 @@ function getMaxPrice($header, $offset = 1){
 
     curl_setopt_array($curl, array(
 
-        CURLOPT_URL => "https://www.backmarket.fr/ws/listings/?page=".$offset,
+        CURLOPT_URL => "https://www.backmarket.fr/ws/listings/?page=" . $offset,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
         CURLOPT_HTTPHEADER => $header,
-        CURLOPT_USERAGENT=>$ua
+        CURLOPT_USERAGENT => $ua
     ));
 
     $result = curl_exec($curl);
@@ -648,12 +680,12 @@ function getMaxPrice($header, $offset = 1){
     if (!$result) {
         die("Connection Failure");
     }
-    $data = (array) json_decode($result);
+    $data = (array)json_decode($result);
 
-    if(isset($data['error']->code)){
+    if (isset($data['error']->code)) {
         //$this->error($data['error']->message);
 
-        return['status'=>"error",'message'=>$data['error']->message];
+        return ['status' => "error", 'message' => $data['error']->message];
 
 
     }
@@ -663,17 +695,18 @@ function getMaxPrice($header, $offset = 1){
 
 }
 
-function getAllProductsFromBackMarket($header,$page=1){
+function getAllProductsFromBackMarket($header, $page = 1)
+{
     $ua = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.A.B.C Safari/525.13';
 
     $curl = curl_init();
 
     curl_setopt_array($curl, array(
-        CURLOPT_URL => "https://www.backmarket.fr/ws/products/?page=".$page,
+        CURLOPT_URL => "https://www.backmarket.fr/ws/products/?page=" . $page,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
         CURLOPT_HTTPHEADER => $header,
-        CURLOPT_USERAGENT=>$ua
+        CURLOPT_USERAGENT => $ua
     ));
 
     $result = curl_exec($curl);
@@ -682,12 +715,12 @@ function getAllProductsFromBackMarket($header,$page=1){
     if (!$result) {
         die("Connection Failure");
     }
-    $data = (array) json_decode($result);
+    $data = (array)json_decode($result);
 
-    if(isset($data['error']->code)){
+    if (isset($data['error']->code)) {
         //$this->error($data['error']->message);
 
-        return['status'=>"error",'message'=>$data['error']->message];
+        return ['status' => "error", 'message' => $data['error']->message];
 
 
     }
@@ -696,10 +729,11 @@ function getAllProductsFromBackMarket($header,$page=1){
     return $data; //return the results for use
 }
 
-function calculationOfProfit($salePrice,$totalCosts,$vatType,$purchasePrice=null){
+function calculationOfProfit($salePrice, $totalCosts, $vatType, $purchasePrice = null)
+{
 
 
-    if($vatType==="Standard" && $salePrice ) {
+    if ($vatType === "Standard" && $salePrice) {
 
         $total_price_ex_value = ($salePrice / 1.2);
         $vat = ($salePrice - $total_price_ex_value);
@@ -711,158 +745,160 @@ function calculationOfProfit($salePrice,$totalCosts,$vatType,$purchasePrice=null
             'marg_vat' => null,
 
         ];
-    }elseif($salePrice){
-        $margVat=((($salePrice-$purchasePrice)*16.67)/100);
+    } elseif ($salePrice) {
+        $margVat = ((($salePrice - $purchasePrice) * 16.67) / 100);
 
-        return[
-            'profit'=>$salePrice-$totalCosts,
-            'marg_vat'=>$margVat,
-            'true_profit'=>($salePrice-$totalCosts)-$margVat,
-            'sale_vat'=>null,
-            'total_price_ex_vat'=>null
+        return [
+            'profit' => $salePrice - $totalCosts,
+            'marg_vat' => $margVat,
+            'true_profit' => ($salePrice - $totalCosts) - $margVat,
+            'sale_vat' => null,
+            'total_price_ex_vat' => null
         ];
 
     }
 }
 
 
+function calculationOfProfitEbay($taxRate, $salePrice, $totalCosts, $vatType, $purchasePrice)
+{
 
-function calculationOfProfitEbay($taxRate,$salePrice,$totalCosts,$vatType,$purchasePrice){
 
-
-    if($vatType==="Standard" && $salePrice ) {
-        $total_price_ex_value = ($salePrice / ($taxRate+1));
+    if ($vatType === "Standard" && $salePrice) {
+        $total_price_ex_value = ($salePrice / ($taxRate + 1));
         $vat = ($salePrice - $total_price_ex_value);
 
         return [
             'sale_vat' => $vat,
-            'total_price_ex_vat' => number_format($total_price_ex_value,2),
-            'profit' => $total_price_ex_value - $totalCosts  ,
-            'true_profit' => $total_price_ex_value - $totalCosts ,
+            'total_price_ex_vat' => number_format($total_price_ex_value, 2),
+            'profit' => $total_price_ex_value - $totalCosts,
+            'true_profit' => $total_price_ex_value - $totalCosts,
             'marg_vat' => null,
-            'pp'=>$purchasePrice,
+            'pp' => $purchasePrice,
 
         ];
-    }elseif($salePrice){
-        $margVat=((($salePrice-$purchasePrice)*16.67)/100);
-        return[
-            'profit'=>$salePrice-$totalCosts,
-            'marg_vat'=>$margVat,
-            'true_profit'=>($salePrice-$totalCosts)-$margVat,
-            'sale_vat'=>null,
-            'total_price_ex_vat'=>null,
-            'pp'=>$purchasePrice
+    } elseif ($salePrice) {
+        $margVat = ((($salePrice - $purchasePrice) * 16.67) / 100);
+        return [
+            'profit' => $salePrice - $totalCosts,
+            'marg_vat' => $margVat,
+            'true_profit' => ($salePrice - $totalCosts) - $margVat,
+            'sale_vat' => null,
+            'total_price_ex_vat' => null,
+            'pp' => $purchasePrice
         ];
 
     }
 }
 
-function getQuickBookServiceProductName($quickBooksCategory,$vat_type,$customerLocation,$platform){
+function getQuickBookServiceProductName($quickBooksCategory, $vat_type, $customerLocation, $platform)
+{
 
 
-
-    if($platform===Stock::PLATFROM_MOBILE_ADVANTAGE){
-        if($vat_type==="Standard"){
-            $vat="Vatable";
-        }else{
-            $vat="Marginal";
+    if ($platform === Stock::PLATFROM_MOBILE_ADVANTAGE) {
+        if ($vat_type === "Standard") {
+            $vat = "Vatable";
+        } else {
+            $vat = "Marginal";
         }
-    }else{
-        if($vat_type==="Standard"){
-            $vat="Vatable";
-        }else{
-            $vat="Vat Margin";
+    } else {
+        if ($vat_type === "Standard") {
+            $vat = "Vatable";
+        } else {
+            $vat = "Vat Margin";
         }
     }
 
 
-
-    if($customerLocation ==="Europe"){
-        $location='EU';
-    }else{
-        $location= $customerLocation;
+    if ($customerLocation === "Europe") {
+        $location = 'EU';
+    } else {
+        $location = $customerLocation;
     }
 
-    if($platform===Stock::PLATFROM_MOBILE_ADVANTAGE){
-        return $quickBooksCategory.' '."(".$vat.")";
-    }else{
-        return $location.' '.$quickBooksCategory.' '."(".$vat.")";
+    if ($platform === Stock::PLATFROM_MOBILE_ADVANTAGE) {
+        return $quickBooksCategory . ' ' . "(" . $vat . ")";
+    } else {
+        return $location . ' ' . $quickBooksCategory . ' ' . "(" . $vat . ")";
     }
 
 }
-function getQuickBookServiceProductNameForMobileAdvantage($quickBooksCategory,$vat_type){
+
+function getQuickBookServiceProductNameForMobileAdvantage($quickBooksCategory, $vat_type)
+{
 
 
-    if($vat_type==="Standard"){
-        $vat="Vatable";
-    }else{
-        $vat="Marginal";
+    if ($vat_type === "Standard") {
+        $vat = "Vatable";
+    } else {
+        $vat = "Marginal";
     }
 
 
-    return $quickBooksCategory.' '."(".$vat.")";
+    return $quickBooksCategory . ' ' . "(" . $vat . ")";
 }
 
 
-function getCheckValidVatType($country,$vatType,$tax_percentage){
+function getCheckValidVatType($country, $vatType, $tax_percentage)
+{
 
 
+    if ($country === "United Kingdom") {
 
-
-    if($country ==="United Kingdom"){
-
-        if($vatType==="Standard" && !($tax_percentage*100)){
+        if ($vatType === "Standard" && !($tax_percentage * 100)) {
             return "Invalid VAT Type  can allow the order to progress with manager approval only";
-        }else if($vatType==="Margin" && ($tax_percentage*100)){
-
-            return "Invalid VAT Type  can allow the order to progress with manager approval only";
-        }
-
-    }else if($country!=="United Kingdom"){
-
-        if($vatType==="Marginal" && $tax_percentage*100){
+        } else if ($vatType === "Margin" && ($tax_percentage * 100)) {
 
             return "Invalid VAT Type  can allow the order to progress with manager approval only";
+        }
+
+    } else if ($country !== "United Kingdom") {
+
+        if ($vatType === "Marginal" && $tax_percentage * 100) {
+
+            return "Invalid VAT Type  can allow the order to progress with manager approval only";
 
         }
 
     }
 
 
+}
+
+function getCount($id, $type)
+{
+
+    return \App\RepairsItems::where('repair_id', $id)->where('type', $type)->count();
 
 }
 
-function getCount($id,$type){
+function getStatus($data)
+{
 
-    return \App\RepairsItems::where('repair_id',$id)->where('type',$type)->count();
-
-}
-
-function getStatus($data){
-
-   $flag=0;
-    foreach ($data as $tt){
-        if($tt->status===\App\RepairsItems::STATUS_OPEN){
-           $flag++;
-        }
-    }
-    return $flag ? \App\RepairsItems::STATUS_OPEN:\App\RepairsItems::STATUS_CLOSE;
-}
-
-function getLastDate($data){
-
-
-    $flag=0;
-    $closeDate='';
-    foreach ($data as $tt){
-        if($tt->status===\App\RepairsItems::STATUS_OPEN){
+    $flag = 0;
+    foreach ($data as $tt) {
+        if ($tt->status === \App\RepairsItems::STATUS_OPEN) {
             $flag++;
         }
     }
-    if(!$flag){
-        foreach ($data as $date){
+    return $flag ? \App\RepairsItems::STATUS_OPEN : \App\RepairsItems::STATUS_CLOSE;
+}
 
-            $closeDate=$date->closed_at;
+function getLastDate($data)
+{
+
+
+    $flag = 0;
+    $closeDate = '';
+    foreach ($data as $tt) {
+        if ($tt->status === \App\RepairsItems::STATUS_OPEN) {
+            $flag++;
+        }
+    }
+    if (!$flag) {
+        foreach ($data as $date) {
+
+            $closeDate = $date->closed_at;
         }
     }
 
@@ -873,35 +909,36 @@ function getLastDate($data){
 }
 
 
-
-function getTotalSellingCost($platform,$total,$country){
-    $shippingCost= getShippingCost($country,$total,$platform);
-    $totalSellCost=$shippingCost;
+function getTotalSellingCost($platform, $total, $country)
+{
+    $shippingCost = getShippingCost($country, $total, $platform);
+    $totalSellCost = $shippingCost;
     return $totalSellCost;
 
 }
 
-function getShippingCost($country,$sales_price,$platform ){
+function getShippingCost($country, $sales_price, $platform)
+{
 
 
-    $setting=\App\SellerFees::where('platform',$platform)->first();
+    $setting = \App\SellerFees::where('platform', $platform)->first();
 
 
-    if($country==="UK" || $country==="United Kingdom" || $country==="Great Britain" ){
+    if ($country === "UK" || $country === "United Kingdom" || $country === "Great Britain") {
 
-        if($sales_price<20){
-            $rate=$setting->uk_shipping_cost_under_20;
+        if ($sales_price < 20) {
+            $rate = $setting->uk_shipping_cost_under_20;
             return $rate;
-        }else{
-            $rate=$setting->uk_shipping_cost_above_20;
+        } else {
+            $rate = $setting->uk_shipping_cost_above_20;
             return $rate;
         }
-    }else{
-        if($sales_price<20){
-            $rate=$setting->uk_non_shipping_cost_under_20;
+    } else {
+        if ($sales_price < 20) {
+            $rate = $setting->uk_non_shipping_cost_under_20;
             return $rate;
-        }else{
-            $rate=$setting->uk_non_shipping_above_under_20;
+        } else {
+            $rate = $setting->uk_non_shipping_above_under_20;
             return $rate;
         }
     }
@@ -909,70 +946,69 @@ function getShippingCost($country,$sales_price,$platform ){
 
 }
 
-function getStockDetatils($id){
+function getStockDetatils($id)
+{
 
-    $stock=Stock::find($id);
-    if(is_null($stock)){
+    $stock = Stock::find($id);
+    if (is_null($stock)) {
         return null;
     }
     return $stock;
 }
 
-function ebayBasicToken($ebayClientId,$ebayClientSecret){
-   // $authorization = base64_encode(config('services.ebay.client_id').':'.config('services.ebay.client_secret'));
-    $authorization = base64_encode($ebayClientId.':'.$ebayClientSecret);
+function ebayBasicToken($ebayClientId, $ebayClientSecret)
+{
+    // $authorization = base64_encode(config('services.ebay.client_id').':'.config('services.ebay.client_secret'));
+    $authorization = base64_encode($ebayClientId . ':' . $ebayClientSecret);
     $header = array("Authorization: Basic {$authorization}", "Content-Type: application/x-www-form-urlencoded");
 
     return $header;
 }
 
 
-
-function getEbayProduct($authToken,$itemId){
+function getEbayProduct($authToken, $itemId)
+{
 
     $client = new Client();
     $client->setDefaultOption('headers', array('Authorization' => "Bearer {$authToken}"));
 
-    try{
-        $response = $client->get("https://api.ebay.com/buy/browse/v1/item/v1|".$itemId."|0?fieldgroups=PRODUCT");
+    try {
+        $response = $client->get("https://api.ebay.com/buy/browse/v1/item/v1|" . $itemId . "|0?fieldgroups=PRODUCT");
         $data = $response->json();
 
 
-        if(count($data)>0){
+        if (count($data) > 0) {
             $ebayOrderImage = \App\EbayImage::firstOrNew([
                 'items_id' => $itemId
             ]);
 
-            $ebayOrderImage->items_id=$itemId;
-            $ebayOrderImage->image_path=count($data['image'])>0 ?$data['image']['imageUrl']:null;
+            $ebayOrderImage->items_id = $itemId;
+            $ebayOrderImage->image_path = count($data['image']) > 0 ? $data['image']['imageUrl'] : null;
             $ebayOrderImage->save();
 
 
-
         }
-    }catch (Exception $e){
-        return  null;
+    } catch (Exception $e) {
+        return null;
     }
-
-
 
 
 }
 
-function getFindProduct($accessToken,$productName,$categoryId,$key){
-
+function getFindProduct($accessToken, $productName, $categoryId, $key)
+{
 
 
     $client = new Client();
-    $client->setDefaultOption('headers', array('Authorization' => "Bearer {$accessToken}",'X-EBAY-C-MARKETPLACE-ID'=>"EBAY_GB"));
+    $client->setDefaultOption('headers', array('Authorization' => "Bearer {$accessToken}", 'X-EBAY-C-MARKETPLACE-ID' => "EBAY_GB"));
 
 
-    try{
-        $response = $client->get("https://api.ebay.com/buy/browse/v1/item_summary/search?q=".$productName." &category_ids=".$categoryId."&filter=conditionIds:{".$key."},deliveryCountry:GB,itemLocationCountry:GB,buyingOptions:{FIXED_PRICE},price:[20],priceCurrency:GBP&sort=price");
+    try {
+        $response = $client->get("https://api.ebay.com/buy/browse/v1/item_summary/search?q=" . $productName . " &category_ids=" . $categoryId . "&filter=conditionIds:{" . $key . "},deliveryCountry:GB,itemLocationCountry:GB,buyingOptions:{FIXED_PRICE},price:[20],priceCurrency:GBP&sort=price");
         $data = $response->json();
 
         return $data;
-    }catch (Exception $e){
+    } catch (Exception $e) {
 
         return null;
     }
@@ -981,20 +1017,20 @@ function getFindProduct($accessToken,$productName,$categoryId,$key){
 }
 
 
-function getFindProductForTablet($accessToken,$productName,$categoryId){
-
+function getFindProductForTablet($accessToken, $productName, $categoryId)
+{
 
 
     $client = new Client();
     $client->setDefaultOption('headers', array('Authorization' => "Bearer {$accessToken}"));
 
 
-    try{
-        $response = $client->get("https://api.ebay.com/buy/browse/v1/item_summary/search?q=".$productName." &category_ids=".$categoryId."&filter=deliveryCountry:GB,itemLocationCountry:GB,buyingOptions:{FIXED_PRICE},price:[20],priceCurrency:GBP&auto_correct=KEYWORD&sort=price");
+    try {
+        $response = $client->get("https://api.ebay.com/buy/browse/v1/item_summary/search?q=" . $productName . " &category_ids=" . $categoryId . "&filter=deliveryCountry:GB,itemLocationCountry:GB,buyingOptions:{FIXED_PRICE},price:[20],priceCurrency:GBP&auto_correct=KEYWORD&sort=price");
         $data = $response->json();
 
         return $data;
-    }catch (Exception $e){
+    } catch (Exception $e) {
 
         return null;
     }
@@ -1007,268 +1043,269 @@ function getCountry($code)
 {
 
 
-  $country= [
-    'AD'=>'Andorr',
-    "AE"=>"United Arab Emirates",
-    "AF"=>"Afghanistan",
-    "AG"=>"Antigua and Barbuda",
-    "AI"=>"Anguilla",
-    "AL"=>"Albania",
-    "AM"=>"Armenia",
-    "AN"=>"Netherlands Antilles",
-    "AO"=>"Angola",
-    "AQ"=>"Antarctica",
-    "AR"=>"Argentina",
-    "AS"=>"American Samoa",
-    "AT"=>"Austria.",
-    "AU"=>"Australia.",
-    "AW"=>"Aruba.",
-    "AZ"=>"Azerbaijan.",
-    "BA"=>"Bosnia and Herzegovina.",
-    "BB"=>"Barbados.",
-    "BD"=>"Bangladesh.",
-    "BE"=>"Belgium.",
-    "BF"=>"Burkina Faso.",
-    "BG"=>"Bulgaria.",
-    "BH"=>"Bahrain.",
-    "BI"=>"Burundi.",
-    "BJ"=>"Benin.",
-    "BM"=>"Bermuda.",
-    "BN"=>"Brunei Darussalam.",
-    "BO"=>"Bolivia.",
-    "BR"=>"Brazil.",
-    "BS"=>"Bahamas.",
-    "BT"=>"Bhutan.",
-    "BV"=>"Bouvet Island.",
-    "BW"=>"Botswana.",
-    "BY"=>"Belarus.",
-    "BZ"=>"Belize.",
-    "CA"=>"Canada.",
-    "CC"=>"Cocos (Keeling) Islands.",
-    "CD"=>"Congo, The Democratic Republic of the.",
-    "CF"=>"Central African Republic.",
-    "CG"=>"Congo.",
-    "CH"=>"Switzerland.",
-    "CI"=>"Cote d'Ivoire.",
-    "CK"=>"Cook Islands",
-    "CL"=>"Chile.",
-    "CM"=>"Cameroon",
-    "CN"=>"China",
-    "CO"=>"Colombia",
-    "CR"=>"Costa Rica",
-    "CU"=>"Cuba",
-    "CV"=>"Cape Verde",
-    "CX"=>"Christmas Island",
-    "CY"=>"Cyprus",
-    "CZ"=>"Czech Republic",
-    "DE"=>"Germany",
-    "DJ"=>"Djibouti",
-    "DK"=>"Denmark",
-    "DM"=>"Dominica",
-    "DO"=>"Dominican Republic",
-    "DZ"=>"Algeria",
-    "EC"=>"Ecuador",
-    "EE"=>"Estonia",
-    "EG"=>"Egypt",
-    "EH"=>"Western Sahara",
-    "ER"=>"Eritrea",
-    "ES"=>"Spain",
-    "ET"=>"Ethiopia",
-    "FI"=>"Finland",
-    "FJ"=>"Fiji",
-    "FK"=>"Falkland Islands (Malvinas)",
-    "FM"=>"Federated States of Micronesia",
-    "FO"=>"Faroe Islands",
-    "FR"=>"France",
-    "GA"=>"Gabon",
-    "GB"=>"United Kingdom",
-    "GD"=>"Grenada",
-    "GE"=>"Georgia",
-    "GF"=>"French Guiana",
-    "GG"=>"Guernsey",
-    "GH"=>"Ghana",
-    "GI"=>"Gibraltar",
-    "GL"=>"Greenland",
-    "GM"=>"Gambia",
-    "GN"=>"Guinea",
-    "GP"=>"Guadeloupe",
-    "GQ"=>"Equatorial Guinea",
-    "GR"=>"Greece",
-    "GS"=>"South Georgia and the South Sandwich Islands",
-    "GT"=>"Guatemala",
-    "GU"=>"Guam",
-    "GW"=>"Guinea-Bissau",
-    "GY"=>"Guyana",
-    "HK"=>"Hong Kong",
-    "HM"=>"Heard Island and McDonald Islands",
-    "HN"=>"Honduras",
-    "HR"=>"Croatia",
-    "HT"=>"Haiti",
-    "HU"=>"Hungary",
-    "ID"=>"Indonesia",
-    "IE"=>"Ireland",
-    "IL"=>"Israel",
-    "IN"=>"India",
-    "IO"=>"British Indian Ocean Territory",
-    "IQ"=>"Iraq",
-    "IR"=>"Islamic Republic of Iran",
-    "IS"=>"Iceland",
-    "IT"=>"Italy",
-    "JE"=>"Jersey",
-    "JM"=>"Jamaica",
-    "JO"=>"Jordan",
-    "JP"=>"Japan",
-    "KE"=>"Kenya",
-    "KG"=>"Kyrgyzstan",
-    "KH"=>"Cambodia",
-    "KI"=>"Kiribati",
-    "KM"=>"Comoros",
-    "KN"=>"Saint Kitts and Nevis",
-    "KP"=>"Democratic People's Republic of Korea",
-    "KR"=>"Republic of Korea",
-    "KW"=>"Kuwait",
-    "KY"=>"Cayman Islands",
-    "KZ"=>"Kazakhstan",
-    "LA"=>"Lao People's Democratic Republic",
-    "LB"=>"Lebanon",
-    "LC"=>"Saint Lucia",
-    "LI"=>"Liechtenstein",
-    "LK"=>"Sri Lanka",
-    "LR"=>"Liberia",
-    "LS"=>"Lesotho",
-    "LT"=>"Lithuania",
-    "LU"=>"Luxembourg",
-    "LV"=>"Latvia",
-    "LY"=>"Libyan Arab Jamahiriya",
-    "MA"=>"Morocco",
-    "MC"=>"Monaco",
-    "MD"=>"Republic of Moldova",
-    "ME"=>"Montenegro",
-    "MG"=>"Madagascar",
-    "MH"=>"Marshall Islands",
-    "MK"=>"The Former Yugoslav Republic of Macedonia",
-    "ML"=>"Mali",
-    "MM"=>"Myanmar",
-    "MN"=>"Mongolia",
-    "MO"=>"Macao",
-    "MP"=>"Northern Mariana Islands",
-    "MQ"=>"Martinique",
-    "MR"=>"Mauritania",
-    "MS"=>"Montserrat",
-    "MT"=>"Malta",
-    "MU"=>"Mauritius",
-    "MV"=>"Maldives",
-    "MW"=>"Malawi",
-    "MX"=>"Mexico",
-    "MY"=>"Malaysia",
-    "MZ"=>"Mozambique",
-    "NA"=>"Namibia",
-    "NC"=>"New Caledonia",
-    "NE"=>"Niger",
-    "NF"=>"Norfolk Island",
-    "NG"=>"Nigeria",
-    "NI"=>"Nicaragua",
-    "NL"=>"Netherlands",
-    "NO"=>"Norway",
-    "NP"=>"Nepal",
-    "NR"=>"Nauru",
-    "NU"=>"Niue",
-    "NZ"=>"New Zealand",
-    "OM"=>"Oman",
-    "PA"=>"Panama",
-    "PE"=>"Peru",
-    "PF"=>"French Polynesia Includes Tahiti",
-    "PG"=>"Papua New Guinea",
-    "PH"=>"Philippines",
-    "PK"=>"Pakistan",
-    "PL"=>"Poland",
-    "PM"=>"Saint Pierre and Miquelon",
-    "PN"=>"Pitcairn",
-    "PR"=>"Puerto Rico",
-    "PS"=>"Palestinian territory, Occupied",
-    "PT"=>"Portugal",
-    "PW"=>"Palau",
-    "PY"=>"Paraguay",
-    "QA"=>"Qatar",
-    "RE"=>"Reunion",
-    "RO"=>"Romania",
-    "RS"=>"Serbia",
-    "RU"=>"Russian Federation",
-    "RW"=>"Rwanda",
-    "SA"=>"Saudi Arabia",
-    "SB"=>"Solomon Islands",
-    "SC"=>"Seychelles",
-    "SD"=>"Sudan",
-    "SE"=>"Sweden",
-    "SG"=>"Singapore",
-    "SH"=>"Saint Helena",
-    "SI"=>"Slovenia",
-    "SJ"=>"Svalbard and Jan Mayen",
-    "SK"=>"Slovakia",
-    "SL"=>"Sierra Leone",
-    "SM"=>"San Marino",
-    "SN"=>"Senegal",
-    "SO"=>"Somalia",
-    "SR"=>"Suriname",
-    "ST"=>"Sao Tome and Principe",
-    "SV"=>"El Salvador",
-    "SY"=>"Syrian Arab Republic",
-    "SZ"=>"Swaziland",
-    "TC"=>"Turks and Caicos Islands",
-    "TD"=>"Chad",
-    "TF"=>"French Southern Territories",
-    "TG"=>"Togo",
-    "TH"=>"Thailand",
-    "TJ"=>"Tajikistan",
-    "TK"=>"Tokelau",
-    "TM"=>"Turkmenistan",
-    "TN"=>"Tunisia",
-    "TO"=>"Tonga",
-    "TP"=>"No longer in use",
-    "TR"=>"Turkey",
-    "TT"=>"Trinidad and Tobago",
-    "TV"=>"Tuvalu",
-    "TW"=>"Taiwan, Province of China",
-    "TZ"=>"Tanzania, United Republic of",
-    "UA"=>"Ukraine",
-    "UG"=>"Uganda",
-    "US"=>"United States",
-    "UY"=>"Uruguay",
-    "UZ"=>"Uzbekistan",
-    "VA"=>"Holy See (Vatican City state)",
-    "VC"=>"Saint Vincent and the Grenadines",
-    "VE"=>"Venezuela",
-    "VG"=>"Virgin Islands, British",
-    "VI"=>"Virgin Islands, U.S",
-    "VN"=>"Vietnam",
-    "VU"=>"Vanuatu",
-    "WF"=>"Wallis and Futuna",
-    "WS"=>"Samoa",
-    "YE"=>"Yemen",
-    "YT"=>"Mayotte",
-    "ZA"=>"South Africa",
-    "ZM"=>"Zambia",
-    "ZW"=>"Zimbabwe",
-    "ZZ"=>"Unknown country",
+    $country = [
+        'AD' => 'Andorr',
+        "AE" => "United Arab Emirates",
+        "AF" => "Afghanistan",
+        "AG" => "Antigua and Barbuda",
+        "AI" => "Anguilla",
+        "AL" => "Albania",
+        "AM" => "Armenia",
+        "AN" => "Netherlands Antilles",
+        "AO" => "Angola",
+        "AQ" => "Antarctica",
+        "AR" => "Argentina",
+        "AS" => "American Samoa",
+        "AT" => "Austria.",
+        "AU" => "Australia.",
+        "AW" => "Aruba.",
+        "AZ" => "Azerbaijan.",
+        "BA" => "Bosnia and Herzegovina.",
+        "BB" => "Barbados.",
+        "BD" => "Bangladesh.",
+        "BE" => "Belgium.",
+        "BF" => "Burkina Faso.",
+        "BG" => "Bulgaria.",
+        "BH" => "Bahrain.",
+        "BI" => "Burundi.",
+        "BJ" => "Benin.",
+        "BM" => "Bermuda.",
+        "BN" => "Brunei Darussalam.",
+        "BO" => "Bolivia.",
+        "BR" => "Brazil.",
+        "BS" => "Bahamas.",
+        "BT" => "Bhutan.",
+        "BV" => "Bouvet Island.",
+        "BW" => "Botswana.",
+        "BY" => "Belarus.",
+        "BZ" => "Belize.",
+        "CA" => "Canada.",
+        "CC" => "Cocos (Keeling) Islands.",
+        "CD" => "Congo, The Democratic Republic of the.",
+        "CF" => "Central African Republic.",
+        "CG" => "Congo.",
+        "CH" => "Switzerland.",
+        "CI" => "Cote d'Ivoire.",
+        "CK" => "Cook Islands",
+        "CL" => "Chile.",
+        "CM" => "Cameroon",
+        "CN" => "China",
+        "CO" => "Colombia",
+        "CR" => "Costa Rica",
+        "CU" => "Cuba",
+        "CV" => "Cape Verde",
+        "CX" => "Christmas Island",
+        "CY" => "Cyprus",
+        "CZ" => "Czech Republic",
+        "DE" => "Germany",
+        "DJ" => "Djibouti",
+        "DK" => "Denmark",
+        "DM" => "Dominica",
+        "DO" => "Dominican Republic",
+        "DZ" => "Algeria",
+        "EC" => "Ecuador",
+        "EE" => "Estonia",
+        "EG" => "Egypt",
+        "EH" => "Western Sahara",
+        "ER" => "Eritrea",
+        "ES" => "Spain",
+        "ET" => "Ethiopia",
+        "FI" => "Finland",
+        "FJ" => "Fiji",
+        "FK" => "Falkland Islands (Malvinas)",
+        "FM" => "Federated States of Micronesia",
+        "FO" => "Faroe Islands",
+        "FR" => "France",
+        "GA" => "Gabon",
+        "GB" => "United Kingdom",
+        "GD" => "Grenada",
+        "GE" => "Georgia",
+        "GF" => "French Guiana",
+        "GG" => "Guernsey",
+        "GH" => "Ghana",
+        "GI" => "Gibraltar",
+        "GL" => "Greenland",
+        "GM" => "Gambia",
+        "GN" => "Guinea",
+        "GP" => "Guadeloupe",
+        "GQ" => "Equatorial Guinea",
+        "GR" => "Greece",
+        "GS" => "South Georgia and the South Sandwich Islands",
+        "GT" => "Guatemala",
+        "GU" => "Guam",
+        "GW" => "Guinea-Bissau",
+        "GY" => "Guyana",
+        "HK" => "Hong Kong",
+        "HM" => "Heard Island and McDonald Islands",
+        "HN" => "Honduras",
+        "HR" => "Croatia",
+        "HT" => "Haiti",
+        "HU" => "Hungary",
+        "ID" => "Indonesia",
+        "IE" => "Ireland",
+        "IL" => "Israel",
+        "IN" => "India",
+        "IO" => "British Indian Ocean Territory",
+        "IQ" => "Iraq",
+        "IR" => "Islamic Republic of Iran",
+        "IS" => "Iceland",
+        "IT" => "Italy",
+        "JE" => "Jersey",
+        "JM" => "Jamaica",
+        "JO" => "Jordan",
+        "JP" => "Japan",
+        "KE" => "Kenya",
+        "KG" => "Kyrgyzstan",
+        "KH" => "Cambodia",
+        "KI" => "Kiribati",
+        "KM" => "Comoros",
+        "KN" => "Saint Kitts and Nevis",
+        "KP" => "Democratic People's Republic of Korea",
+        "KR" => "Republic of Korea",
+        "KW" => "Kuwait",
+        "KY" => "Cayman Islands",
+        "KZ" => "Kazakhstan",
+        "LA" => "Lao People's Democratic Republic",
+        "LB" => "Lebanon",
+        "LC" => "Saint Lucia",
+        "LI" => "Liechtenstein",
+        "LK" => "Sri Lanka",
+        "LR" => "Liberia",
+        "LS" => "Lesotho",
+        "LT" => "Lithuania",
+        "LU" => "Luxembourg",
+        "LV" => "Latvia",
+        "LY" => "Libyan Arab Jamahiriya",
+        "MA" => "Morocco",
+        "MC" => "Monaco",
+        "MD" => "Republic of Moldova",
+        "ME" => "Montenegro",
+        "MG" => "Madagascar",
+        "MH" => "Marshall Islands",
+        "MK" => "The Former Yugoslav Republic of Macedonia",
+        "ML" => "Mali",
+        "MM" => "Myanmar",
+        "MN" => "Mongolia",
+        "MO" => "Macao",
+        "MP" => "Northern Mariana Islands",
+        "MQ" => "Martinique",
+        "MR" => "Mauritania",
+        "MS" => "Montserrat",
+        "MT" => "Malta",
+        "MU" => "Mauritius",
+        "MV" => "Maldives",
+        "MW" => "Malawi",
+        "MX" => "Mexico",
+        "MY" => "Malaysia",
+        "MZ" => "Mozambique",
+        "NA" => "Namibia",
+        "NC" => "New Caledonia",
+        "NE" => "Niger",
+        "NF" => "Norfolk Island",
+        "NG" => "Nigeria",
+        "NI" => "Nicaragua",
+        "NL" => "Netherlands",
+        "NO" => "Norway",
+        "NP" => "Nepal",
+        "NR" => "Nauru",
+        "NU" => "Niue",
+        "NZ" => "New Zealand",
+        "OM" => "Oman",
+        "PA" => "Panama",
+        "PE" => "Peru",
+        "PF" => "French Polynesia Includes Tahiti",
+        "PG" => "Papua New Guinea",
+        "PH" => "Philippines",
+        "PK" => "Pakistan",
+        "PL" => "Poland",
+        "PM" => "Saint Pierre and Miquelon",
+        "PN" => "Pitcairn",
+        "PR" => "Puerto Rico",
+        "PS" => "Palestinian territory, Occupied",
+        "PT" => "Portugal",
+        "PW" => "Palau",
+        "PY" => "Paraguay",
+        "QA" => "Qatar",
+        "RE" => "Reunion",
+        "RO" => "Romania",
+        "RS" => "Serbia",
+        "RU" => "Russian Federation",
+        "RW" => "Rwanda",
+        "SA" => "Saudi Arabia",
+        "SB" => "Solomon Islands",
+        "SC" => "Seychelles",
+        "SD" => "Sudan",
+        "SE" => "Sweden",
+        "SG" => "Singapore",
+        "SH" => "Saint Helena",
+        "SI" => "Slovenia",
+        "SJ" => "Svalbard and Jan Mayen",
+        "SK" => "Slovakia",
+        "SL" => "Sierra Leone",
+        "SM" => "San Marino",
+        "SN" => "Senegal",
+        "SO" => "Somalia",
+        "SR" => "Suriname",
+        "ST" => "Sao Tome and Principe",
+        "SV" => "El Salvador",
+        "SY" => "Syrian Arab Republic",
+        "SZ" => "Swaziland",
+        "TC" => "Turks and Caicos Islands",
+        "TD" => "Chad",
+        "TF" => "French Southern Territories",
+        "TG" => "Togo",
+        "TH" => "Thailand",
+        "TJ" => "Tajikistan",
+        "TK" => "Tokelau",
+        "TM" => "Turkmenistan",
+        "TN" => "Tunisia",
+        "TO" => "Tonga",
+        "TP" => "No longer in use",
+        "TR" => "Turkey",
+        "TT" => "Trinidad and Tobago",
+        "TV" => "Tuvalu",
+        "TW" => "Taiwan, Province of China",
+        "TZ" => "Tanzania, United Republic of",
+        "UA" => "Ukraine",
+        "UG" => "Uganda",
+        "US" => "United States",
+        "UY" => "Uruguay",
+        "UZ" => "Uzbekistan",
+        "VA" => "Holy See (Vatican City state)",
+        "VC" => "Saint Vincent and the Grenadines",
+        "VE" => "Venezuela",
+        "VG" => "Virgin Islands, British",
+        "VI" => "Virgin Islands, U.S",
+        "VN" => "Vietnam",
+        "VU" => "Vanuatu",
+        "WF" => "Wallis and Futuna",
+        "WS" => "Samoa",
+        "YE" => "Yemen",
+        "YT" => "Mayotte",
+        "ZA" => "South Africa",
+        "ZM" => "Zambia",
+        "ZW" => "Zimbabwe",
+        "ZZ" => "Unknown country",
     ];
 
-  $countryName='';
+    $countryName = '';
 
-  foreach ($country as $key=>$value){
+    foreach ($country as $key => $value) {
 
-      if($key===$code){
-          $countryName=$value;
+        if ($key === $code) {
+            $countryName = $value;
 
-      }
-  }
+        }
+    }
 
-  return $countryName;
+    return $countryName;
 
 }
 
-function getEbayRefreshTokenBaseToken($authorizationHeader,$refreshToken){
+function getEbayRefreshTokenBaseToken($authorizationHeader, $refreshToken)
+{
 
-    $content2 = "grant_type=refresh_token&refresh_token=".$refreshToken."&scope=https://api.ebay.com/oauth/api_scope https://api.ebay.com/oauth/api_scope/sell.marketing.readonly https://api.ebay.com/oauth/api_scope/sell.marketing https://api.ebay.com/oauth/api_scope/sell.inventory.readonly https://api.ebay.com/oauth/api_scope/sell.inventory https://api.ebay.com/oauth/api_scope/sell.account.readonly https://api.ebay.com/oauth/api_scope/sell.account https://api.ebay.com/oauth/api_scope/sell.fulfillment.readonly https://api.ebay.com/oauth/api_scope/sell.fulfillment https://api.ebay.com/oauth/api_scope/sell.analytics.readonly https://api.ebay.com/oauth/api_scope/sell.finances https://api.ebay.com/oauth/api_scope/sell.payment.dispute https://api.ebay.com/oauth/api_scope/commerce.identity.readonly https://api.ebay.com/oauth/api_scope/commerce.notification.subscription https://api.ebay.com/oauth/api_scope/commerce.notification.subscription.readonly";
+    $content2 = "grant_type=refresh_token&refresh_token=" . $refreshToken . "&scope=https://api.ebay.com/oauth/api_scope https://api.ebay.com/oauth/api_scope/sell.marketing.readonly https://api.ebay.com/oauth/api_scope/sell.marketing https://api.ebay.com/oauth/api_scope/sell.inventory.readonly https://api.ebay.com/oauth/api_scope/sell.inventory https://api.ebay.com/oauth/api_scope/sell.account.readonly https://api.ebay.com/oauth/api_scope/sell.account https://api.ebay.com/oauth/api_scope/sell.fulfillment.readonly https://api.ebay.com/oauth/api_scope/sell.fulfillment https://api.ebay.com/oauth/api_scope/sell.analytics.readonly https://api.ebay.com/oauth/api_scope/sell.finances https://api.ebay.com/oauth/api_scope/sell.payment.dispute https://api.ebay.com/oauth/api_scope/commerce.identity.readonly https://api.ebay.com/oauth/api_scope/commerce.notification.subscription https://api.ebay.com/oauth/api_scope/commerce.notification.subscription.readonly";
 
 
     $curl = curl_init();
@@ -1283,7 +1320,7 @@ function getEbayRefreshTokenBaseToken($authorizationHeader,$refreshToken){
     $response = curl_exec($curl);
 
 
-    $data= (array) json_decode($response);
+    $data = (array)json_decode($response);
 
 
     return $data;
@@ -1291,7 +1328,8 @@ function getEbayRefreshTokenBaseToken($authorizationHeader,$refreshToken){
 
 }
 
-function getBackMarketCondition($conditionCode){
+function getBackMarketCondition($conditionCode)
+{
     switch ($conditionCode) {
         case "10":
             return "Excellent";
@@ -1308,7 +1346,8 @@ function getBackMarketCondition($conditionCode){
 
 }
 
-function getBackMarketConditionAestheticGrade($conditionCode){
+function getBackMarketConditionAestheticGrade($conditionCode)
+{
     switch ($conditionCode) {
         case "1":
             return "Excellent";
@@ -1325,36 +1364,37 @@ function getBackMarketConditionAestheticGrade($conditionCode){
 
 }
 
-function getSellerName($productId){
+function getSellerName($productId)
+{
 
 
     $client = new Client([
             'base_uri' => 'https://www.backmarket.co.uk/',
-            'verify'    => false,
+            'verify' => false,
             'cookie' => true
         ]
     );
-        $response = $client->get("https://www.backmarket.co.uk/second-hand-samsung-galaxy-s9-64-gb-carbon-black-unlocked/".$productId.".html?offer_type=6#l=10");
-        $content = $response->getBody()->getContents();
-        $crawler = new Crawler($content);
+    $response = $client->get("https://www.backmarket.co.uk/second-hand-samsung-galaxy-s9-64-gb-carbon-black-unlocked/" . $productId . ".html?offer_type=6#l=10");
+    $content = $response->getBody()->getContents();
+    $crawler = new Crawler($content);
 
 
+    $crawler->filter('div>div>.mb-4')->each(function ($node) {
 
-        $crawler->filter('div>div>.mb-4')->each(function($node) {
+        $sellerName = getBetween($node->text(), 'Refurbished and sold by', 'Reseller since');
 
-           $sellerName= getBetween($node->text(),'Refurbished and sold by','Reseller since');
+        $str = str_replace("\n", "", $sellerName);
 
-            $str=str_replace("\n","",$sellerName);
-
-            return trim($str);
+        return trim($str);
 
 
-        });
+    });
 
 }
 
 
-function getBetween($string, $start = "", $end = ""){
+function getBetween($string, $start = "", $end = "")
+{
     if (strpos($string, $start)) { // required if $start not exist in $string
         $startCharCount = strpos($string, $start) + strlen($start);
         $firstSubStr = substr($string, $startCharCount, strlen($string));
@@ -1368,23 +1408,24 @@ function getBetween($string, $start = "", $end = ""){
     }
 }
 
-function getEbayProductDetatils($itemId,$itemUrl,$gra=null){
+function getEbayProductDetatils($itemId, $itemUrl, $gra = null)
+{
 
 
-    $apiNetwork=[];
-    $condition='';
-    $grade='';
+    $apiNetwork = [];
+    $condition = '';
+    $grade = '';
 
     $client = new Client();
 
-  //  $data=[];
+    //  $data=[];
 
     $accessToken = \App\AccessToken::where('platform', 'ebay-third')->first();
 
     $currentTime = \Carbon\Carbon::now();
     $addTime = \Carbon\Carbon::parse($accessToken->updated_at)->addSecond($accessToken->expires_in);
 
-    $BasicHeaders = ebayBasicToken(config('services.ebay3.client_id'),config('services.ebay3.client_secret'));
+    $BasicHeaders = ebayBasicToken(config('services.ebay3.client_id'), config('services.ebay3.client_secret'));
 
 
     if ($currentTime->gt($addTime)) {
@@ -1413,15 +1454,15 @@ function getEbayProductDetatils($itemId,$itemUrl,$gra=null){
 
             if (strpos($localized['value'], $gra) !== false) {
                 //array_push($condition, $localized['value']);
-                $condition=$localized['value'];
+                $condition = $localized['value'];
             }
 
         }
 
         if ($localized['name'] === "Grade") {
             if (strpos($localized['value'], $gra) !== false) {
-               // array_push($grade, $localized['value']);
-                $grade=$localized['value'];
+                // array_push($grade, $localized['value']);
+                $grade = $localized['value'];
             }
         }
     }
@@ -1433,22 +1474,18 @@ function getEbayProductDetatils($itemId,$itemUrl,$gra=null){
 
     ]);
 
-    if(!is_null($network)){
+    if (!is_null($network)) {
         $networkData->item_id = $itemId;
         $networkData->network = $network;
         $networkData->save();
     }
 
 
-    $data=[
-        'network'=>$network,
-        'condition'=>$condition,
-        'grade'=>$grade
+    $data = [
+        'network' => $network,
+        'condition' => $condition,
+        'grade' => $grade
     ];
-
-
-
-
 
 
     return $data;
@@ -1456,11 +1493,8 @@ function getEbayProductDetatils($itemId,$itemUrl,$gra=null){
 }
 
 
-
-
-
-function getAvailableStock($itemUrl){
-
+function getAvailableStock($itemUrl)
+{
 
 
     $client = new Client();
@@ -1472,7 +1506,7 @@ function getAvailableStock($itemUrl){
     $currentTime = \Carbon\Carbon::now();
     $addTime = \Carbon\Carbon::parse($accessToken->updated_at)->addSecond($accessToken->expires_in);
 
-    $BasicHeaders = ebayBasicToken(config('services.ebay4.client_id'),config('services.ebay4.client_secret'));
+    $BasicHeaders = ebayBasicToken(config('services.ebay4.client_id'), config('services.ebay4.client_secret'));
 
 
     if ($currentTime->gt($addTime)) {
@@ -1484,16 +1518,13 @@ function getAvailableStock($itemUrl){
 
     }
 
-    $client->setDefaultOption('headers', array('Authorization' => "Bearer {$accessToken->access_token}",'X-EBAY-C-MARKETPLACE-ID'=>"EBAY_GB"));
+    $client->setDefaultOption('headers', array('Authorization' => "Bearer {$accessToken->access_token}", 'X-EBAY-C-MARKETPLACE-ID' => "EBAY_GB"));
 
     $productResponse = $client->get($itemUrl);
     $productData = $productResponse->json();
 
 
-
-
-    return isset($productData['estimatedAvailabilities'][0]['estimatedAvailableQuantity'])?$productData['estimatedAvailabilities'][0]['estimatedAvailableQuantity']:0;
-
+    return isset($productData['estimatedAvailabilities'][0]['estimatedAvailableQuantity']) ? $productData['estimatedAvailabilities'][0]['estimatedAvailableQuantity'] : 0;
 
 
 }
@@ -1636,7 +1667,8 @@ function getProcessor()
     ];
 }
 
-function getEbayProductByMobileCategory($searchProductName,$productFullName,$categoryId,$categoryName,$make,$condition,$token,$capacity,$color,$connectivity,$conditionName){
+function getEbayProductByMobileCategory($searchProductName, $productFullName, $categoryId, $categoryName, $make, $condition, $token, $capacity, $color, $connectivity, $conditionName)
+{
     $sellerList = \App\EBaySeller::all();
 
     $sellerUserNameList = [];
@@ -1649,15 +1681,13 @@ function getEbayProductByMobileCategory($searchProductName,$productFullName,$cat
      */
 
 
-
-
-    if($condition !==""){
+    if ($condition !== "") {
 
         $conditionList = [
-           $condition=>$conditionName,
+            $condition => $conditionName,
         ];
 
-    }else{
+    } else {
         $conditionList = [
             '1000' => 'New',
             '1500' => 'Open box',
@@ -1679,11 +1709,7 @@ function getEbayProductByMobileCategory($searchProductName,$productFullName,$cat
     }
 
 
-
-
-
-
-    $finalData=[];
+    $finalData = [];
 
     foreach ($conditionList as $key => $value) {
 
@@ -1692,10 +1718,10 @@ function getEbayProductByMobileCategory($searchProductName,$productFullName,$cat
 
         try {
 
-            $response = $client->get("https://api.ebay.com/buy/browse/v1/item_summary/search?q=" . $productFullName . "&category_ids=" . $categoryId . "&aspect_filter=categoryId:".$categoryId.",Storage Capacity:{".$capacity."},Colour:{".$color."},Connectivity:{".$connectivity."}&filter=conditionIds:{" . $key . "},deliveryCountry:GB,itemLocationCountry:GB,buyingOptions:{FIXED_PRICE},price:[20],priceCurrency:GBP&sort=price");
+            $response = $client->get("https://api.ebay.com/buy/browse/v1/item_summary/search?q=" . $productFullName . "&category_ids=" . $categoryId . "&aspect_filter=categoryId:" . $categoryId . ",Storage Capacity:{" . $capacity . "},Colour:{" . $color . "},Connectivity:{" . $connectivity . "}&filter=conditionIds:{" . $key . "},deliveryCountry:GB,itemLocationCountry:GB,buyingOptions:{FIXED_PRICE},price:[20],priceCurrency:GBP&sort=price");
             $data = $response->json();
 
-         //   dd("https://api.ebay.com/buy/browse/v1/item_summary/search?q=" . $productFullName . "&category_ids=" . $categoryId . "&aspect_filter=categoryId:".$categoryId.",Storage Capacity:{".$capacity."},Colour:{".$color."},Connectivity:{".$connectivity."}&filter=conditionIds:{" . $key . "},deliveryCountry:GB,itemLocationCountry:GB,buyingOptions:{FIXED_PRICE},price:[20],priceCurrency:GBP&sort=price");
+            //   dd("https://api.ebay.com/buy/browse/v1/item_summary/search?q=" . $productFullName . "&category_ids=" . $categoryId . "&aspect_filter=categoryId:".$categoryId.",Storage Capacity:{".$capacity."},Colour:{".$color."},Connectivity:{".$connectivity."}&filter=conditionIds:{" . $key . "},deliveryCountry:GB,itemLocationCountry:GB,buyingOptions:{FIXED_PRICE},price:[20],priceCurrency:GBP&sort=price");
             $priceFirst = [];
             $bestPrice = '';
             $sellerPrice = [];
@@ -1705,10 +1731,10 @@ function getEbayProductByMobileCategory($searchProductName,$productFullName,$cat
             $epid = '';
             $totalSold = 0;
             $modelNumber = '';
-            $availableStock=0;
+            $availableStock = 0;
 
 
-            $totalQty=$data['total'];
+            $totalQty = $data['total'];
 
             if ($data['total'] > 0) {
 
@@ -1728,7 +1754,7 @@ function getEbayProductByMobileCategory($searchProductName,$productFullName,$cat
                         $productData = $productResponse->json();
 
 
-                        $availableStock+=getAvailableStock($item['itemHref']);
+                        $availableStock += getAvailableStock($item['itemHref']);
                         foreach ($productData['localizedAspects'] as $localized) {
                             if ($localized['name'] === "Network") {
                                 array_push($apiNetwork, str_replace(' ', '', $localized['value']));
@@ -1835,7 +1861,6 @@ function getEbayProductByMobileCategory($searchProductName,$productFullName,$cat
                 if ($firstPrice || $secondPrice || $thirdPrice) {
 
 
-
                     $finalData[] = [
                         'product_name' => $searchProductName,
                         'ean' => "",
@@ -1862,8 +1887,8 @@ function getEbayProductByMobileCategory($searchProductName,$productFullName,$cat
                         'category' => $categoryName,
                         'platform' => "eBay",
                         'make' => $make,
-                        'available_stock'=>$availableStock,
-                        'total_qty'=>$totalQty
+                        'available_stock' => $availableStock,
+                        'total_qty' => $totalQty
 
 
                     ];
@@ -1888,16 +1913,15 @@ function getEbayProductByMobileCategory($searchProductName,$productFullName,$cat
 
     }
     return [
-        'status'=>200,
-        'data'=> $finalData];
+        'status' => 200,
+        'data' => $finalData];
 
 
 }
 
-function getEbayProductWithOtherCategory($searchProductName,$productFullName,$categoryId,$categoryName,$grade=null,$token,$capacity,$color,$connectivity,$make){
+function getEbayProductWithOtherCategory($searchProductName, $productFullName, $categoryId, $categoryName, $grade = null, $token, $capacity, $color, $connectivity, $make)
+{
     $sellerList = \App\EBaySeller::all();
-
-
 
 
     $sellerUserNameList = [];
@@ -1906,11 +1930,7 @@ function getEbayProductWithOtherCategory($searchProductName,$productFullName,$ca
     }
 
 
-
-
-    $finalData=[];
-
-
+    $finalData = [];
 
 
     $conditionList = [
@@ -1918,7 +1938,7 @@ function getEbayProductWithOtherCategory($searchProductName,$productFullName,$ca
 
     ];
 
-    if(!is_null($grade)){
+    if (!is_null($grade)) {
 
 
         $gradeList = [
@@ -1926,7 +1946,7 @@ function getEbayProductWithOtherCategory($searchProductName,$productFullName,$ca
         ];
 
 
-    }else{
+    } else {
         $gradeList = [
             'Grade A-Excellent',
             'Grade B- Very Good',
@@ -1937,24 +1957,11 @@ function getEbayProductWithOtherCategory($searchProductName,$productFullName,$ca
     }
 
 
-
-
-
-
-
     $client = new Client();
-    $client->setDefaultOption('headers', array('Authorization' => "Bearer {$token}",'X-EBAY-C-MARKETPLACE-ID'=>"EBAY_GB"));
-
+    $client->setDefaultOption('headers', array('Authorization' => "Bearer {$token}", 'X-EBAY-C-MARKETPLACE-ID' => "EBAY_GB"));
 
 
     foreach ($conditionList as $Conditionkey => $value) {
-
-
-
-
-
-
-
 
 
         foreach ($gradeList as $grades) {
@@ -1969,7 +1976,7 @@ function getEbayProductWithOtherCategory($searchProductName,$productFullName,$ca
             $rakingList = [];
             $finalRaking = [];
             $graderWithCondition = explode('-', $grades);
-            $totalQty=0;
+            $totalQty = 0;
 
             foreach ($graderWithCondition as $gra) {
 
@@ -1977,18 +1984,18 @@ function getEbayProductWithOtherCategory($searchProductName,$productFullName,$ca
 
 
                     $epid = '';
-                    $apiNetwork=[];
-                    $modelNumber='';
+                    $apiNetwork = [];
+                    $modelNumber = '';
 
-                    $availableStock=0;
-                    $fullProductName=strtolower($productFullName).' '.strtolower($gra).' '.strtolower($value);
+                    $availableStock = 0;
+                    $fullProductName = strtolower($productFullName) . ' ' . strtolower($gra) . ' ' . strtolower($value);
 
 
-                    $response = $client->get("https://api.ebay.com/buy/browse/v1/item_summary/search?q=" .$fullProductName . "&category_id=" . $categoryId . "&aspect_filter=categoryId:".$categoryId.",Storage Capacity:{".$capacity."},Colour:{".$color."},Connectivity:{".$connectivity."}&filter=deliveryCountry:GB,itemLocationCountry:GB,buyingOptions:{FIXED_PRICE},price:[20],priceCurrency:GBP&sort=price");
+                    $response = $client->get("https://api.ebay.com/buy/browse/v1/item_summary/search?q=" . $fullProductName . "&category_id=" . $categoryId . "&aspect_filter=categoryId:" . $categoryId . ",Storage Capacity:{" . $capacity . "},Colour:{" . $color . "},Connectivity:{" . $connectivity . "}&filter=deliveryCountry:GB,itemLocationCountry:GB,buyingOptions:{FIXED_PRICE},price:[20],priceCurrency:GBP&sort=price");
                     $data = $response->json();
 
 
-                    $totalQty=$data['total'];
+                    $totalQty = $data['total'];
 
 
                     $raking = 0;
@@ -2010,7 +2017,7 @@ function getEbayProductWithOtherCategory($searchProductName,$productFullName,$ca
                             $productResponse = $client->get($item['itemHref']);
                             $productData = $productResponse->json();
 
-                            $availableStock+=getAvailableStock($item['itemHref']);
+                            $availableStock += getAvailableStock($item['itemHref']);
 
                             foreach ($productData['localizedAspects'] as $localized) {
                                 if ($localized['name'] === "Condition") {
@@ -2031,7 +2038,6 @@ function getEbayProductWithOtherCategory($searchProductName,$productFullName,$ca
                             }
 
 
-
                             foreach ($productData['localizedAspects'] as $localized) {
                                 if ($localized['name'] === "Network") {
                                     array_push($apiNetwork, str_replace(' ', '', $localized['value']));
@@ -2039,7 +2045,7 @@ function getEbayProductWithOtherCategory($searchProductName,$productFullName,$ca
 
                                 if ($localized['name'] === "Model Number") {
 
-                                    $modelNumber=$localized['value'];
+                                    $modelNumber = $localized['value'];
                                 }
 
                             }
@@ -2066,8 +2072,6 @@ function getEbayProductWithOtherCategory($searchProductName,$productFullName,$ca
                                 }
 
 
-
-
                             }
 
                             if (count($sellerList)) {
@@ -2087,11 +2091,9 @@ function getEbayProductWithOtherCategory($searchProductName,$productFullName,$ca
                     }
 
 
-
-
                 } catch (\Exception $e) {
 
-                    return[
+                    return [
                         'status' => $e->getCode(),
                         'error' => $e->getMessage(),
                         'data' => []
@@ -2100,25 +2102,14 @@ function getEbayProductWithOtherCategory($searchProductName,$productFullName,$ca
                 }
 
 
-
-
-
             }
 
 
-
-
-
-
-
-
-
-
-            if(count($priceList)){
+            if (count($priceList)) {
                 array_push($combinePriceList, $priceList);
             }
 
-            if(count($rakingList)){
+            if (count($rakingList)) {
                 array_push($combineRanking, $rakingList);
             }
 
@@ -2133,8 +2124,7 @@ function getEbayProductWithOtherCategory($searchProductName,$productFullName,$ca
             arsort($combineRanking);
 
 
-
-            if(count($combineRanking)){
+            if (count($combineRanking)) {
 
                 foreach ($combineRanking[0] as $key => $fv) {
 
@@ -2152,10 +2142,9 @@ function getEbayProductWithOtherCategory($searchProductName,$productFullName,$ca
 //
 
 
-
             foreach ($combinePriceList as $pri) {
 
-                foreach ($pri as $key=>$price){
+                foreach ($pri as $key => $price) {
                     if ($i <= 5) {
                         array_push($sellerPrice, $key);
                     }
@@ -2164,20 +2153,15 @@ function getEbayProductWithOtherCategory($searchProductName,$productFullName,$ca
                 }
 
 
-
             }
-
 
 
             $result = array_unique($sellerPrice);
 
 
-
-
-
             $exportFirst = isset($result[0]) ? explode('@', $result[0]) : [];
             $exportSecond = isset($result[1]) ? explode('@', $result[1]) : [];
-            $exportThird = isset($result[2]) ?   explode('@', $result[2]) : [];
+            $exportThird = isset($result[2]) ? explode('@', $result[2]) : [];
 
             $firstPrice = isset($exportFirst[1]) ? $exportFirst[1] : 0;
             $firstSeller = isset($exportFirst[0]) ? $exportFirst[0] : '';
@@ -2211,9 +2195,6 @@ function getEbayProductWithOtherCategory($searchProductName,$productFullName,$ca
             }
 
 
-
-
-
             if ($firstPrice || $secondPrice || $thirdPrice) {
 
 
@@ -2222,7 +2203,7 @@ function getEbayProductWithOtherCategory($searchProductName,$productFullName,$ca
                     'ean' => "",
                     'mpn' => "",
                     'epid' => $epid,
-                    'condition' => $value.' '.$grades,
+                    'condition' => $value . ' ' . $grades,
                     'best_price_from_named_seller' => isset($bestPrice[1]) ? $bestPrice[1] : '',
                     'best_price_network' => isset($bestPrice[2]) ? $bestPrice[2] : '',
                     'best_seller' => isset($bestPrice[0]) ? $bestPrice[0] : '',
@@ -2243,39 +2224,30 @@ function getEbayProductWithOtherCategory($searchProductName,$productFullName,$ca
                     'category' => $categoryName,
                     'platform' => "eBay",
                     'make' => $make,
-                    'available_stock'=>$availableStock,
-                    'total_qty'=>$totalQty
+                    'available_stock' => $availableStock,
+                    'total_qty' => $totalQty
 
 
                 ];
 
 
-
-
             }
-
 
 
         }
 
 
-
-
-
     }
 
-    return[
-        'status'=>200,
-        'data'=>$finalData
+    return [
+        'status' => 200,
+        'data' => $finalData
     ];
 
 
-
-
-
-
 }
-function getProductBaseOnProductName($searchProductName,$productName,$categoryName,$token,$categoryId,$operatingSystem,$ramSize,$processor,$storageType,$hardDriveCapacity,$ssdCapacity,$make)
+
+function getProductBaseOnProductName($searchProductName, $productName, $categoryName, $token, $categoryId, $operatingSystem, $ramSize, $processor, $storageType, $hardDriveCapacity, $ssdCapacity, $make)
 {
 
     $sellerList = \App\EBaySeller::all();
@@ -2290,7 +2262,7 @@ function getProductBaseOnProductName($searchProductName,$productName,$categoryNa
     $finalData = [];
     foreach ($conditionList as $key => $value) {
         $client = new Client();
-        $client->setDefaultOption('headers', array('Authorization' => "Bearer {$token}",'X-EBAY-C-MARKETPLACE-ID'=>"EBAY_GB"));
+        $client->setDefaultOption('headers', array('Authorization' => "Bearer {$token}", 'X-EBAY-C-MARKETPLACE-ID' => "EBAY_GB"));
         $combinePriceList = [];
         $combineFirstPrice = [];
         $combineRanking = [];
@@ -2304,15 +2276,15 @@ function getProductBaseOnProductName($searchProductName,$productName,$categoryNa
             $epid = '';
             $mpn = '';
             $modelNumber = '';
-            $availableStock=0;
-            $productFullName = $productName ;
-            $response = $client->get("https://api.ebay.com/buy/browse/v1/item_summary/search?q=".$productFullName."&category_ids=".$categoryId."&aspect_filter=categoryId:".$categoryId.",Operating System:{".$operatingSystem."},RAM Size:{".$ramSize."},Processor:{".$processor."},Storage Type:{".$storageType."},Hard Drive Capacity:{".$hardDriveCapacity."},SSD Capacity:{".$ssdCapacity."}&filter=conditionIds:{" . $key . "},deliveryCountry:GB,itemLocationCountry:GB,buyingOptions:{FIXED_PRICE},price:[20],priceCurrency:GBP&sort=price");
+            $availableStock = 0;
+            $productFullName = $productName;
+            $response = $client->get("https://api.ebay.com/buy/browse/v1/item_summary/search?q=" . $productFullName . "&category_ids=" . $categoryId . "&aspect_filter=categoryId:" . $categoryId . ",Operating System:{" . $operatingSystem . "},RAM Size:{" . $ramSize . "},Processor:{" . $processor . "},Storage Type:{" . $storageType . "},Hard Drive Capacity:{" . $hardDriveCapacity . "},SSD Capacity:{" . $ssdCapacity . "}&filter=conditionIds:{" . $key . "},deliveryCountry:GB,itemLocationCountry:GB,buyingOptions:{FIXED_PRICE},price:[20],priceCurrency:GBP&sort=price");
 
             $data = $response->json();
 
-           // dd("https://api.ebay.com/buy/browse/v1/item_summary/search?q=".$productFullName."&category_ids=".$categoryId."&aspect_filter=categoryId:".$categoryId.",Operating System:{".$operatingSystem."},RAM Size:{".$ramSize."},Processor:{".$processor."},Storage Type:{".$storageType."},Hard Drive Capacity:{".$hardDriveCapacity."},SSD Capacity:{".$ssdCapacity."}&filter=conditionIds:{" . $key . "},deliveryCountry:GB,itemLocationCountry:GB,buyingOptions:{FIXED_PRICE},price:[20],priceCurrency:GBP&sort=price");
+            // dd("https://api.ebay.com/buy/browse/v1/item_summary/search?q=".$productFullName."&category_ids=".$categoryId."&aspect_filter=categoryId:".$categoryId.",Operating System:{".$operatingSystem."},RAM Size:{".$ramSize."},Processor:{".$processor."},Storage Type:{".$storageType."},Hard Drive Capacity:{".$hardDriveCapacity."},SSD Capacity:{".$ssdCapacity."}&filter=conditionIds:{" . $key . "},deliveryCountry:GB,itemLocationCountry:GB,buyingOptions:{FIXED_PRICE},price:[20],priceCurrency:GBP&sort=price");
 
-            $totalQty=$data['total'];
+            $totalQty = $data['total'];
 
             if ($data['total'] > 0) {
                 $raking = 0;
@@ -2323,7 +2295,7 @@ function getProductBaseOnProductName($searchProductName,$productName,$categoryNa
                     $productResponse = $client->get($item['itemHref']);
                     $productData = $productResponse->json();
                     $mpn = isset($productData['mpn']) ? $productData['mpn'] : '';
-                    $availableStock+=getAvailableStock($item['itemHref']);
+                    $availableStock += getAvailableStock($item['itemHref']);
                     foreach ($productData['localizedAspects'] as $localized) {
                         if ($localized['name'] === "Network") {
                             array_push($apiNetwork, $localized['value']);
@@ -2425,8 +2397,7 @@ function getProductBaseOnProductName($searchProductName,$productName,$categoryNa
                     $thirdRaking = $finalRaking[$thirdSeller . '@' . $thirdPrice];
                 }
 
-                if ($firstPrice || $secondPrice || $thirdPrice)
-                {
+                if ($firstPrice || $secondPrice || $thirdPrice) {
                     $finalData[] = [
                         'product_name' => $searchProductName,
                         'ean' => "",
@@ -2453,8 +2424,8 @@ function getProductBaseOnProductName($searchProductName,$productName,$categoryNa
                         'category' => $categoryName,
                         'platform' => "eBay",
                         'make' => $make,
-                        'available_stock'=>$availableStock,
-                        'total_qty'=>$totalQty
+                        'available_stock' => $availableStock,
+                        'total_qty' => $totalQty
                     ];
 
                 }
@@ -2470,26 +2441,28 @@ function getProductBaseOnProductName($searchProductName,$productName,$categoryNa
         }
 
     }
-    return[
-        'status'=>200,
-        'data'=>$finalData
+    return [
+        'status' => 200,
+        'data' => $finalData
 
     ];
 }
 
-function getCategoryValidation($name){
-    $category=\App\Category::where('name',$name)->first();
+function getCategoryValidation($name)
+{
+    $category = \App\Category::where('name', $name)->first();
     return $category->validation;
 }
 
-function getSupplierMappingGrade($supplierId,$supplierCondition){
-    $supplier=\App\Models\Supplier::find($supplierId);
-    $grader='';
-    if(isset($supplier->grade_mapping)){
-        foreach (json_decode($supplier->grade_mapping) as $ty){
+function getSupplierMappingGrade($supplierId, $supplierCondition)
+{
+    $supplier = \App\Models\Supplier::find($supplierId);
+    $grader = '';
+    if (isset($supplier->grade_mapping)) {
+        foreach (json_decode($supplier->grade_mapping) as $ty) {
 
-            if($ty->s===$supplierCondition){
-                $grader=$ty->r;
+            if ($ty->s === $supplierCondition) {
+                $grader = $ty->r;
             }
         }
         return $grader;
@@ -2497,25 +2470,27 @@ function getSupplierMappingGrade($supplierId,$supplierCondition){
     return $grader;
 }
 
-function getCondition($name){
+function getCondition($name)
+{
 
-    if($name==="Excellent - Refurbished"){
+    if ($name === "Excellent - Refurbished") {
 
         return "Excellent (A) - Refurbished";
-    }elseif($name==="Very Good - Refurbished"){
+    } elseif ($name === "Very Good - Refurbished") {
 
         return "Good/Very Good (B) - Refurbished";
 
-    }elseif($name==="Good - Refurbished"){
+    } elseif ($name === "Good - Refurbished") {
 
         return "Fair/Good (C) Refurbished";
     }
 
 }
 
-function getCountryCode($countryName){
+function getCountryCode($countryName)
+{
 
-   $country='[
+    $country = '[
   {
       "name": "Afghanistan",
     "code": "AF"
@@ -3507,11 +3482,21 @@ function getCountryCode($countryName){
   }
 
 ]';
-   foreach ( json_decode($country) as $key=>$value){
-       if($countryName===$value->name){
-           return $value->code;
-       }
-   }
+    foreach (json_decode($country) as $key => $value) {
+        if ($countryName === $value->name) {
+            return $value->code;
+        }
+    }
+}
+
+
+function money_format($price)
+{
+   $number= '£'.number_format($price,2);
+
+
+    return  $number;
+
 }
 
 

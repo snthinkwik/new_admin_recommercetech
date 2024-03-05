@@ -1,7 +1,7 @@
 <?php namespace App\Console\Commands\Quickbooks;
 
 use App\Invoicing\Quickbooks\WebhookEvent;
-use App\Sale;
+use App\Models\Sale;
 use Illuminate\Console\Command;
 
 class ProcessWebhooks extends Command {
@@ -10,7 +10,7 @@ class ProcessWebhooks extends Command {
 
 	protected $description = 'Process webhook notifications delivered to use from Quickbooks';
 
-	public function fire()
+	public function handle()
 	{
 		$events = WebhookEvent::where('status', WebhookEvent::STATUS_NEW)->get();
 		if (!count($events)) {

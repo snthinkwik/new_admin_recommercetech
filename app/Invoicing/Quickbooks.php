@@ -7,14 +7,14 @@ require_once(QUICKBOOKS_PATH_SDK_ROOT . 'PlatformService/PlatformService.php');*
 use App\Contracts\Quickbooks as QuickbooksContract;
 use App\Models\Address;
 use App\Models\Customer;
-use App\EbayOrderItems;
-use App\EbayOrders;
-use App\EbayRefund;
-use App\Invoice;
+use App\Models\EbayOrderItems;
+use App\Models\EbayOrders;
+use App\Models\EbayRefund;
+use App\Models\Invoice;
 use App\Models\Sale;
 use App\Models\Stock;
 use App\Models\SalePart;
-use App\Unlock\Order;
+use App\Models\Unlock\Order;
 use App\Models\User;
 use Cache;
 use Exception;
@@ -40,6 +40,8 @@ use Setting;
 use QuickBooksOnline\API\Data\IPPAccountBasedExpenseLineDetail;
 use QuickBooksOnline\API\Data\IPPPurchaseOrder;
 use App\Invoicing;
+use Illuminate\Support\Arr;
+
 
 class Quickbooks extends Invoicing {
 
@@ -661,7 +663,7 @@ class Quickbooks extends Invoicing {
 		$addressDefinitions = ['BillAddr' => 'billing_address', 'ShipAddr' => 'shipping_address'];
 		foreach ($addressDefinitions as $qbAddressType => $ourAddressType) {
 			$ourAddressValues = $customer->$ourAddressType
-				? array_only($customer->$ourAddressType->toArray(), ['line1', 'line2', 'city', 'country', 'postcode','county'])
+				? Arr::only($customer->$ourAddressType->toArray(), ['line1', 'line2', 'city', 'country', 'postcode','county'])
 				: ['line1' => '', 'line2' => '', 'city' => '', 'country' => '', 'postcode' => '','county'=>''];
 
 			// We only want to set the address object if it already existed ($qbCustomer->$qbAddressType not empty)
@@ -792,7 +794,7 @@ Account No: 49869160';
 
 
         $qbInvoice->CustomerMemo= $description;
-        $qbInvoice->PrivateNote = "Stock item ids: " . implode(', ', $sale->stock->lists('id'));
+        $qbInvoice->PrivateNote = "Stock item ids: " . implode(', ', $sale->stock->pluck('id')->toArray());
 	//	$qbInvoice->PrivateNote = "Stock item ids: " . implode(', ', $sale->stock->lists('id'));
 
 		// QB custom fields can only be 31 characters long or less.
@@ -1557,7 +1559,7 @@ Account No: 49869160';
 		$qbInvoice->CustomerRef = $customer->invoice_api_id;
 		$qbInvoice->SalesTermRef = 1;
 		$qbInvoice->Line = [];
-		$qbInvoice->PrivateNote = "Stock item ids: " . implode(', ', $sale->stock->lists('id'));
+		$qbInvoice->PrivateNote = "Stock item ids: " . implode(', ', $sale->stock->pluck('id')->toArray());
 
 		// QB custom fields can only be 31 characters long or less.
 		if (strlen($customer->email) <= 31) {
@@ -1703,7 +1705,7 @@ Account No: 49869160';
 		$qbInvoice->CustomerRef = $customer->invoice_api_id;
 		$qbInvoice->SalesTermRef = 1;
 		$qbInvoice->Line = [];
-		$qbInvoice->PrivateNote = "Stock item ids: " . implode(', ', $sale->stock->lists('id'));
+		$qbInvoice->PrivateNote = "Stock item ids: " . implode(', ', $sale->stock->pluck('id')->toArray());
 
 		// QB custom fields can only be 31 characters long or less.
 		if (strlen($customer->email) <= 31) {
@@ -1773,7 +1775,7 @@ Account No: 49869160';
 		$qbInvoice->CustomerRef = $customer->invoice_api_id;
 		$qbInvoice->SalesTermRef = 1;
 		$qbInvoice->Line = [];
-		$qbInvoice->PrivateNote = "Stock item ids: " . implode(', ', $sale->stock->lists('id'));
+		$qbInvoice->PrivateNote = "Stock item ids: " . implode(', ', $sale->stock->pluck('id')->toArray());
 
 		// QB custom fields can only be 31 characters long or less.
 		if (strlen($customer->email) <= 31) {

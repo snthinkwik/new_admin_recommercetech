@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\AccessToken;
-use App\Commands\Dpd\CreateShipping;
-use App\Commands\ebay\CreateNewInvoice;
-use App\Commands\ebay\eBayOrderSync;
-use App\Commands\ebay\ImportDPDSync;
+use App\Models\AccessToken;
+//use App\Commands\Dpd\CreateShipping;
+//use App\Commands\ebay\CreateNewInvoice;
+//use App\Commands\ebay\eBayOrderSync;
+//use App\Commands\ebay\ImportDPDSync;
 use App\Contracts\Invoicing;
 use App\Contracts\TrgStock;
 use App\Models\DeliveryNotes;
@@ -23,6 +23,7 @@ use App\Models\Stock;
 use App\Models\StockLog;
 use App\Models\SysLog;
 use App\Models\User;
+use App\Jobs\ebay\CreateNewInvoice;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -70,52 +71,19 @@ class EbayOrderController extends Controller
     }
 
     public function view($id) {
+
         $eBayOrder = EbayOrders::with('Newsale')->findOrFail($id);
+
         $countAuction = 0;
         $ItemSalePrice = 0;
         $totalFeeAmount = 0;
         $totalDeliveryFeeAmount = 0;
-//        foreach ($eBayOrder->EbayOrderItems as $item) {
-//            $ItemSalePrice += $item->individual_item_price;
-//            if ($item->sale_type == \App\EbayOrderItems::SALE_TYPE_AUCTION) {
-//                $countAuction ++;
-//            }
-//        }
-
-//        foreach ($eBayOrder->EbayFees as $fee) {
-//            $totalFeeAmount += str_replace("£", "", $fee["amount"]);
-//        }
-//
-//        foreach ($eBayOrder->DpdImport as $delivery) {
-//            $totalDeliveryFeeAmount += $delivery["cost"];
-//        }
-//
-//        if (!is_null($eBayOrder->EbayDeliveryCharges)) {
-//            $totalDeliveryFeeAmount += $eBayOrder->EbayDeliveryCharges->cost;
-//        }
-//
-//        $SoldFor = $eBayOrder->total_price - $totalFeeAmount - $eBayOrder["paypal_fees"] - $totalDeliveryFeeAmount - $eBayOrder["packaging_materials"];
-
-//        $orderLog = EbayOrderLog::where('orders_id', $id)
-//                ->orderBy("id", "DESC")
-//                ->paginate(config('app.pagination'));
-
-
-        //  $eBayOrderStock='';
-//        foreach ($eBayOrder->EbayOrderItems as $item){
-//            $eBayOrderStock=count($item->stock);
-//        }
-
-
 
         return view('ebay-order.single',
             compact('eBayOrder',
-                //    'orderLog',
                 'countAuction',
-//            'SoldFor',
                 'totalFeeAmount',
                 'totalDeliveryFeeAmount'
-//            'eBayOrderStock'
             )
         );
     }
@@ -666,12 +634,14 @@ class EbayOrderController extends Controller
                     $customerUser = User::where('invoice_api_id', $user->invoice_api_id)->firstOrFail();
                 }else{
                     if($data->post_to_country==="United Kingdom" || $data->post_to_country==="Great Britain"){
-                        $customerUser = User::where('invoice_api_id', env('QuickBookBackMarketUk'))->firstOrFail();
+                        $customerUser = User::where('invoice_api_id', config('services.quickbooks.userid.backmarket.uk'))->firstOrFail();
+
                     }else{
-                        $customerUser = User::where('invoice_api_id', env('QuickBookBackMarketEU'))->firstOrFail();
+                        $customerUser = User::where('invoice_api_id', env('services.quickbooks.userid.backmarket.eu'))->firstOrFail();
                     }
                 }
             }
+
         if($customerUser->suspended) {
             return back()->with('messages.error', 'Customer is suspended');
         }
@@ -707,12 +677,14 @@ class EbayOrderController extends Controller
         $customer->billing_address->country=$billingCountry;
         $invoicing->updateCustomer($customer);
 
-        sleep(7);
+        sleep(1);
+
         if($invoicing){
             $deliveryName = !empty($data['customer_is_collecting']) ? null : $invoicing->getDeliveryForUser($customerUser);
 
             $partsItemsBasket = Auth::user()->part_basket;
-            if(count($partsItemsBasket)) {
+
+            if(!is_null($partsItemsBasket)) {
                 foreach ($partsItemsBasket as $item) {
                     $part = Part::where('id', $item->part_id)->first();
                     if ($part->quantity < $item->quantity) {
@@ -777,7 +749,7 @@ class EbayOrderController extends Controller
 
             $partsItems = [];
 
-            if(count($partsItemsBasket)) {
+            if(!is_null($partsItemsBasket)) {
                 foreach ($partsItemsBasket as $item) {
                     $partsItems[] = new SalePart([
                         'part_id' => $item->part->id,
@@ -838,17 +810,26 @@ class EbayOrderController extends Controller
                 $saleName=$invoicing->getSaleForUser($customerUser);
             }
 
-            Queue::pushOn(
-                'ebay-invoices',
-                new CreateNewInvoice(
-                    $sale,
-                    $data,
-                    $customerUser,
-                    $saleName,
-                    $deliveryName,
-                    $data->tracking_number
-                )
-            );
+//            Queue::pushOn(
+//                'ebay-invoices',
+//                new CreateNewInvoice(
+//                    $sale,
+//                    $data,
+//                    $customerUser,
+//                    $saleName,
+//                    $deliveryName,
+//                    $data->tracking_number
+//                )
+//            );
+
+            dispatch(new CreateNewInvoice(
+                $sale,
+                $data,
+                $customerUser,
+                $saleName,
+                $deliveryName,
+                $data->tracking_number
+            ));
         }
 
         //Queue::pushOn('emails', new UnlockEmail($sale));

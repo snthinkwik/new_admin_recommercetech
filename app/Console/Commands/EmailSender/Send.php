@@ -1,10 +1,10 @@
 <?php namespace App\Console\Commands\EmailSender;
 
-use App\Batch;
-use App\Email;
-use App\Invoice;
-use App\Sale;
-use App\User;
+use App\Models\Batch;
+use App\Models\Email;
+use App\Models\Invoice;
+use App\Models\Sale;
+use App\Models\User;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Mail\Message;
@@ -27,7 +27,7 @@ class Send extends Command {
 
 	protected $attachment;
 
-	public function fire()
+	public function handle()
 	{
 		$this->setDataFromInput();
 

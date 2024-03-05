@@ -1,7 +1,7 @@
 <?php namespace App\Console\Commands\PhoneCheck;
 
-use App\PhoneCheck;
-use App\StockLog;
+use App\Models\PhoneCheck;
+use App\Models\StockLog;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -27,7 +27,7 @@ class UpdateNoUpdates extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function handle()
 	{
 		$updated = 0;
 		$processed = 0;

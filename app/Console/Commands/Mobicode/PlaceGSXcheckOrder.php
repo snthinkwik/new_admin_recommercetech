@@ -1,7 +1,7 @@
 <?php namespace App\Console\Commands\Mobicode;
 
-use App\Mobicode\GsxCheck;
-use App\StockLog;
+use App\Models\Mobicode\GsxCheck;
+use App\Models\StockLog;
 use Illuminate\Console\Command;
 use Exception;
 use App\Contracts\Click2Unlock;
@@ -19,7 +19,7 @@ class PlaceGSXcheckOrder extends Command {
 		parent::__construct();
 	}
 
-	public function fire()
+	public function handle()
 	{
 		$checks = GsxCheck::where('status', GsxCheck::STATUS_NEW)->where(function($query) {
 			$query->where(function($q){

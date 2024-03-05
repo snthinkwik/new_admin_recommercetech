@@ -2,7 +2,10 @@
 
 namespace App\Console\Commands\ebay;
 
-use App\EbayOrders;
+use App\Models\EbayOrders;
+use App\Models\DeliverySettings;
+use App\Models\EbayDeliveryCharges;
+
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -37,21 +40,21 @@ class HermesCharges extends Command {
      *
      * @return mixed
      */
-    public function fire() {
+    public function handle() {
         $EbayOrder = EbayOrders::where('shipping_alias', "Hermes")
                 ->get();
 
-        $DelivertSetting = \App\DeliverySettings::where('carrier', "Hermes")
+        $DelivertSetting = DeliverySettings::where('carrier', "Hermes")
                 ->first();
 
         if ($EbayOrder->count() > 0 && !is_null($DelivertSetting)) {
             foreach ($EbayOrder as $Order) {
 
-                $DeliveryCharge = \App\EbayDeliveryCharges::where("sales_record_number", $Order->sales_record_number)
+                $DeliveryCharge = EbayDeliveryCharges::where("sales_record_number", $Order->sales_record_number)
                         ->first();
 
                 if (is_null($DeliveryCharge)) {
-                    $DeliveryCharge = new \App\EbayDeliveryCharges();
+                    $DeliveryCharge = new EbayDeliveryCharges();
 
                     $DeliveryCharge->order_id = $Order->id;
                     $DeliveryCharge->sales_record_number = $Order->sales_record_number;

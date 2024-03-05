@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\AccessToken;
-use App\AllowedIp;
-use App\BackMarketProduct;
-use App\Batch;
-use App\EmailFormat;
-use App\IgnoreSku;
-use App\Stock;
-use App\StockLog;
+use App\Models\AccessToken;
+use App\Models\AllowedIp;
+use App\Models\BackMarketProduct;
+use App\Models\Batch;
+use App\Models\EmailFormat;
+use App\Models\IgnoreSku;
+use App\Models\Stock;
+use App\Models\StockLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Auth;
 
 class SettingsController extends Controller
 {

@@ -1,10 +1,10 @@
 <?php namespace App\Console\Commands\PhoneCheck;
 
-use App\Mobicode\GsxCheck;
-use App\PhoneCheck;
-use App\Product;
-use App\Stock;
-use App\StockLog;
+use App\Models\Mobicode\GsxCheck;
+use App\Models\PhoneCheck;
+use App\Models\Product;
+use App\Models\Stock;
+use App\Models\StockLog;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -32,7 +32,7 @@ class ProcessChecks extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function handle()
 	{
         $date = \Carbon\Carbon::today()->subDays(2);
         $checks = PhoneCheck::where('status', PhoneCheck::STATUS_NEW)->where('created_at', '>=', $date)->get();

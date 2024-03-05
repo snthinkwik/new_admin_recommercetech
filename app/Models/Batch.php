@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Stock;
+use App\Models\Stock;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -113,20 +113,21 @@ class Batch extends Model
 
     public function stock()
     {
-        return $this->hasMany('App\Stock')->whereIn("status",[Stock::STATUS_BATCH]);
+        return $this->hasMany(Stock::class)->whereIn("status",[Stock::STATUS_BATCH]);
     }
 
 
     public function batch_offers()
     {
-        return $this->hasMany('App\BatchOffer');
+        return $this->hasMany(BatchOffer::class);
     }
 
     public function getPurchasePriceFormattedAttribute()
     {
         $price = $this->stock()->sum('purchase_price');
 
-        return money_format(config('app.money_format'), $price);
+       // return money_format(config('app.money_format'), $price);
+        return $price;
     }
 
     public function getWantedPriceAttribute()

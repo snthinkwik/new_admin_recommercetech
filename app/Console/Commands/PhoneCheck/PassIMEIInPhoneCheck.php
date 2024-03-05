@@ -1,6 +1,6 @@
 <?php namespace App\Console\Commands\PhoneCheck;
 
-use App\Stock;
+use App\Models\Stock;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -36,7 +36,7 @@ class PassIMEIInPhoneCheck extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function handle()
 	{
 
 	    $stockList=Stock::whereIn('status',[Stock::STATUS_IN_STOCK,Stock::STATUS_BATCH])

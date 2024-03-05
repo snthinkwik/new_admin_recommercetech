@@ -1,9 +1,9 @@
 <?php namespace App\Console\Commands\Batches;
 
-use App\Batch;
-use App\BatchOffer;
-use App\Stock;
-use App\User;
+use App\Models\Batch;
+use App\Models\BatchOffer;
+use App\Models\Stock;
+use App\Models\User;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -31,7 +31,7 @@ class SoldEmail extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function handle()
 	{
 		$batch = Batch::findOrFail($this->argument('batch_id'));
 		$user = User::findOrFail($this->argument('user_id'));
@@ -40,7 +40,8 @@ class SoldEmail extends Command {
 		$this->info('Sold Price: '.$soldPrice);
 		$this->info('User: '.$user->id.' '.$user->full_name);
 
-		$soldPrice = money_format(config('app.money_format'), $soldPrice);
+	//	$soldPrice = money_format(config('app.money_format'), $soldPrice);
+        $soldPrice = $soldPrice;
 		$this->info("Sold Price");
 
 		$userOffer = BatchOffer::where('user_id', $user->id)->first();

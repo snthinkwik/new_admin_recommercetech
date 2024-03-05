@@ -1,7 +1,7 @@
 <?php namespace App\Console\Commands\Emails;
 
-use App\EmailTracking;
-use App\GoogleEmail;
+use App\Models\EmailTracking;
+use App\Models\GoogleEmail;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -12,7 +12,7 @@ class MatchEmails extends Command {
 
 	protected $description = 'Checks if there are any matching emails in emails_tracking and google_emails';
 
-	public function fire()
+	public function handle()
 	{
 		$processed = 0;
 		$query = GoogleEmail::where('processed',0);

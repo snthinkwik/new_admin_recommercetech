@@ -244,7 +244,7 @@ class User extends Authenticatable
 
     public function sales()
     {
-        return $this->hasMany('App\Sale');
+        return $this->hasMany(Sale::class);
     }
 
     public function getSalesCountAttribute()
@@ -254,7 +254,7 @@ class User extends Authenticatable
 
     public function emailTracking()
     {
-        return $this->hasMany('App\EmailTracking');
+        return $this->hasMany(EmailTracking::class);
     }
 
     public function googleEmails()
@@ -269,12 +269,12 @@ class User extends Authenticatable
 
     public function stockLogs()
     {
-        return $this->hasMany('App\StockLog');
+        return $this->hasMany(StockLog::class);
     }
 
     public function phone_checks()
     {
-        return $this->hasMany('App\PhoneCheck', 'station_id', 'station_id');
+        return $this->hasMany(PhoneCheck::class, 'station_id', 'station_id');
     }
 
     public function stock_returns()

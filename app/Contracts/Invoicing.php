@@ -1,12 +1,12 @@
 <?php namespace App\Contracts;
 
 use App\Models\Customer;
-use App\EbayOrderItems;
-use App\EbayOrders;
-use App\EbayRefund;
-use App\Invoice;
+use App\Models\EbayOrderItems;
+use App\Models\EbayOrders;
+use App\Models\EbayRefund;
+use App\Models\Invoice;
 use App\Models\Sale;
-use App\Unlock\Order;
+use App\Models\Unlock\Order;
 use App\Models\User;
 use Illuminate\Support\Collection;
 

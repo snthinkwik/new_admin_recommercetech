@@ -2,8 +2,9 @@
 
 namespace App\Models\Unlock;
 
-use App\Unlock;
-use App\Unlock\Pricing;
+use App\Models\Unlock;
+use App\Models\Unlock\Pricing;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -48,12 +49,12 @@ class Order extends Model
 
     public function unlocks()
     {
-        return $this->belongsToMany('App\Unlock', 'unlock_orders_unlocks', 'unlock_order_id', 'unlock_id');
+        return $this->belongsToMany(Unlock::class, 'unlock_orders_unlocks', 'unlock_order_id', 'unlock_id');
     }
 
     public function user()
     {
-        return $this->belongsTo('App\User');
+        return $this->belongsTo(User::class);
     }
 
     /*public function retailOrder()

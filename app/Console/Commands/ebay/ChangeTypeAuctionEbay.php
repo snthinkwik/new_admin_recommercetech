@@ -71,7 +71,7 @@ class ChangeTypeAuctionEbay extends Command {
                     if (!empty($ChangeOwner)) {
                         $this->comment($ChangeOwner);
 
-                        $ebayOrdersLogModel = new \App\EbayOrderLog();
+                        $ebayOrdersLogModel = new EbayOrderLog();
                         $ebayOrdersLogModel->orders_id = $item->order_id;
                         $ebayOrdersLogModel->content = $ChangeOwner;
                         $ebayOrdersLogModel->save();
