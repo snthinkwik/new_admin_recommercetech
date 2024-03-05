@@ -24,6 +24,12 @@ class BillingAddress extends Model
         return $address;
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'id', 'user_id');
+    }
+
+
     public function country_details()
     {
         return $this->belongsTo(Country::class, 'country', 'name');

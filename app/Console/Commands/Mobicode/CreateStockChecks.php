@@ -1,8 +1,8 @@
 <?php namespace App\Console\Commands\Mobicode;
 
-use App\Mobicode\GsxCheck;
-use App\Stock;
-use App\StockLog;
+use App\Models\Mobicode\GsxCheck;
+use App\Models\Stock;
+use App\Models\StockLog;
 use Illuminate\Console\Command;
 use DB;
 
@@ -27,7 +27,7 @@ class CreateStockChecks extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function handle()
 	{
 		$items = Stock::/*where('network', 'Unknown')
 			->*/whereDoesntHave('network_checks', function($q) {

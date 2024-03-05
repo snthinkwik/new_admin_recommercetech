@@ -25,7 +25,7 @@ class StockNewItemRequest extends Request {
             $rules = [
                 'grade' => 'required|in:' . implode(',', Stock::getAvailableGrades()),
                 'name' => 'required',
-                'capacity' => 'required',
+                'capacity' => 'required|numeric|min:1|max:100',
                 'lcd_status' => 'required|in:'.implode(',', Stock::getAvailableLcdStatuses()),
                 'condition' => 'required|in:'.implode(',', Stock::getAvailableConditions()),
                 // Double unique rules because imei and serial number have to be unique even relative to each other.

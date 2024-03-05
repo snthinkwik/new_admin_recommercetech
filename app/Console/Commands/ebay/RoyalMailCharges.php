@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands\ebay;
 
-use App\EbayOrders;
+use App\Models\EbayOrders;
+use App\Models\DeliverySettings;
+use App\Models\EbayDeliveryCharges;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -37,22 +39,22 @@ class RoyalMailCharges extends Command {
      *
      * @return mixed
      */
-    public function fire() {
+    public function handle() {
         $EbayOrder = EbayOrders::where('shipping_alias', "Royal Mail 1st")
                 ->get();
 
-        $DelivertSetting = \App\DeliverySettings::where('carrier', "Royal Mail")
+        $DelivertSetting =DeliverySettings::where('carrier', "Royal Mail")
                 ->where("service_name", "1st Class Large Letter")
                 ->first();
 
         if ($EbayOrder->count() > 0 && !is_null($DelivertSetting)) {
             foreach ($EbayOrder as $Order) {
 
-                $DeliveryCharge = \App\EbayDeliveryCharges::where("sales_record_number", $Order->sales_record_number)
+                $DeliveryCharge = EbayDeliveryCharges::where("sales_record_number", $Order->sales_record_number)
                         ->first();
 
                 if (is_null($DeliveryCharge)) {
-                    $DeliveryCharge = new \App\EbayDeliveryCharges();
+                    $DeliveryCharge = new EbayDeliveryCharges();
 
                     $DeliveryCharge->order_id = $Order->id;
                     $DeliveryCharge->sales_record_number = $Order->sales_record_number;

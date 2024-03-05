@@ -1,10 +1,10 @@
 <?php namespace App\Console\Commands\ebay;
 
-use App\AccessToken;
-use App\EbayImage;
-use App\EbayOrderItems;
-use App\EbayOrders;
-use App\Stock;
+use App\Models\AccessToken;
+use App\Models\EbayImage;
+use App\Models\EbayOrderItems;
+use App\Models\EbayOrders;
+use App\Models\Stock;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
@@ -42,7 +42,7 @@ class GetProductDetatils extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function handle()
 	{
 
        $ebayItems= EbayOrderItems::select('ebay_order_items.item_number')->where('platform',Stock::PLATFROM_EBAY)
@@ -82,7 +82,7 @@ class GetProductDetatils extends Command {
             $this->info($items->item_number);
 
            $client = new Client();
-           $client->setDefaultOption('headers', array('Authorization' => "Bearer {$accessToken->access_token}"));
+        //   $client->setDefaultOption('headers', array('Authorization' => "Bearer {$accessToken->access_token}"));
 
 
            try{

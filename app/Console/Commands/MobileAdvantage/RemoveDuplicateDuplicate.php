@@ -38,7 +38,7 @@ class RemoveDuplicateDuplicate extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function handle()
 	{
 
 	        $ebayOrder=EbayOrders::where('platform',Stock::PLATFROM_MOBILE_ADVANTAGE)->get();

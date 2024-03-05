@@ -2,7 +2,8 @@
 
 namespace App\Console\Commands\ebay;
 
-use App\EbayOrders;
+use App\Models\EbayOrderLog;
+use App\Models\EbayOrders;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -37,7 +38,7 @@ class PayPalFeeCalculation extends Command {
      *
      * @return mixed
      */
-    public function fire() {
+    public function handle() {
         $EbayOrder = EbayOrders::where('status', EbayOrders::STATUS_DISPATCHED)
                 ->whereNull("paypal_fees")
                 ->get();
@@ -59,7 +60,7 @@ class PayPalFeeCalculation extends Command {
                 $Order->save();
 
                 if (!empty($ChangeBayOrder)) {
-                    $ebayOrdersLogModel = new \App\EbayOrderLog();
+                    $ebayOrdersLogModel = new EbayOrderLog();
                     $ebayOrdersLogModel->orders_id = $Order->id;
                     $ebayOrdersLogModel->content = $ChangeBayOrder;
                     $ebayOrdersLogModel->save();

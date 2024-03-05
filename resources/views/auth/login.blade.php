@@ -49,7 +49,7 @@
                             </div>
                             <button type="submit" class="btn btn- btn-primary shadow-none mt-4 mb-3" type="submit">Log In</button>
                         </form>
-                        <p class="text-center text-2 mb-2"><a class="btn-link" href="{{ url('/password/email') }}">Forgot Password ?</a></p>
+                        <p class="text-center text-2 mb-2"><a class="btn-link" href="{{route('password.request') }}">Forgot Password ?</a></p>
                     </div>
                 </div>
             </div>

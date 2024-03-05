@@ -15,6 +15,8 @@
         "laravel/tinker": "^2.7",
         "laravel/ui": "^4.3",
         "laravelcollective/html": "^6.4",
+        "maatwebsite/excel": "^3.1",
+        "moneyphp/money": "^4.4",
         "quickbooks/v3-php-sdk": "^6.1",
         "symfony/translation": "^6.0"
     },

@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands\ebay;
 
-use App\EbayOrders;
+use App\Models\EbayOrders;
 use Illuminate\Console\Command;
 use Illuminate\Mail\Message;
 use Illuminate\Support\Facades\DB;
@@ -42,7 +42,7 @@ class SendDailyReportEmail extends Command {
      *
      * @return mixed
      */
-    public function fire() {
+    public function handle() {
         $ebayOrders = EbayOrders::with('EbayOrderItems')
                 ->whereHas('EbayOrderItems', function (Builder $query) {
                     $query->where('item_name', 'like', "%Faulty%");

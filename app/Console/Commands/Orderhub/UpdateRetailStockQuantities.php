@@ -1,7 +1,7 @@
 <?php namespace App\Console\Commands\Orderhub;
 
-use App\ChannelGrabberUpdateLog;
-use App\Stock;
+use App\Models\ChannelGrabberUpdateLog;
+use App\Models\Stock;
 use Illuminate\Console\Command;
 use DB;
 
@@ -26,7 +26,7 @@ class UpdateRetailStockQuantities extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function handle()
 	{
 		$retailStock = Stock::where('status', Stock::STATUS_RETAIL_STOCK)->where('new_sku', '!=', '')->select(DB::raw('count(*) as count, new_sku'))->groupBy('new_sku')->get();
 
@@ -47,9 +47,11 @@ class UpdateRetailStockQuantities extends Command {
 		}
 
 		$this->info("Found: ".$retailStock->count());
-		
+
 		$orderhub = app('App\Contracts\Orderhub');
+
 		$accessToken = $orderhub->getAccessToken();
+
 		$this->comment($accessToken);
 		$updated = 0;
 		$errors = 0;
@@ -61,7 +63,7 @@ class UpdateRetailStockQuantities extends Command {
 		$detailsUpdateErrors = [];
 		$detailsSameAmount = [];
 		$detailsFound = [];
-		
+
 		foreach($retailStock as $retail) {
 			$this->info($retail->new_sku." - ".$retail->count);
 			$parameters = ["sku[]" => $retail->new_sku];
@@ -74,7 +76,7 @@ class UpdateRetailStockQuantities extends Command {
 					break;
 				}
 			} while (true);
-			
+
 			if(is_object($orderhubItem) && isset($orderhubItem->_embedded->stock) && isset($orderhubItem->_embedded->stock[0])) {
 				$found++;
 				$detailsFound[] = $retail->new_sku;
@@ -116,12 +118,12 @@ class UpdateRetailStockQuantities extends Command {
 				$detailsNotFound[] = $retail->new_sku;
 			}
 		}
-		
+
 		$this->question("Updated: $updated");
 		$this->question("Errors: $errors");
 		$this->question("Total: $total");
 		$this->question("Found: $found");
-		
+
 		$details = [
 			'found' => $detailsFound,
 			'not_found' => $detailsNotFound,
@@ -129,7 +131,7 @@ class UpdateRetailStockQuantities extends Command {
 			'update_error' => $detailsUpdateErrors,
 			'not_updated_same_amount' => $detailsSameAmount
 		];
-		
+
 		$channelGrabberUpdateDetails['updated_qty'] = $updated;
 		$channelGrabberUpdateDetails['found_qty'] = $found;
 		$channelGrabberUpdateDetails['not_found_qty'] = $errors;

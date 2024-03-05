@@ -2,11 +2,11 @@
 
 namespace App\Console\Commands\Orderhub;
 
-use App\EbayOrderLog;
-use App\EbayOrderItems;
-use App\EbayOrders;
-use App\Stock;
-use App\StockLog;
+use App\Models\EbayOrderLog;
+use App\Models\EbayOrderItems;
+use App\Models\EbayOrders;
+use App\Models\Stock;
+use App\Models\StockLog;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -32,7 +32,7 @@ class EbayOrderAssignStock extends Command {
      *
      * @return mixed
      */
-    public function fire() {
+    public function handle() {
         $OrderItem = EbayOrderItems::with("order")
                 ->whereNull('stock_id')
                 ->where('item_sku', '!=', '')
@@ -53,22 +53,22 @@ class EbayOrderAssignStock extends Command {
 
         foreach ($OrderItem as $item) {
             $this->info("$item->id $item->order_id $item->item_sku ".$item->order->status." $item->stock_id");
-            
+
             $stock = Stock::where('status', Stock::STATUS_RETAIL_STOCK)
                     ->where('new_sku', $item->item_sku)
                     ->orderBy('id', 'asc')
                     ->first();
-            
+
             if ($stock) {
                 $this->question("Item Found: $stock->id $stock->imei $stock->new_sku $stock->status");
                 $item->stock_id = $stock->id;
                 $item->save();
-                
+
                 EbayOrderLog::create([
                     'orders_id' => $item->order_id,
                     'content' => "<a href='" . route('stock.single', ['id' => $stock->id]) . "'>$stock->imei</a> has been reserved for this order"
                 ]);
-                
+
                 $stock->status = Stock::STATUS_RESERVED_FOR_ORDER;
                 $stock->save();
                 StockLog::create([

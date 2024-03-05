@@ -1,7 +1,7 @@
 <?php namespace App\Console\Commands\DpdShipping;
 
-use App\Stock;
-use App\TrackingBackMarketDPDShipping;
+use App\Models\Stock;
+use App\Models\TrackingBackMarketDPDShipping;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -37,7 +37,7 @@ class ChangeStatus extends Command {
      *
      * @return mixed
      */
-    public function fire()
+    public function handle()
     {
 
         $trackingBackMarket=TrackingBackMarketDPDShipping::whereNull('status')->where('platfrom',Stock::PLATFROM_BACKMARCKET)->get();

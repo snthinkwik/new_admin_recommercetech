@@ -1,9 +1,9 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Batch;
+use App\Http\Requests\UserRequest;
+use App\Models\Batch;
 use App\Models\BillingAddress;
-use App\Commands\Users\AccountSuspended;
 use App\Contracts\Invoicing;
 use App\Models\Invoice;
 use App\Models\Sale;
@@ -14,8 +14,13 @@ use App\Models\UserLog;
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\Request;
+use Illuminate\Mail\Message;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\View;
+use App\Jobs\Users\AccountSuspended;
+use App\Models\EmailFormat;
 
 
 
@@ -145,6 +150,10 @@ class UserController extends Controller
         return view('admin.users.single', compact('invoicing', 'user', 'customer', 'orders', 'sales', 'total_spend', 'emails_count','subAdmin'));
     }
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
     public function postLogin(Request $request) {
         $previousUser = Auth::user();
         $user = User::findOrFail($request->id);
@@ -169,6 +178,11 @@ class UserController extends Controller
 
 
     }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function postApiGenerateKey(Request $request) {
         $user = User::findOrFail($request->user_id);
         $user->api_key = md5(rand()) . md5(rand());
@@ -176,6 +190,10 @@ class UserController extends Controller
         return back()->with('messages.success', "API key has been set.");
     }
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function postMarketingEmails(Request $request) {
         $user = User::findOrFail($request->id);
         $user->fill($request->only(['marketing_emails_subscribe']));
@@ -217,13 +235,20 @@ class UserController extends Controller
 
         $suspendedBy = Auth::user()->first_name;
 
-        Queue::pushOn('emails', new AccountSuspended($user, $suspendedBy));
+       // Queue::pushOn('emails', new AccountSuspended($user, $suspendedBy));
 
+
+        dispatch(new AccountSuspended($user, $suspendedBy));
         $message = "User has been ";
         $user->suspended == 1 ? $message .= "Suspended" : $message .= "Unsuspended";
         return back()->with('messages.success', $message);
     }
 
+    /**
+     * @param Request $request
+     * @param Invoicing $invoicing
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function postCreateQuickbooksCustomer(Request $request, Invoicing $invoicing) {
         $user = User::with(['address','billingAddress'])->findOrFail($request->id);
 
@@ -291,6 +316,11 @@ class UserController extends Controller
         return back()->with("messages.$type", $message);
     }
 
+    /**
+     * @param $id
+     * @param Invoicing $invoicing
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function getSyncQuickbooksCustomer($id, Invoicing $invoicing) {
         $user = User::with(['address','billingAddress'])->findOrFail($id);
 
@@ -354,11 +384,17 @@ class UserController extends Controller
         return back()->with("messages.$type", $message);
     }
 
+    /**
+     * @param Request $request
+     * @param Invoicing $invoicing
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function postUpdateBillingAddress(Request $request,Invoicing $invoicing){
 
         $user = User::findOrFail($request->id);
 
         $billingAddress = BillingAddress::firstOrNew(['user_id' => $request->id]);
+
         $billingAddress->user()->associate($user);
         $billingAddress->fill($request->except('id'));
         $billingAddress->save();
@@ -368,6 +404,130 @@ class UserController extends Controller
 
 
     }
+
+    /**
+     * @param UserRequest $request
+     * @param Invoicing $invoicing
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function postSave(UserRequest $request,Invoicing $invoicing) {
+        $user = $request->id ? User::findOrFail($request->id) : new User;
+        $user->fill($request->except('password'));
+        $user->invoice_api_id = $request->user_invoice_api_id;
+
+        if ($request->password) {
+            $user->password = bcrypt($request->password);
+        }
+        if ($request->balance_spent) {
+            $user->balance_spent = $request->balance_spent;
+        }
+
+        if ($request->notes)
+            $user->notes = $request->notes;
+
+        $user->registered = true;
+        $user->save();
+
+
+        if($user->invoice_api_id){
+            $customer = $user->getCustomer($user->invoice_api_id);
+            $invoicing->updateCustomer($customer);
+        }
+
+
+        return back()->with('messages.success', "User saved.");
+    }
+
+    /**
+     * @param Request $request
+     * @param Invoicing $invoicing
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function postUpdateAddress(Request $request,Invoicing $invoicing) {
+        $user = User::findOrFail($request->id);
+        $address = $user->address;
+
+
+        $address = \App\Models\User\Address::firstOrNew(['user_id' => $request->id]);
+        $address->user()->associate($user);
+        $address->fill($request->except('id'));
+        $address->save();
+
+        $this->getSyncQuickbooksCustomer($request->id,$invoicing);
+
+        return back()->with('messages.success', 'Shipping Address has been updated.');
+    }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public  function sendEmail(Request $request){
+
+        $user= User::find($request->id);
+
+        if(!is_null($user)){
+            $emailFormat=EmailFormat::where('email_format_name','multiple-upload-document')->first();
+
+
+            $subject=$emailFormat->subject;
+            $email=$user->email;
+            $name=$user->first_name.' '.$user->last_name;
+
+            $userId = Crypt::encrypt($user->id);
+
+            $content= str_replace("{userId}",$userId,$emailFormat->message);
+
+
+            Mail::send(
+                'emails.upload-document-email',
+                ['body'=>$content,'regard'=>$emailFormat->regard],
+                function(Message $mail) use ($subject,$email,$name) {
+                    $mail->subject($subject)
+                        ->to($email, $name)
+                        ->from(config('mail.from.address'), config('mail.from.name'));
+
+                }
+            );
+        }
+
+
+        return back()->with('messages.success','successfully Email Send');
+
+    }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function  addSubAdmin(Request  $request){
+        $user= new User();
+        $user->type='sub-admin';
+        $user->admin_type='sub-admin';
+        $user->first_name=$request->first_name;
+        $user->last_name=$request->last_name;
+        $user->email=$request->email;
+        $user->password = bcrypt($request->password);
+        $user->master_admin_id=$request->master_id;
+        $user->save();
+        return back()->with('messages.success','Sub Admin Successfully added');
+    }
+
+    /**
+     * @param $id
+     * @return \Illuminate\Http\RedirectResponse|void
+     */
+    public function  removeSubAdmin($id){
+
+        $subAdmin=User::where('id',$id)->where('type','sub-admin');
+        if(!is_null($subAdmin)){
+            $subAdmin->delete();
+            return back()->with('messages.success','Sub Admin Successfully deleted');
+        }
+
+    }
+
+
 
 
 

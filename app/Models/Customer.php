@@ -2,7 +2,8 @@
 
 namespace App\Models;
 
-use App\Address;
+use App\Models\Address;
+use App\Models\BillingAddress;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 

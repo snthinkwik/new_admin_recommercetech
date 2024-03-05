@@ -20,7 +20,7 @@ class EbayRefund extends Model
     ];
 
     public function order() {
-        return $this->hasOne('App\EbayOrders', 'id', 'order_id');
+        return $this->hasOne(EbayOrders::class, 'id', 'order_id');
     }
 
     public function scopeFromRequest(Builder $query, Request $request, $type = 'main') {

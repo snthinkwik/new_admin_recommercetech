@@ -1620,5 +1620,74 @@ class StockController extends Controller
     }
 
 
+    /**
+     * @param Request $request
+     * @return string|void
+     */
+    public function getStockInformation(Request $request)
+    {
+
+        $id = $request->id;
+
+
+        if (strpos($request->value, "RCT") !== false) {
+            $value = preg_replace('/[^0-9.]+/', '', $request->value);
+
+        } else {
+            $value = $request->value;
+        }
+
+        if ($request->value) {
+            $stock = Stock::whereNotIn('status', [Stock::STATUS_REPAIR, Stock::STATUS_SOLD, Stock::STATUS_PAID, Stock::STATUS_ALLOCATED])
+                ->where(function ($query) use ($value) {
+
+                    $query->where('id', 'like', '%' . $value . '%')->orWhere('imei', 'like', '%' . $value . '%')
+                        ->orWhere('serial', 'like', '%' . $value . '%')
+                        ->orWhere('name', 'like', '%' . $value . '%')
+                        ->orWhere('sku', 'like', '%' . $value . '%');
+
+                })->get();
+        }
+
+
+        $output = '<ul class="dropdown-menu" style="display:block;width: 400px !important;
+    overflow: scroll;
+    height: 165px;">';
+
+        if (!count($stock)) {
+
+            $output .= '
+
+       <li id=' . $id . '><a href="#">No Data Found</a></li>
+       ';
+            return $output;
+
+        }
+
+        foreach ($stock as $data) {
+
+
+            if ($data->imei !== '') {
+                $imeiNumber = $data->imei;
+            } else if ($data->serial !== '') {
+                $imeiNumber = $data->serial;
+            } else if ($data->sku !== '') {
+                $imeiNumber = $data->sku;
+            } else {
+                $imeiNumber = "RCT" . $data->id;
+            }
+
+            $output .= '
+
+       <li id=' . $id . '><a href="#"> ' . $data->long_name . ':' . "$imeiNumber" . '</a></li>
+       ';
+        }
+        $output .= '</ul>';
+        echo $output;
+
+    }
+
+
+
 
 }

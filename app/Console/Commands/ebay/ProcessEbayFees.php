@@ -1,7 +1,7 @@
 <?php namespace App\Console\Commands\ebay;
 
 use App\Commands\ebay\CreateFeesSupplierBill;
-use App\EbayOrderItems;
+use App\Models\EbayOrderItems;
 use Illuminate\Console\Command;
 use Queue;
 
@@ -26,7 +26,7 @@ class ProcessEbayFees extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function hendle()
 	{
 		$orderItems = EbayOrderItems::readyForInvoice()->whereNotNull('invoice_number')
 			->whereHas('order', function($q) {
@@ -81,7 +81,7 @@ class ProcessEbayFees extends Command {
 				$this->error("Invalid");;
 				continue;
 			}
-			
+
 			$data = [
 				'paypal' => $paypalFees,
 				'delivery' => $deliveryFees,
@@ -90,12 +90,12 @@ class ProcessEbayFees extends Command {
 				'ebay_order_number' => $orderItem->order->order_number,
 				'ebay_order_sales_record_number' => $orderItem->order->sales_record_number
 			];
-			
+
 			$dataJson = json_encode($data);
 			$dataJsonDecode = json_decode($dataJson);
-			
+
 			$res = $trgStock->createEbayFeesInvoice($dataJson);
-			
+
 			if($res->status == 'success') {
 				$data = json_decode($res->data);
 				$invoiceNumber = $data->id;
@@ -104,10 +104,10 @@ class ProcessEbayFees extends Command {
 				$processed++;
 			}
 			$this->info(json_encode($res));
-			
+
 		}
 		$this->info("Processed: $processed | Found: $found");
-		
+
 	}
 
 }

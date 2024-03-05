@@ -1,7 +1,7 @@
 <?php namespace App\Console\Commands\ebay;
 
-use App\AccessToken;
-use App\Category;
+use App\Models\AccessToken;
+use App\Models\Category;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
@@ -39,7 +39,7 @@ class getEbayCategoryIds extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function handle()
 	{
 	    //https://api.ebay.com/commerce/taxonomy/v1/category_tree/0/get_category_suggestions?q=Cell Phone Accessories
 

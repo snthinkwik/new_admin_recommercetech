@@ -1,10 +1,10 @@
 <?php namespace App\Console\Commands\ebay;
 
-use App\Commands\ebay\CreateInvoice;
 use App\Contracts\Invoicing;
-use App\EbayOrderItems;
-use App\EbayOrders;
-use App\User;
+use App\Jobs\ebay\CreateInvoice;use App\Jobs\Unlocks\Emails\UnknownNetwork;
+use App\Models\EbayOrderItems;
+use App\Models\EbayOrders;
+use App\Models\User;
 use Queue;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
@@ -31,11 +31,12 @@ class ProcessReadyForInvoice extends Command {
      *
      * @return mixed
      */
-    public function fire()
+    public function handle()
     {
         $customerId =76; //71 (dev)
 
         $cucstomer=User::where('invoice_api_id',$customerId)->first();
+
 
 
 
@@ -51,7 +52,7 @@ class ProcessReadyForInvoice extends Command {
 
         $this->info("Found: ".$items->count());
 
-     $saleName= getQuickBookServiceProductName($cucstomer->quickbooks_customer_category,"Standard",$cucstomer->location);
+     $saleName= getQuickBookServiceProductName($cucstomer->quickbooks_customer_category,"Standard",$cucstomer->location,null);
 
 
         $n = 0;
@@ -65,7 +66,10 @@ class ProcessReadyForInvoice extends Command {
 //                'delivery_price' => $item->order->postage_and_packaging
 //            ];
 //            $this->comment($item->id." | ".$record['item_name']." | ".$record['sku']." | ".$record['price']." | ".$record['delivery_price']);
-            Queue::pushOn('invoices', new CreateInvoice($item, $customerId, $saleName, Invoicing::DELIVERY_UK));
+//            Queue::pushOn('invoices', new CreateInvoice($item, $customerId, $saleName, Invoicing::DELIVERY_UK));
+//
+            dispatch(new CreateInvoice($item, $customerId, $saleName, Invoicing::DELIVERY_UK));
+
         }
         $this->question("Processed $n / ".$items->count());
 

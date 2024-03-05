@@ -1,7 +1,7 @@
 <?php namespace App\Console\Commands\Orderhub;
 
-use App\Stock;
-use App\StockLog;
+use App\Models\Stock;
+use App\Models\StockLog;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -27,15 +27,15 @@ class GenerateNewSku extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function handle()
 	{
 		$items = Stock::where('status', Stock::STATUS_RETAIL_STOCK)->where('name', 'like', "%iphone%")->where('new_sku', '')->limit(100)->orderByRaw('RAND()')->get();
-		
+
 		if(!count($items)) {
 			$this->info("Nothing to Process");
 			return;
 		}
-		
+
 		$this->info("Items Found: ".$items->count());
 
 		$saved = 0;
@@ -56,7 +56,7 @@ class GenerateNewSku extends Command {
 				$saved++;
 				$this->comment("Saved");
 			}
-			
+
 		}
 
 		$this->question("Saved: $saved / ".count($items));

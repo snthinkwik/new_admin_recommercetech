@@ -57,6 +57,12 @@ return [
             'client_id' => env('QUICKBOOKS_CLIENT_ID'),
             'client_secret' => env('QUICKBOOKS_CLIENT_SECRET'),
             'base_url' => env('QUICKBOOKS_BASE_URL')
+        ],
+        'userid'=>[
+            'backmarket'=>[
+                'uk'=>env('QuickBookBackMarketUk'),
+                'eu'=>env('QuickBookBackMarketEU')
+            ]
         ]
     ],
 

@@ -25,7 +25,7 @@ class RefreshToken extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function handle()
 	{
 		$quickbooks = app('App\Contracts\Quickbooks');
 		$this->info($quickbooks->refreshToken());

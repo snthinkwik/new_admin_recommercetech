@@ -2,6 +2,12 @@
 
 namespace App\Providers;
 
+use App\Listeners\UserSyncToQuickBooks;
+use App\Observers\MailObserver;
+use App\Observers\SaleObserver;
+use App\Observers\StockObserver;
+use App\Observers\UserObserver;
+use App\Models\Stock;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -18,6 +24,11 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
+        Registered::class=>[
+            UserSyncToQuickBooks::class
+
+        ]
+
     ];
 
     /**
@@ -27,7 +38,18 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+
+        $mailObserver = new MailObserver();
+        Event::subscribe($mailObserver);
+
+        $userObserver = new UserObserver;
+        Event::subscribe($userObserver);
+
+        $saleSubscriber = new SaleObserver;
+        Event::subscribe($saleSubscriber);
+
+        $stockSubscriber = new StockObserver();
+        Stock::observe($stockSubscriber);
     }
 
     /**

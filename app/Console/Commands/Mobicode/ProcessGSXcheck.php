@@ -1,9 +1,9 @@
 <?php namespace App\Console\Commands\Mobicode;
 
-use App\Colour;
-use App\Mobicode\GsxCheck;
-use App\Stock;
-use App\StockLog;
+use App\Models\Colour;
+use App\Models\Mobicode\GsxCheck;
+use App\Models\Stock;
+use App\Models\StockLog;
 use App\Support\ReportParser;
 use Exception;
 use Carbon\Carbon;
@@ -43,7 +43,7 @@ class ProcessGSXcheck extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function handle()
 	{
 		$checks = GsxCheck::where('status', GsxCheck::STATUS_DONE)->where('processed', false)->where('external_id','!=',0)
 			->where(function($query) {

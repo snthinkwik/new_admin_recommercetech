@@ -17,6 +17,7 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    'money_format' => '%n',
     /*
     |--------------------------------------------------------------------------
     | Application Environment

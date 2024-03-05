@@ -26,7 +26,7 @@ abstract class Invoicing implements InvoicingContract {
             return $this->getCustomers($ids);
         }
         else {
-            $ids = array_filter(User::distinct('invoice_api_id')->lists('invoice_api_id'));
+            $ids = array_filter(User::distinct('invoice_api_id')->pluck('invoice_api_id')->toArray());
             return $this->getCustomers($ids);
         }
     }

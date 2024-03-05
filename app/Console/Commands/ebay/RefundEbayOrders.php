@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands\ebay;
 
-use App\EbayOrders;
-use App\EbayRefund;
+use App\Models\EbayOrders;
+use App\Models\EbayRefund;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -38,7 +38,7 @@ class RefundEbayOrders extends Command {
      *
      * @return mixed
      */
-    public function fire() {
+    public function handle() {
         $EbayOrders = EbayOrders::with("EbayOrderItems")
                 ->where("status", EbayOrders::STATUS_REFUNDED)
                 ->where("total_discount", "!=", 0.00)

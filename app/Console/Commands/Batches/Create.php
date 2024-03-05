@@ -1,9 +1,9 @@
 <?php namespace App\Console\Commands\Batches;
 
-use App\Batch;
-use App\Stock;
-use App\SysLog;
-use App\User;
+use App\Models\Batch;
+use App\Models\Stock;
+use App\Models\SysLog;
+use App\Models\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
@@ -18,7 +18,7 @@ class Create extends Command {
 
 	protected $description = 'Create a stock batch.';
 
-	public function fire()
+	public function handle()
 	{
 		$runOnce = $this->option('run-once') === 'true' ? true : false;
 
@@ -97,7 +97,7 @@ class Create extends Command {
 			->update(['locked_by' => $lockKey]);
 		$stock = Stock::where('locked_by', $lockKey)->get();
 		if (!count($stock)) return false;
-		SysLog::log("Locking with key \"$lockKey\".", null, $stock->lists('id'));
+		SysLog::log("Locking with key \"$lockKey\".", null, $stock->pluck('id')->toArray());
 
 		$batch = Batch::create([]);
 		foreach ($stock as $item) {

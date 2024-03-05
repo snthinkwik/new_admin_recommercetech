@@ -1,9 +1,9 @@
 <?php namespace App\Console\Commands\PhoneCheck;
 
-use App\PhoneCheck;
-use App\PhoneCheckReports;
-use App\Stock;
-use App\StockLog;
+use App\Models\PhoneCheck;
+use App\Models\PhoneCheckReports;
+use App\Models\Stock;
+use App\Models\StockLog;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -29,7 +29,7 @@ class CreateChecks extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function handle()
 	{
 		$apis = ['App\Contracts\PhoneCheck'];
 

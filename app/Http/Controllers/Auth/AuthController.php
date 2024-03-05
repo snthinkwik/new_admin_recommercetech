@@ -221,4 +221,11 @@ class AuthController extends Controller
         session(['users.previous' => $previousUser]);
         return redirect('stock')->with('messages.success', "You're now logged in as $user->full_name.");
     }
+    public function getLogout()
+    {
+
+        $this->auth->logout();
+
+        return redirect(property_exists($this, 'redirectAfterLogout') ? $this->redirectAfterLogout : $this->redirectPath);
+    }
 }

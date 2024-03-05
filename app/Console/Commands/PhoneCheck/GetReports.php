@@ -1,8 +1,8 @@
 <?php namespace App\Console\Commands\PhoneCheck;
 
-use App\NewInventory;
-use App\PhoneCheck;
-use App\PhoneCheckReports;
+use App\Models\NewInventory;
+use App\Models\PhoneCheck;
+use App\Models\PhoneCheckReports;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -38,7 +38,7 @@ class GetReports extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function handle()
 	{
 
         ini_set('memory_limit', '1024M');

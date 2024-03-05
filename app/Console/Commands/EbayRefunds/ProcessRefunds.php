@@ -1,10 +1,9 @@
 <?php namespace App\Console\Commands\EbayRefunds;
-
-use App\Commands\EbayRefunds\CreateCreditNote;
-use App\EbayOrderItems;
-use App\EbayRefund;
+use App\Models\EbayOrderItems;
+use App\Models\EbayRefund;
 use App\Invoicing;
-use Queue;
+use App\Jobs\EbayRefunds\CreateCreditNote;
+
 use Illuminate\Console\Command;
 
 class ProcessRefunds extends Command {
@@ -28,27 +27,29 @@ class ProcessRefunds extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function handle()
 	{
 		$ebayRefunds = EbayRefund::where('processed', 'No')->whereNull('credit_note_number')->where('owner', EbayOrderItems::RECOMM)->limit(50)->get();
-		
+
 		if(!count($ebayRefunds)) {
 			$this->info("Nothing to Process");
 			return;
 		}
-		
+
 		$found = $ebayRefunds->count();
 		$customerId = 447; //71 (dev)
 		$processed = 0;
-		
-		
+
+
 		foreach($ebayRefunds as $refund) {
 			$order = $refund->order;
 			$this->info("Refund ID: $refund->id | $refund->owner | $refund->refund_amount | $refund->processed | ".$order->EbayOrderItems()->count());
-			Queue::pushOn('invoices', new CreateCreditNote($refund, $customerId, Invoicing::EBAY_RETURNS));
+			//Queue::pushOn('invoices', new CreateCreditNote($refund, $customerId, Invoicing::EBAY_RETURNS));
+
+            dispatch(new CreateCreditNote($refund, $customerId, Invoicing::EBAY_RETURNS));
 			$processed++;
 		}
-		
+
 		$this->info("Processed: $processed / $found");
 	}
 

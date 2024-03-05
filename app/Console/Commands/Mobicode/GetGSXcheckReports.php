@@ -1,7 +1,7 @@
 <?php namespace App\Console\Commands\Mobicode;
 
-use App\Mobicode\GsxCheck;
-use App\StockLog;
+use App\Models\Mobicode\GsxCheck;
+use App\Models\StockLog;
 use Illuminate\Console\Command;
 use App\Contracts\Click2Unlock;
 use Carbon\Carbon;
@@ -24,7 +24,7 @@ class GetGSXcheckReports extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function handle()
 	{
 		$checks = GsxCheck::where('status', GsxCheck::STATUS_PROCESSING)->where(function($query) {
 			$query->where(function($q){

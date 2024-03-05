@@ -42,25 +42,23 @@ class Quickbooks implements QuickbooksContract {
 
 	public function connectToQuickbooks()
 	{
+
 		$dataService = $this->getOAuth2();
 
 		$OAuth2LoginHelper = $dataService->getOAuth2LoginHelper();
 		$parseUrl = $this->parseAuthRedirectUrl($_SERVER['QUERY_STRING']);
 
 		$accessToken = $OAuth2LoginHelper->exchangeAuthorizationCodeForToken($parseUrl['code'], $parseUrl['realmId']);
+
 		$dataService->updateOAuth2Token($accessToken);
 		Setting::set('quickbooks.oauth2.access_token', $accessToken->getAccessToken());
+
 		Setting::set('quickbooks.oauth2.refresh_token', $accessToken->getRefreshToken());
 		Setting::set('quickbooks.oauth2.realm_id', $accessToken->getRealmID());
 		Setting::set('quickbooks.oauth2.access_token_expires_at', $accessToken->getAccessTokenExpiresAt());
 		Setting::set('quickbooks.oauth2.refresh_token_expires_at', $accessToken->getRefreshTokenExpiresAt());
 		Setting::set('quickbooks.oauth2.session_access_token', serialize($accessToken));
-
-        Session::put('quickbooks.oauth2.access_token',$accessToken->getAccessToken());
-        Session::put('quickbooks.oauth2.refresh_token', $accessToken->getRefreshToken());
-        Session::put('quickbooks.oauth2.access_token_expires_at', $accessToken->getAccessTokenExpiresAt());
-        Session::put('quickbooks.oauth2.refresh_token_expires_at', $accessToken->getRefreshTokenExpiresAt());
-        Session::put('quickbooks.oauth2.session_access_token', serialize($accessToken));
+        Setting::save();
 
         return
 			'<script>
@@ -126,8 +124,7 @@ class Quickbooks implements QuickbooksContract {
 	{
         $quickbooks = app('App\Contracts\Quickbooks');
 		$dataService = $this->getOAuth2();
-
-		$accessToken = unserialize(Session::get('quickbooks.oauth2.session_access_token'));
+		$accessToken = unserialize(Setting::get('quickbooks.oauth2.session_access_token'));
 		$dataService->updateOAuth2Token($accessToken);
 		return $dataService;
 	}

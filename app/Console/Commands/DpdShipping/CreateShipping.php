@@ -1,6 +1,6 @@
 <?php namespace App\Console\Commands\DpdShipping;
 
-use App\Setting;
+use App\Models\Setting;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -36,7 +36,7 @@ class CreateShipping extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function handle()
 	{
 
         $BASE="https://api.dpdlocal.co.uk/";

@@ -1,7 +1,7 @@
 <?php namespace App\Console\Commands\Mobicode;
 
-use App\ImeiReport;
-use App\Stock;
+use App\Models\ImeiReport;
+use App\Models\Stock;
 use Illuminate\Console\Command;
 use Exception;
 
@@ -13,7 +13,7 @@ class UpdateColourReports extends Command
 	protected $description = 'Update Stock Items Colour when Unknown or Mixed (based on existing GSX Check Reports).';
 
 
-	public function fire()
+	public function handle()
 	{
 		$items = Stock::with(['imei_report' => function($query) {
 			$query->type(ImeiReport::TYPE_NETWORK)->where('status', ImeiReport::STATUS_DONE)->where('mobicode', 1);
