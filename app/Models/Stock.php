@@ -575,7 +575,7 @@ class Stock extends Model
 
     public function returnToStock()
     {
-        $this->status = \App\Stock::STATUS_IN_STOCK;
+        $this->status = Stock::STATUS_IN_STOCK;
         $this->locked_by = '';
         $this->sale_id = null;
         if ($this->original_sale_price > 0 && $this->original_sale_price != $this->sale_price) {
@@ -1080,10 +1080,13 @@ class Stock extends Model
 
     public function getPurchaseDateAttribute($value)
     {
+
+
         if (!$value || $value[0] === '0') {
             return null;
         } else {
-            return Carbon::createFromFormat('Y-m-d H:i:s', $value);
+            return Carbon::parse($value)->format('Y-m-d H:i:s');
+           // return $value;
         }
     }
 

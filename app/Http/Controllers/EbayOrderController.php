@@ -523,24 +523,36 @@ class EbayOrderController extends Controller
         $salePrice=[];
         $status=[];
         if($orderItem->quantity>1){
-            if(count(json_decode($orderItem->stock_sale_price))>0){
-                foreach (json_decode($orderItem->stock_sale_price) as $key=>$sale_price ){
-                    $salePrice[$key]=$sale_price;
+
+
+            if(!is_null($orderItem->stock_sale_price)){
+
+                if(count(json_decode($orderItem->stock_sale_price,true))>0){
+                    foreach (json_decode($orderItem->stock_sale_price,true) as $key=>$sale_price ){
+                        $salePrice[$key]=$sale_price;
+                    }
                 }
             }
 
-            if(count(json_decode($orderItem->stock_status))>0){
-                foreach (json_decode($orderItem->stock_status) as $key=>$stock_status ){
-                    //    array_push($status,$stock_status);
-                    $status[$key]=$stock_status;
-                }
-            }
-            if(count(json_decode($orderItem->stock_id))>0){
-                foreach (json_decode($orderItem->stock_id) as $item ){
-                    array_push($stockIds,$item);
-                }
 
+            if(!is_null($orderItem->stock_status)){
+                if(count(json_decode($orderItem->stock_status,true))>0){
+                    foreach (json_decode($orderItem->stock_status,true) as $key=>$stock_status ){
+                        //    array_push($status,$stock_status);
+                        $status[$key]=$stock_status;
+                    }
+                }
             }
+
+            if(!is_null($orderItem->stock_id)){
+                if(count(json_decode($orderItem->stock_id,true))>0){
+                    foreach (json_decode($orderItem->stock_id,true) as $item ){
+                        array_push($stockIds,$item);
+                    }
+
+                }
+            }
+
             $salePrice[$stock->id]=$stock->sale_price;
             $status[$stock->id]=$stock->status;
             array_push($stockIds,$stock->id);
@@ -772,7 +784,7 @@ class EbayOrderController extends Controller
                 foreach ($items as $item) {
                     $item_price = $item->sale_price;
                     $item->status = Stock::STATUS_SOLD;
-                    $item->original_sale_price = $data['items'][$item->id]['price'];
+                    $item->original_sale_price = !is_null($data['items']) ? $data['items'][$item->id]['price']:0.00;
                     $item->sale_price = $item_price;
                     $item->sold_at = new Carbon;
                     $item->sale()->associate($sale);

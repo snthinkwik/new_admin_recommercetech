@@ -1122,7 +1122,7 @@ Account No: 49869160';
                     $vatTypeCheck= getStockDetatils($stockId)->vat_type;
 
 
-                    if(count(getStockDetatils($stockId)->product)>0){
+                    if(!is_null(getStockDetatils($stockId)->product)>0){
 
                         if(getStockDetatils($stockId)->product->non_serialised){
                             //array_push($productIds,getStockDetatils($stockId)->product->id);
@@ -1176,7 +1176,7 @@ Account No: 49869160';
 
             }else{
                 $vatTypeCheck=$item->stock->vat_type;
-                if(count($item->stock->product)>0){
+                if(!is_null($item->stock->product)){
 
                     if($item->stock->product->non_serialised){
 
@@ -1347,6 +1347,12 @@ Account No: 49869160';
 
         $old_customer=$this->getCustomers([$newQbInvoice->CustomerRef]);
 
+        $email=null;
+        foreach ($old_customer as $ty){
+            $email=$ty->email;
+        }
+
+
         return [
             'id' => $newQbInvoice->Id,
             'number' => $newQbInvoice->Id, // The same as id.
@@ -1368,7 +1374,7 @@ Account No: 49869160';
             'customer_name'=>$ebayOrders->post_to_name,
             'payment_methods'=>!is_null($ebayOrders->payment_method)?$ebayOrders->payment_method:'',
             'payment_type'=>!is_null($ebayOrders->payment_type)?$ebayOrders->payment_type:'',
-            'customer_email'=>$old_customer[0]['attributes']['email'],
+            'customer_email'=>$email,
 
         ];
     }

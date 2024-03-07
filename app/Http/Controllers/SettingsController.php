@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Setting;
 
 class SettingsController extends Controller
 {
@@ -281,7 +282,7 @@ class SettingsController extends Controller
     }
 
     public function DpdShipping(){
-        $setting=\App\Setting::where('key','dpd_shipping_status')->first();
+        $setting=Setting::where('key','dpd_shipping_status')->first();
         return view('admin.dpd-shipping.index',compact('setting'));
     }
 
@@ -312,7 +313,7 @@ class SettingsController extends Controller
         $result      = file_get_contents($url, false, $context);
         $data=(json_decode($result,true));
         $session=$data['data']['geoSession'];
-        $setting=\App\Setting::firstOrNew([
+        $setting=Setting::firstOrNew([
             'key' => 'dpd_shipping_token'
         ]);
         $setting->key='dpd_shipping_token';
@@ -320,7 +321,7 @@ class SettingsController extends Controller
         $setting->save();
 
 
-        $dpdToken=\App\Setting::where('key','dpd_shipping_token')->first();
+        $dpdToken=Setting::where('key','dpd_shipping_token')->first();
 
         return view('admin.dpd-shipping.index',compact('dpdToken'));
 
@@ -329,7 +330,7 @@ class SettingsController extends Controller
     }
     public function dpdShippingStatus(Request  $request){
 
-        $setting=\App\Setting::firstOrNew([
+        $setting=Setting::firstOrNew([
             'key' => 'dpd_shipping_status'
         ]);
         $setting->key='dpd_shipping_status';

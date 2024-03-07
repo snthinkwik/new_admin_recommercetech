@@ -724,7 +724,10 @@ if ($eBayOrder->EbayOrderItems) {
                                             {{--<span class="text-danger"><strong>No</strong></span>--}}
                                             {{--@endif--}}
                                             @if($item->quantity>1)
+
+                                                @if(!is_null($eBayOrder->EbayOrderItems[0]->stock_id))
                                                 {{count(json_decode($eBayOrder->EbayOrderItems[0]->stock_id))}}
+                                                @endif
                                             @else
                                                 @if(($item->stock))
                                                     {{$item->quantity}}

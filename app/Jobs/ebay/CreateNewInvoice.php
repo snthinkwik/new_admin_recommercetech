@@ -501,12 +501,27 @@ class CreateNewInvoice implements ShouldQueue
             //  app('App\Contracts\Invoicing')->markInvoicePaid($this->sale);
 
 
+            $inoicing= app('App\Contracts\Invoicing');
+            $customer = $inoicing->getCustomer($this->sale->customer_api_id);
+            $invoicePath =$inoicing->getInvoiceDocument($this->sale);
+            $newCustomer=[];
+            if(!is_null($customer)){
+                $newCustomer=[
+                    'first_name'=>$customer->first_name,
+                    'last_name'=>$customer->last_name,
+                    'email'=>$customer->email,
+                    'external_id'=>$customer->external_id,
+                    'phone'=>isset($customer->phone)?$customer->phone:null,
+                ];
+            }
+
+
 
             if($this->auction!=null){
-                dispatch(new EmailSend($this->sale, EmailSend::EMAIL_CREATED, $this->auction));
+                dispatch(new EmailSend($this->sale,EmailSend::EMAIL_CREATED,$newCustomer,$invoicePath));
                // Queue::pushOn('emails', new EmailSend($this->sale, EmailSend::EMAIL_CREATED, $this->auction));
             } else {
-                dispatch(new EmailSend($this->sale, EmailSend::EMAIL_CREATED));
+               dispatch(new EmailSend($this->sale,EmailSend::EMAIL_CREATED,$newCustomer,$invoicePath));
               //  Queue::pushOn('emails', new EmailSend($this->sale, EmailSend::EMAIL_CREATED));
             }
         }
@@ -526,10 +541,6 @@ class CreateNewInvoice implements ShouldQueue
 
         if($setting->value){
             if($result['platform']===Stock::PLATFROM_BACKMARCKET || $result['platform']===Stock::PLATFROM_EBAY || $result['platform']===Stock::PLATFROM_MOBILE_ADVANTAGE){
-//                Queue::pushOn(
-//                    'dpd-shipping',
-//                    new CreateShipping($dataJson,$this->sale->id,$this->ebay_order)
-//                );
                 dispatch(new CreateShipping($dataJson,$this->sale->id,$this->ebay_order));
 
             }

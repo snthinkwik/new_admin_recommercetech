@@ -17,6 +17,7 @@ use App\Models\Invoice;
 use App\Models\OtherRecycle;
 use App\Jobs\Sales\InvoiceCustomOrderCreate;
 use App\Models\EbayOrders;
+use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SalePart;
 use App\Models\Stock;
@@ -31,6 +32,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\CustomerReturns;
 use Illuminate\Support\Facades\Auth;
+use App\Models\DeliveryNotes;
+use PDF;
 
 class SalesController extends Controller
 {
@@ -64,8 +67,8 @@ class SalesController extends Controller
 
         if ($request->imei) {
             $stock = Stock::where('imei', $request->imei)
-                ->orWhere('id',substr($request->imei, 3))
-                ->orWhere('serial',$request->imei)
+                ->orWhere('id', substr($request->imei, 3))
+                ->orWhere('serial', $request->imei)
                 ->first();
 
             if ($stock) $salesQuery->where('id', $stock->sale_id);
@@ -106,6 +109,7 @@ class SalesController extends Controller
                 }
             }
         }
+        $saleJustCreated = session('sales.created_id') ? Sale::findOrFail(session('sales.created_id')) : null;
         if ($request->ajax()) {
             return [
                 'itemsHtml' => view('sales.list', compact('sales', 'saleJustCreated', 'customers'))->render(),
@@ -114,9 +118,8 @@ class SalesController extends Controller
         }
 
 
-
         //$sales = $salesQuery->paginate(config('app.pagination'))->appends($request->all());
-        $saleJustCreated = session('sales.created_id') ? Sale::findOrFail(session('sales.created_id')) : null;
+
         return view('sales.index', compact('sales', 'saleJustCreated', 'customers'));
     }
 
@@ -435,7 +438,7 @@ class SalesController extends Controller
     public function postChangeStatus(SaleChangeStatusRequest $request, Invoicing $invoicing)
     {
         $sale = Sale::findOrFail($request->id);
-        $currentDate=Carbon::now();
+        $currentDate = Carbon::now();
 
         // Sometimes there was no status in request, which caused some bugs
         if ($request->status)
@@ -446,8 +449,8 @@ class SalesController extends Controller
             else
                 $sale->invoice_status = $request->status;
 
-        if($request->status==="dispatched"){
-            $sale->dispatch_date=$currentDate->toDateString('Y-m-d');
+        if ($request->status === "dispatched") {
+            $sale->dispatch_date = $currentDate->toDateString('Y-m-d');
         }
 
 
@@ -536,56 +539,56 @@ class SalesController extends Controller
 
         foreach ($sales as $sale) {
             $docNumber = !is_null($sale->invoice_doc_number) ? '-' . $sale->invoice_doc_number : '';
-            $amount=0;
-            if($sale->vat_type==="Margin"){
-                if(!is_null('delivery_charges')){
-                    $amount=$sale->amount-$sale->delivery_charges*20/100;
+            $amount = 0;
+            if ($sale->vat_type === "Margin") {
+                if (!is_null('delivery_charges')) {
+                    $amount = $sale->amount - $sale->delivery_charges * 20 / 100;
                 }
-            }else{
-                $amount=$sale->amount;
+            } else {
+                $amount = $sale->amount;
             }
 
-            $totalProfit=$sale->vat_type==="Standard" ? ($amount / 1.2)- $sale->total_cost: $amount-$sale->total_cost;
-            $vatMar=((($sale->total_sale_price-$sale->total_purchase_price)*16.67)/100);
-            $totalTrueProfit=$sale->vat_type==="Standard" ?$totalProfit:$totalProfit-$vatMar;
-            $estNetProfit=$totalTrueProfit-$sale->platform_fee-$sale->shipping_cost;
+            $totalProfit = $sale->vat_type === "Standard" ? ($amount / 1.2) - $sale->total_cost : $amount - $sale->total_cost;
+            $vatMar = ((($sale->total_sale_price - $sale->total_purchase_price) * 16.67) / 100);
+            $totalTrueProfit = $sale->vat_type === "Standard" ? $totalProfit : $totalProfit - $vatMar;
+            $estNetProfit = $totalTrueProfit - $sale->platform_fee - $sale->shipping_cost;
 
-            if($sale->vat_type==="Standard"){
-                $estNetProfitPer=number_format( ($estNetProfit)/($sale->amount / 1.2)*100 ,2)."%";
-            }else{
-                if(!is_null('delivery_charges')){
+            if ($sale->vat_type === "Standard") {
+                $estNetProfitPer = number_format(($estNetProfit) / ($sale->amount / 1.2) * 100, 2) . "%";
+            } else {
+                if (!is_null('delivery_charges')) {
 
 
-                    $estNetProfitPer=$amount>0?number_format( $estNetProfit/$amount*100 ,2)."%":'';
-                }else{
+                    $estNetProfitPer = $amount > 0 ? number_format($estNetProfit / $amount * 100, 2) . "%" : '';
+                } else {
 
-                    $estNetProfitPer=$amount>0?number_format( $estNetProfit/$sale->amount*100 ,2)."%":'';
+                    $estNetProfitPer = $amount > 0 ? number_format($estNetProfit / $sale->amount * 100, 2) . "%" : '';
                 }
             }
 
-            if($sale->vat_type==="Standard"){
-                $coreAmount=number_format($sale->amount / 1.2,2);
-            }else{
+            if ($sale->vat_type === "Standard") {
+                $coreAmount = number_format($sale->amount / 1.2, 2);
+            } else {
 
-                if(!is_null('delivery_charges')){
+                if (!is_null('delivery_charges')) {
 
-                    $coreAmount=$sale->amount-$sale->delivery_charges*20/100;
-                }else{
-                    $coreAmount=$sale->amount;
+                    $coreAmount = $sale->amount - $sale->delivery_charges * 20 / 100;
+                } else {
+                    $coreAmount = $sale->amount;
                 }
 
 
             }
-            $totalProfitPre=0;
-            $totalTrueProfitPre=0;
-            if($coreAmount>0){
-                if($sale->vat_type==="Standard"){
-                    $totalProfitPre=number_format($totalProfit/$coreAmount*100,2)."%";
-                    $totalTrueProfitPre=number_format(($totalTrueProfit/$coreAmount*100),2)."%";
+            $totalProfitPre = 0;
+            $totalTrueProfitPre = 0;
+            if ($coreAmount > 0) {
+                if ($sale->vat_type === "Standard") {
+                    $totalProfitPre = number_format($totalProfit / $coreAmount * 100, 2) . "%";
+                    $totalTrueProfitPre = number_format(($totalTrueProfit / $coreAmount * 100), 2) . "%";
 
-                }else{
-                    $totalProfitPre=number_format(($totalProfit/$coreAmount)*100,2)."%";
-                    $totalTrueProfitPre=number_format(($totalTrueProfit/$coreAmount)*100,2)."%";
+                } else {
+                    $totalProfitPre = number_format(($totalProfit / $coreAmount) * 100, 2) . "%";
+                    $totalTrueProfitPre = number_format(($totalTrueProfit / $coreAmount) * 100, 2) . "%";
                 }
 
             }
@@ -599,18 +602,18 @@ class SalesController extends Controller
                     $sale->invoice_number . $docNumber .
                     '</a>'
                     : null,
-                'amount' =>  money_format(config('app.money_format'),$amount) ,
-                'ex_vat' => $sale->amount && $sale->vat_type === "Standard" ? money_format(config('app.money_format'), $sale->amount / 1.2) : '-',
-                'total_profit'=>money_format(config('app.money_format'),$totalProfit),
-                'profit_per'=>$totalProfitPre,
-                'true_profit'=> money_format(config('app.money_format'),$totalTrueProfit),
-                'true_profit_per'=>$totalTrueProfitPre,
-                'seller_fees'=>$sale->platform_fee,
-                'shipping_cost'=>$sale->shipping_cost,
-                'est_net_profit' =>  money_format(config('app.money_format'),$estNetProfit) ,
-                'est_net_profit_per'=>$estNetProfitPer,
-                'vat_margin'=>$sale->vat_type==="Margin" ?money_format(config('app.money_format'),$vatMar):'-',
-                'platform'=>$sale->platform
+                'amount' => money_format($amount),
+                'ex_vat' => $sale->amount && $sale->vat_type === "Standard" ? money_format($sale->amount / 1.2) : '-',
+                'total_profit' => money_format($totalProfit),
+                'profit_per' => $totalProfitPre,
+                'true_profit' => money_format($totalTrueProfit),
+                'true_profit_per' => $totalTrueProfitPre,
+                'seller_fees' => $sale->platform_fee,
+                'shipping_cost' => $sale->shipping_cost,
+                'est_net_profit' => money_format($estNetProfit),
+                'est_net_profit_per' => $estNetProfitPer,
+                'vat_margin' => $sale->vat_type === "Margin" ? money_format($vatMar) : '-',
+                'platform' => $sale->platform
             ];
         }
         return response()->json($res);
@@ -711,7 +714,7 @@ class SalesController extends Controller
                                 foreach (json_decode($item->stock_id) as $stockId) {
 
 
-                                    if (count(getStockDetatils($stockId)->product) > 0) {
+                                    if (!is_null(getStockDetatils($stockId)->product) > 0) {
 
                                         if (getStockDetatils($stockId)->product->non_serialised) {
                                             $productIds[$i . '-' . getStockDetatils($stockId)->product->id] = $item->quantity;
@@ -756,7 +759,7 @@ class SalesController extends Controller
 
                 foreach ($sale->stock as $item) {
 
-                    if (count($item->product) > 0) {
+                    if (!is_null($item->product) > 0) {
 
                         if ($sale->invoice_creation_status !== "error") {
                             $stock = Stock::find($item->id);
@@ -795,8 +798,6 @@ class SalesController extends Controller
             $sale->save();
 
 
-
-
             if (!$sale->other_recycler)
                 event(new Cancelled($sale));
 
@@ -827,7 +828,7 @@ class SalesController extends Controller
 
             foreach ($items as $key => $item) {
 
-                if($item['status']===Stock::STATUS_REPAIR){
+                if ($item['status'] === Stock::STATUS_REPAIR) {
                     return response()->json([
                         'status' => 'error',
                         'message' => "Cannot add to sale as Stock ID has open repair job",
@@ -1395,7 +1396,7 @@ class SalesController extends Controller
             $vatType = $items[0]['vat_type'];
             $customerLocation = $customerUser->location;
 
-            $saleName = getQuickBookServiceProductName($customerUser->quickbooks_customer_category, $vatType, $customerLocation,$request->platform);
+            $saleName = getQuickBookServiceProductName($customerUser->quickbooks_customer_category, $vatType, $customerLocation, $request->platform);
 
         } else {
             $saleName = $invoicing->getSaleForUser($customerUser);
@@ -1759,9 +1760,7 @@ class SalesController extends Controller
             Invoicing::SALE_OTHER;
 
 
-
-        dispatch(new InvoiceCustomOrderCreate($sale,$customerUser,$salename));
-
+        dispatch(new InvoiceCustomOrderCreate($sale, $customerUser, $salename));
 
 
         return redirect()->route('sales')->with('sales.created_id', $sale->id);
@@ -2040,8 +2039,7 @@ class SalesController extends Controller
         $data = array_combine($request->ids, $request->value);
         $vatType = array_combine($request->ids, $request->vat_type);
 
-        if (count(array_unique($vatType)) > 1)
-        {
+        if (count(array_unique($vatType)) > 1) {
             return ['error' => 'true', 'message' => 'You cannot add items with different VAT Type to the same sale'];
         }
 
@@ -2106,7 +2104,7 @@ class SalesController extends Controller
 
     public function getDashboard(Request $request)
     {
-        $salesQuery = Sale::whereNotIn('invoice_status', ['voided'])->whereNotIn('invoice_creation_status',['error','not initialised']);
+        $salesQuery = Sale::whereNotIn('invoice_status', ['voided'])->whereNotIn('invoice_creation_status', ['error', 'not initialised']);
         $counting = [];
         $stockList = [];
         $field = [];
@@ -2164,8 +2162,7 @@ class SalesController extends Controller
             $salesQuery->whereRaw('YEAR(created_at) = ' . $request->year);
             $field['Year'] = $request->year;
         }
-        if ($request->days)
-        {
+        if ($request->days) {
             if ($request->days === "current") {
                 $salesQuery->whereRaw('Date(created_at) = CURDATE()');
                 $field['Current Day'] = Carbon::now()->format('d M Y ');
@@ -2194,31 +2191,31 @@ class SalesController extends Controller
         $estNetProfitPer = 0;
         $soldItems = 0;
         $totalVatMargin = 0;
-        $final=0;
-        $supplierPre='';
+        $final = 0;
+        $supplierPre = '';
         // $estProfitSPModel=0;
-        $finalTotalProfitSPModel=0;
-        $finalTotalSPItems=0;
-        $finalTotalSPNonItems=0;
-        $finalTotalProfitNonSPModel=0;
-        $finalTotalEstNetProfit=0;
-        $finalTotalProfitNetPre=0;
-        $totalVatMarginArray=[];
-        $finalTotalExVat=0;
+        $finalTotalProfitSPModel = 0;
+        $finalTotalSPItems = 0;
+        $finalTotalSPNonItems = 0;
+        $finalTotalProfitNonSPModel = 0;
+        $finalTotalEstNetProfit = 0;
+        $finalTotalProfitNetPre = 0;
+        $totalVatMarginArray = [];
+        $finalTotalExVat = 0;
 
         foreach ($salesQuery as $sale) {
             $date = Carbon::parse($sale->created_at)->format('Y-m-d');
             $rev = 0;
             $trueP = 0;
             $estNetProfit = 0;
-            $numberOfSold=0;
-            $totalItemsSoldPS=0;
-            $totalItemsSoldNonPS=0;
-            $totalProfitNonModel=0;
+            $numberOfSold = 0;
+            $totalItemsSoldPS = 0;
+            $totalItemsSoldNonPS = 0;
+            $totalProfitNonModel = 0;
             $vatType = '';
-            $finalTotalSPModel=0;
-            $finalTotalPr=0;
-            $tempTotalEstNetProfit=0;
+            $finalTotalSPModel = 0;
+            $finalTotalPr = 0;
+            $tempTotalEstNetProfit = 0;
             $salesData = Sale::with('stock')->where('created_at', 'like', "%" . $date . "%")->where('invoice_status', '!=', 'voided');
             if ($request->platform) {
                 $salesData->where('platform', $request->platform);
@@ -2234,31 +2231,31 @@ class SalesController extends Controller
                 });
             }
 
-            $salesData=$salesData->get();
+            $salesData = $salesData->get();
 
 
             foreach ($salesData as $data) {
 
-                if(count($data->stock)){
+                if (count($data->stock)) {
                     $totalCosts = 0;
-                    $estProfitSPModel=0;
-                    $estProfitNonSPModel=0;
-                    $totalExVat=0;
-                    $psTotalSalePrice=0;
-                    $psTotalVat=0;
-                    $totalProfitSPModel=0;
-                    $finalTotalSPNonModel=0;
-                    $totalCostsArray=[];
-                    $temItemsSoldNonPSArray=[];
-                    $stockMuFlag=false;
+                    $estProfitSPModel = 0;
+                    $estProfitNonSPModel = 0;
+                    $totalExVat = 0;
+                    $psTotalSalePrice = 0;
+                    $psTotalVat = 0;
+                    $totalProfitSPModel = 0;
+                    $finalTotalSPNonModel = 0;
+                    $totalCostsArray = [];
+                    $temItemsSoldNonPSArray = [];
+                    $stockMuFlag = false;
                     $totalVatMargin = 0;
                     //    $totalProfitNonModel=0;
 
 
-                    $temEstNet=0;
-                    $dTotalEstProfit=0;
-                    $dTotalEstProfitPre=0;
-                    $temEstNetAQ=0;
+                    $temEstNet = 0;
+                    $dTotalEstProfit = 0;
+                    $dTotalEstProfitPre = 0;
+                    $temEstNetAQ = 0;
 
                     if (count($data->ebay_orders) > 0) {
                         foreach ($data->ebay_orders as $ebay) {
@@ -2268,19 +2265,19 @@ class SalesController extends Controller
 
                                         $totalVatMargin = 0;
                                         $vatStockType = '';
-                                        $temItemsSoldPs=0;
-                                        $temItemsSoldNonPS=0;
-                                        $vatType='';
-                                        $temEstNet=0;
-                                        $dTotalEstProfitPre=0;
-                                        $dTotalEstProfit=0;
-                                        $stockMuFlag=false;
+                                        $temItemsSoldPs = 0;
+                                        $temItemsSoldNonPS = 0;
+                                        $vatType = '';
+                                        $temEstNet = 0;
+                                        $dTotalEstProfitPre = 0;
+                                        $dTotalEstProfit = 0;
+                                        $stockMuFlag = false;
                                         foreach (json_decode($item->stock_id) as $stockId) {
 
                                             if ($item->tax_percentage * 100 > 0 || !$item->tax_percentage * 100 && getStockDetatils($stockId)->vat_type === "Standard") {
-                                                $vatType = \App\Stock::VAT_TYPE_STD;
+                                                $vatType = Stock::VAT_TYPE_STD;
                                             } else {
-                                                $vatType = \App\Stock::VAT_TYPE_MAG;
+                                                $vatType = Stock::VAT_TYPE_MAG;
                                             }
 
                                             if (getStockDetatils($stockId)->vat_type === Stock::VAT_TYPE_MAG) {
@@ -2292,76 +2289,75 @@ class SalesController extends Controller
                                             }
                                             $totalCosts += getStockDetatils($stockId)->total_cost_with_repair;
                                             $vatStockType = getStockDetatils($stockId)->vat_type;
-                                            if($vatType===Stock::VAT_TYPE_STD){
-                                                $totalExVat+=getStockDetatils($stockId)->total_price_ex_vat;
-                                            }else{
-                                                $psTotalSalePrice+=getStockDetatils($stockId)->sale_price;
-                                                $psTotalVat+=getStockDetatils($stockId)->marg_vat;
+                                            if ($vatType === Stock::VAT_TYPE_STD) {
+                                                $totalExVat += getStockDetatils($stockId)->total_price_ex_vat;
+                                            } else {
+                                                $psTotalSalePrice += getStockDetatils($stockId)->sale_price;
+                                                $psTotalVat += getStockDetatils($stockId)->marg_vat;
                                             }
 
-                                            if(getStockDetatils($stockId)->ps_model){
+                                            if (getStockDetatils($stockId)->ps_model) {
 
-                                                if(!is_null(getStockDetatils($stockId)->supplier_id)){
-                                                    if(!is_null(getStockDetatils($stockId)->supplier->recomm_ps)){
+                                                if (!is_null(getStockDetatils($stockId)->supplier_id)) {
+                                                    if (!is_null(getStockDetatils($stockId)->supplier->recomm_ps)) {
                                                         $totalItemsSoldPS++;
                                                         $temItemsSoldPs++;
-                                                        $supplierPre=getStockDetatils($stockId)->supplier->recomm_ps;
-                                                        if(getStockDetatils($stockId)->vat_type===\App\Stock::VAT_TYPE_STD){
-                                                            $est=(getStockDetatils($stockId)->total_price_ex_vat*getStockDetatils($stockId)->supplier->recomm_ps)/100;
-                                                            $estProfitSPModel+=$est;
-                                                        }else{
-                                                            $salePrice=getStockDetatils($stockId)->sale_price - getStockDetatils($stockId)->marg_vat;
-                                                            $estM=($salePrice*getStockDetatils($stockId)->supplier->recomm_ps)/100;
-                                                            $estProfitSPModel+=$estM;
+                                                        $supplierPre = getStockDetatils($stockId)->supplier->recomm_ps;
+                                                        if (getStockDetatils($stockId)->vat_type === Stock::VAT_TYPE_STD) {
+                                                            $est = (getStockDetatils($stockId)->total_price_ex_vat * getStockDetatils($stockId)->supplier->recomm_ps) / 100;
+                                                            $estProfitSPModel += $est;
+                                                        } else {
+                                                            $salePrice = getStockDetatils($stockId)->sale_price - getStockDetatils($stockId)->marg_vat;
+                                                            $estM = ($salePrice * getStockDetatils($stockId)->supplier->recomm_ps) / 100;
+                                                            $estProfitSPModel += $estM;
                                                         }
 
                                                     }
                                                 }
-                                            }else{
+                                            } else {
                                                 $totalItemsSoldNonPS++;
                                                 $temItemsSoldNonPS++;
-                                                $estProfitNonSPModel+=getStockDetatils($stockId)->true_profit - $data->platform_fee;
+                                                $estProfitNonSPModel += getStockDetatils($stockId)->true_profit - $data->platform_fee;
                                             }
                                         }
                                         if ($vatType === "Standard") {
-                                            $temEstNet+=($data->invoice_total_amount / 1.2) - $totalCosts - $data->platform_fee - $data->shipping_cost;
+                                            $temEstNet += ($data->invoice_total_amount / 1.2) - $totalCosts - $data->platform_fee - $data->shipping_cost;
                                         } else {
 
-                                            $temEstNet+=($data->invoice_total_amount - ($data->delivery_charges * 20 / 100)) - $totalCosts - $totalVatMargin - $data->platform_fee - $data->shipping_cost;
+                                            $temEstNet += ($data->invoice_total_amount - ($data->delivery_charges * 20 / 100)) - $totalCosts - $totalVatMargin - $data->platform_fee - $data->shipping_cost;
 
                                         }
-                                        if(abs($estProfitSPModel)>0){
-                                            if($temItemsSoldPs && !$temItemsSoldNonPS){
-                                                $totalProfitSPModel+=($temEstNet *$supplierPre)/100;
-                                            }else{
-                                                $totalProfitSPModel+=($estProfitSPModel + $sale->delivery_charges)- $sale->shipping_cost;
+                                        if (abs($estProfitSPModel) > 0) {
+                                            if ($temItemsSoldPs && !$temItemsSoldNonPS) {
+                                                $totalProfitSPModel += ($temEstNet * $supplierPre) / 100;
+                                            } else {
+                                                $totalProfitSPModel += ($estProfitSPModel + $sale->delivery_charges) - $sale->shipping_cost;
                                             }
                                         }
 
-                                        if(abs($estProfitSPModel)>0){
-                                            if(abs($estProfitNonSPModel)>0){
-                                                $totalProfitNonModel+=$estProfitNonSPModel + $sale->delivery_charges;
+                                        if (abs($estProfitSPModel) > 0) {
+                                            if (abs($estProfitNonSPModel) > 0) {
+                                                $totalProfitNonModel += $estProfitNonSPModel + $sale->delivery_charges;
                                             }
-                                        }else{
-                                            if(abs($estProfitNonSPModel)>0){
-                                                $totalProfitNonModel+=$temEstNet;
+                                        } else {
+                                            if (abs($estProfitNonSPModel) > 0) {
+                                                $totalProfitNonModel += $temEstNet;
                                             }
                                         }
-                                        if($temItemsSoldPs && !$temItemsSoldNonPS){
-                                            $dTotalEstProfit+=($temEstNet *$supplierPre)/100;
+                                        if ($temItemsSoldPs && !$temItemsSoldNonPS) {
+                                            $dTotalEstProfit += ($temEstNet * $supplierPre) / 100;
 
-                                        }elseif(abs($estProfitSPModel)>0){
-                                            $dTotalEstProfit+=$totalProfitSPModel + $totalProfitNonModel;
-                                        }
-                                        else{
-                                            $dTotalEstProfit+=$temEstNet;
+                                        } elseif (abs($estProfitSPModel) > 0) {
+                                            $dTotalEstProfit += $totalProfitSPModel + $totalProfitNonModel;
+                                        } else {
+                                            $dTotalEstProfit += $temEstNet;
 
                                         }
-                                        if($vatType==="Standard"){
-                                            $dTotalEstProfitPre+= $totalExVat>0?  ($dTotalEstProfit/$totalExVat)*100:0;
-                                        }else{
-                                            $totalVatAndSalePrice=$psTotalSalePrice-$psTotalVat;
-                                            $dTotalEstProfitPre+=$totalVatAndSalePrice>0 ? ($dTotalEstProfit/$totalVatAndSalePrice)*100:0;
+                                        if ($vatType === "Standard") {
+                                            $dTotalEstProfitPre += $totalExVat > 0 ? ($dTotalEstProfit / $totalExVat) * 100 : 0;
+                                        } else {
+                                            $totalVatAndSalePrice = $psTotalSalePrice - $psTotalVat;
+                                            $dTotalEstProfitPre += $totalVatAndSalePrice > 0 ? ($dTotalEstProfit / $totalVatAndSalePrice) * 100 : 0;
 
                                         }
 
@@ -2379,7 +2375,7 @@ class SalesController extends Controller
                                     $dTotalEstProfit = 0;
 
 
-                                    $sGStock=Stock::where("id",$item->stock_id)->get();
+                                    $sGStock = Stock::where("id", $item->stock_id)->get();
 
                                     foreach ($sGStock as $stock) {
 
@@ -2393,38 +2389,38 @@ class SalesController extends Controller
                                         if ($vatType === "Margin") {
                                             $totalVatMargin += ($stock->sale_price - $stock->purchase_price) * 16.67 / 100;
                                         }
-                                        if($vatType===Stock::VAT_TYPE_STD){
-                                            $totalExVat+=$stock->total_price_ex_vat;
+                                        if ($vatType === Stock::VAT_TYPE_STD) {
+                                            $totalExVat += $stock->total_price_ex_vat;
 
-                                        }else{
-                                            $psTotalSalePrice+=$stock->sale_price;
-                                            $psTotalVat+=$stock->marg_vat;
+                                        } else {
+                                            $psTotalSalePrice += $stock->sale_price;
+                                            $psTotalVat += $stock->marg_vat;
                                         }
-                                        if($stock->ps_model){
-                                            if(!is_null($stock->supplier_id)){
-                                                if(!is_null($stock->supplier->recomm_ps)){
+                                        if ($stock->ps_model) {
+                                            if (!is_null($stock->supplier_id)) {
+                                                if (!is_null($stock->supplier->recomm_ps)) {
                                                     $totalItemsSoldPS++;
                                                     $temItemsSoldPs++;
-                                                    $supplierPre=$stock->supplier->recomm_ps;
+                                                    $supplierPre = $stock->supplier->recomm_ps;
 
 
-                                                    if($stock->vat_type===\App\Stock::VAT_TYPE_STD){
-                                                        $est=($stock->total_price_ex_vat*$stock->supplier->recomm_ps)/100;
-                                                        $estProfitSPModel+=$est;
-                                                    }else{
-                                                        $salePrice=$stock->sale_price - $stock->marg_vat;
-                                                        $estM=($salePrice*$stock->supplier->recomm_ps)/100;
-                                                        $estProfitSPModel+=$estM;
+                                                    if ($stock->vat_type === Stock::VAT_TYPE_STD) {
+                                                        $est = ($stock->total_price_ex_vat * $stock->supplier->recomm_ps) / 100;
+                                                        $estProfitSPModel += $est;
+                                                    } else {
+                                                        $salePrice = $stock->sale_price - $stock->marg_vat;
+                                                        $estM = ($salePrice * $stock->supplier->recomm_ps) / 100;
+                                                        $estProfitSPModel += $estM;
                                                     }
                                                 }
                                             }
-                                        }else{
+                                        } else {
                                             $totalItemsSoldNonPS++;
                                             $temItemsSoldNonPS++;
-                                            $estProfitNonSPModel+=$stock->true_profit - $data->platform_fee;
+                                            $estProfitNonSPModel += $stock->true_profit - $data->platform_fee;
                                         }
 
-                                        $stockMuFlag=true;
+                                        $stockMuFlag = true;
 
                                     }
 
@@ -2435,12 +2431,12 @@ class SalesController extends Controller
                         }
                     } else {
                         $totalVatMargin = 0;
-                        $temItemsSoldPs=0;
-                        $temItemsSoldNonPS=0;
-                        $vatType='';
-                        $dTotalEstProfitPre=0;
-                        $dTotalEstProfit=0;
-                        $totalExVat=0;
+                        $temItemsSoldPs = 0;
+                        $temItemsSoldNonPS = 0;
+                        $vatType = '';
+                        $dTotalEstProfitPre = 0;
+                        $dTotalEstProfit = 0;
+                        $totalExVat = 0;
 
 
                         foreach ($data->stock()->get() as $stock) {
@@ -2455,130 +2451,120 @@ class SalesController extends Controller
                             if ($vatType === "Margin") {
                                 $totalVatMargin += ($stock->sale_price - $stock->purchase_price) * 16.67 / 100;
                             }
-                            if($vatType===Stock::VAT_TYPE_STD){
-                                $totalExVat+=$stock->total_price_ex_vat;
+                            if ($vatType === Stock::VAT_TYPE_STD) {
+                                $totalExVat += $stock->total_price_ex_vat;
 
-                            }else{
-                                $psTotalSalePrice+=$stock->sale_price;
-                                $psTotalVat+=$stock->marg_vat;
+                            } else {
+                                $psTotalSalePrice += $stock->sale_price;
+                                $psTotalVat += $stock->marg_vat;
                             }
-                            if($stock->ps_model){
-                                if(!is_null($stock->supplier_id)){
-                                    if(!is_null($stock->supplier->recomm_ps)){
+                            if ($stock->ps_model) {
+                                if (!is_null($stock->supplier_id)) {
+                                    if (!is_null($stock->supplier->recomm_ps)) {
                                         $totalItemsSoldPS++;
                                         $temItemsSoldPs++;
-                                        $supplierPre=$stock->supplier->recomm_ps;
+                                        $supplierPre = $stock->supplier->recomm_ps;
 
 
-                                        if($stock->vat_type===\App\Stock::VAT_TYPE_STD){
-                                            $est=($stock->total_price_ex_vat*$stock->supplier->recomm_ps)/100;
-                                            $estProfitSPModel+=$est;
-                                        }else{
-                                            $salePrice=$stock->sale_price - $stock->marg_vat;
-                                            $estM=($salePrice*$stock->supplier->recomm_ps)/100;
-                                            $estProfitSPModel+=$estM;
+                                        if ($stock->vat_type === Stock::VAT_TYPE_STD) {
+                                            $est = ($stock->total_price_ex_vat * $stock->supplier->recomm_ps) / 100;
+                                            $estProfitSPModel += $est;
+                                        } else {
+                                            $salePrice = $stock->sale_price - $stock->marg_vat;
+                                            $estM = ($salePrice * $stock->supplier->recomm_ps) / 100;
+                                            $estProfitSPModel += $estM;
                                         }
                                     }
                                 }
-                            }else{
+                            } else {
                                 $totalItemsSoldNonPS++;
                                 $temItemsSoldNonPS++;
-                                $estProfitNonSPModel+=$stock->true_profit - $data->platform_fee;
+                                $estProfitNonSPModel += $stock->true_profit - $data->platform_fee;
                             }
 
                         }
                         if ($vatType === "Standard") {
-                            $temEstNet+=($data->invoice_total_amount / 1.2) - $totalCosts - $data->platform_fee - $data->shipping_cost;
+                            $temEstNet += ($data->invoice_total_amount / 1.2) - $totalCosts - $data->platform_fee - $data->shipping_cost;
                         } else {
-                            $temEstNet+=($data->invoice_total_amount - ($data->delivery_charges * 20 / 100)) - $totalCosts - $totalVatMargin - $data->platform_fee - $data->shipping_cost;
+                            $temEstNet += ($data->invoice_total_amount - ($data->delivery_charges * 20 / 100)) - $totalCosts - $totalVatMargin - $data->platform_fee - $data->shipping_cost;
 
                         }
 
 
-                        if($estProfitSPModel>0){
-                            if($temItemsSoldPs && !$temItemsSoldNonPS){
-                                $totalProfitSPModel+=($temEstNet *$supplierPre)/100;
-                            }else{
-                                $totalProfitSPModel+=($estProfitSPModel + $sale->delivery_charges)- $sale->shipping_cost;
+                        if ($estProfitSPModel > 0) {
+                            if ($temItemsSoldPs && !$temItemsSoldNonPS) {
+                                $totalProfitSPModel += ($temEstNet * $supplierPre) / 100;
+                            } else {
+                                $totalProfitSPModel += ($estProfitSPModel + $sale->delivery_charges) - $sale->shipping_cost;
                             }
                         }
 
-                        if(abs($estProfitSPModel)>0){
-                            if(abs($estProfitNonSPModel)>0){
-                                $totalProfitNonModel+=$estProfitNonSPModel + $sale->delivery_charges;
+                        if (abs($estProfitSPModel) > 0) {
+                            if (abs($estProfitNonSPModel) > 0) {
+                                $totalProfitNonModel += $estProfitNonSPModel + $sale->delivery_charges;
                             }
-                        }else{
-                            $totalProfitNonModel+=$temEstNet;
+                        } else {
+                            $totalProfitNonModel += $temEstNet;
                         }
 
-                        if($temItemsSoldPs && !$temItemsSoldNonPS){
-                            $dTotalEstProfit+=($temEstNet *$supplierPre)/100;
-                        }elseif(abs($estProfitSPModel)>0){
-                            $dTotalEstProfit+=$totalProfitSPModel + $totalProfitNonModel;
+                        if ($temItemsSoldPs && !$temItemsSoldNonPS) {
+                            $dTotalEstProfit += ($temEstNet * $supplierPre) / 100;
+                        } elseif (abs($estProfitSPModel) > 0) {
+                            $dTotalEstProfit += $totalProfitSPModel + $totalProfitNonModel;
+                        } else {
+                            $dTotalEstProfit += $temEstNet;
                         }
-                        else{
-                            $dTotalEstProfit+=$temEstNet;
-                        }
-                        if($vatType==="Standard"){
-                            $dTotalEstProfitPre+= $totalExVat>0?  ($dTotalEstProfit/$totalExVat)*100:0;
-                        }else{
-                            $totalVatAndSalePrice=$psTotalSalePrice-$psTotalVat;
-                            $dTotalEstProfitPre+=$totalVatAndSalePrice>0 ? ($dTotalEstProfit/$totalVatAndSalePrice)*100:0;
+                        if ($vatType === "Standard") {
+                            $dTotalEstProfitPre += $totalExVat > 0 ? ($dTotalEstProfit / $totalExVat) * 100 : 0;
+                        } else {
+                            $totalVatAndSalePrice = $psTotalSalePrice - $psTotalVat;
+                            $dTotalEstProfitPre += $totalVatAndSalePrice > 0 ? ($dTotalEstProfit / $totalVatAndSalePrice) * 100 : 0;
                         }
 
                     }
 
-                    if($stockMuFlag){
+                    if ($stockMuFlag) {
                         if ($vatType === "Standard") {
-                            $temEstNet+=($data->invoice_total_amount / 1.2) - $totalCosts - $data->platform_fee - $data->shipping_cost;
+                            $temEstNet += ($data->invoice_total_amount / 1.2) - $totalCosts - $data->platform_fee - $data->shipping_cost;
 
                         } else {
                             $temEstNet += ($data->invoice_total_amount - ($data->delivery_charges * 20 / 100)) - $totalCosts - $totalVatMargin - $data->platform_fee - $data->shipping_cost;
                         }
 
 
-
-
-                        if($estProfitSPModel>0){
-                            if($temItemsSoldPs && !count($temItemsSoldNonPSArray)){
-                                $totalProfitSPModel+=($temEstNet *$supplierPre)/100;
-                            }else{
-                                $totalProfitSPModel+=($estProfitSPModel + $sale->delivery_charges)- $sale->shipping_cost;
+                        if ($estProfitSPModel > 0) {
+                            if ($temItemsSoldPs && !count($temItemsSoldNonPSArray)) {
+                                $totalProfitSPModel += ($temEstNet * $supplierPre) / 100;
+                            } else {
+                                $totalProfitSPModel += ($estProfitSPModel + $sale->delivery_charges) - $sale->shipping_cost;
                             }
                         }
 
 
-                        if(abs($estProfitSPModel)>0){
-                            if(abs($estProfitNonSPModel)>0){
-                                $totalProfitNonModel+=$estProfitNonSPModel + $sale->delivery_charges;
+                        if (abs($estProfitSPModel) > 0) {
+                            if (abs($estProfitNonSPModel) > 0) {
+                                $totalProfitNonModel += $estProfitNonSPModel + $sale->delivery_charges;
                             }
-                        }else{
+                        } else {
 
-                            if(abs($estProfitNonSPModel)>0)
-                            {
-                                $totalProfitNonModel+=$temEstNet;
+                            if (abs($estProfitNonSPModel) > 0) {
+                                $totalProfitNonModel += $temEstNet;
                             }
 
                         }
 
-                        if($temItemsSoldPs && !$temItemsSoldNonPS)
-                        {
-                            $dTotalEstProfit+=($temEstNet *$supplierPre)/100;
-                        }elseif(abs($estProfitSPModel)>0)
-                        {
-                            $dTotalEstProfit+=$totalProfitSPModel + $totalProfitNonModel;
+                        if ($temItemsSoldPs && !$temItemsSoldNonPS) {
+                            $dTotalEstProfit += ($temEstNet * $supplierPre) / 100;
+                        } elseif (abs($estProfitSPModel) > 0) {
+                            $dTotalEstProfit += $totalProfitSPModel + $totalProfitNonModel;
+                        } else {
+                            $dTotalEstProfit += $temEstNet;
                         }
-                        else
-                        {
-                            $dTotalEstProfit+=$temEstNet;
-                        }
-                        if($vatType==="Standard")
-                        {
-                            $dTotalEstProfitPre+= $totalExVat>0?  ($dTotalEstProfit/$totalExVat)*100:0;
-                        }else
-                        {
-                            $totalVatAndSalePrice=$psTotalSalePrice-$psTotalVat;
-                            $dTotalEstProfitPre+=$totalVatAndSalePrice>0 ? ($dTotalEstProfit/$totalVatAndSalePrice)*100:0;
+                        if ($vatType === "Standard") {
+                            $dTotalEstProfitPre += $totalExVat > 0 ? ($dTotalEstProfit / $totalExVat) * 100 : 0;
+                        } else {
+                            $totalVatAndSalePrice = $psTotalSalePrice - $psTotalVat;
+                            $dTotalEstProfitPre += $totalVatAndSalePrice > 0 ? ($dTotalEstProfit / $totalVatAndSalePrice) * 100 : 0;
                         }
 
                     }
@@ -2601,12 +2587,12 @@ class SalesController extends Controller
 
                     }
 
-                    $finalTotalSPModel+=$totalProfitSPModel;
+                    $finalTotalSPModel += $totalProfitSPModel;
 
 
-                    $finalTotalSPNonModel+=$totalProfitNonModel;
-                    $tempTotalEstNetProfit+=$dTotalEstProfit;
-                    $finalTotalPr+=$dTotalEstProfitPre;
+                    $finalTotalSPNonModel += $totalProfitNonModel;
+                    $tempTotalEstNetProfit += $dTotalEstProfit;
+                    $finalTotalPr += $dTotalEstProfitPre;
                 }
 
             }
@@ -2617,38 +2603,38 @@ class SalesController extends Controller
                 'rev' => $rev,
                 'true_profit' => $trueP,
                 'true_profit_pe' => $rev > 0 ? number_format(($trueP / $rev) * 100, 2) . "%" : '0%',
-                'est_net_profit'=> $estNetProfit,
+                'est_net_profit' => $estNetProfit,
                 'est_net_profit_pe' => $rev > 0 ? number_format(($estNetProfit / $rev) * 100, 2) . "%" : "0%",
                 'count' => $salesData->count(),
-                'number_of_sold'=>$numberOfSold,
-                'est_profit_sp_model'=>$finalTotalSPModel,
-                'est_profit_sp_non_model'=>$finalTotalSPNonModel,
-                'total_items_sold_non_ps'=>$totalItemsSoldNonPS,
-                'total_items_sold_ps'=>$totalItemsSoldPS,
+                'number_of_sold' => $numberOfSold,
+                'est_profit_sp_model' => $finalTotalSPModel,
+                'est_profit_sp_non_model' => $finalTotalSPNonModel,
+                'total_items_sold_non_ps' => $totalItemsSoldNonPS,
+                'total_items_sold_ps' => $totalItemsSoldPS,
                 // 'total_est_net_profit'=>$tempTotalEstNetProfit,
-                'total_est_net_profit'=> $finalTotalSPNonModel>0 && $totalItemsSoldNonPS>0 ? $finalTotalSPModel+ $finalTotalSPNonModel:$tempTotalEstNetProfit,
-                'total_est_net_pre'=>$finalTotalPr,
-                'total_ex_vat'=>$totalExVat,
+                'total_est_net_profit' => $finalTotalSPNonModel > 0 && $totalItemsSoldNonPS > 0 ? $finalTotalSPModel + $finalTotalSPNonModel : $tempTotalEstNetProfit,
+                'total_est_net_pre' => $finalTotalPr,
+                'total_ex_vat' => $totalExVat,
 
             ];
 
-            $final+=$estNetProfit;
-            $finalTotalEstNetProfit+=$tempTotalEstNetProfit;
-            $finalTotalProfitSPModel+=$finalTotalSPModel;
-            $finalTotalSPItems+=$totalItemsSoldPS;
-            $finalTotalSPNonItems+=$totalItemsSoldNonPS;
-            $finalTotalProfitNonSPModel+=$totalProfitNonModel;
-            $finalTotalProfitNetPre+=$finalTotalPr;
-            $finalTotalExVat+=$totalExVat;
+            $final += $estNetProfit;
+            $finalTotalEstNetProfit += $tempTotalEstNetProfit;
+            $finalTotalProfitSPModel += $finalTotalSPModel;
+            $finalTotalSPItems += $totalItemsSoldPS;
+            $finalTotalSPNonItems += $totalItemsSoldNonPS;
+            $finalTotalProfitNonSPModel += $totalProfitNonModel;
+            $finalTotalProfitNetPre += $finalTotalPr;
+            $finalTotalExVat += $totalExVat;
         }
 
-        $total=0;
-        foreach ($stockList as $ty){
+        $total = 0;
+        foreach ($stockList as $ty) {
 
-            if(abs($ty['est_profit_sp_model'])>0 && abs($ty['est_profit_sp_non_model'])>0){
-                $total+= $ty['est_profit_sp_non_model']+ $ty['est_profit_sp_model']  ;
-            }else{
-                $total+=$ty['total_est_net_profit'];
+            if (abs($ty['est_profit_sp_model']) > 0 && abs($ty['est_profit_sp_non_model']) > 0) {
+                $total += $ty['est_profit_sp_non_model'] + $ty['est_profit_sp_model'];
+            } else {
+                $total += $ty['total_est_net_profit'];
             }
 
         }
@@ -2664,14 +2650,14 @@ class SalesController extends Controller
             'est_net_profit_pre' => $estNetProfitPer,
             'items_credited' => $customerReturnItem,
             'value_of_credited' => $customerReturnValue,
-            'profit_lost_from_customer'=>$customerReturnProfitLost,
-            'total_sp_model'=>$finalTotalProfitSPModel,
-            'total_sp_items'=>$finalTotalSPItems,
-            'total_sp_non_items'=>$finalTotalSPNonItems,
-            'total_non_model'=>$finalTotalProfitNonSPModel,
-            'total_est_net_profit'=>$total,
-            'total_est_profit_pre'=>$finalTotalProfitNetPre,
-            'total_ex_vat'=>$finalTotalExVat,
+            'profit_lost_from_customer' => $customerReturnProfitLost,
+            'total_sp_model' => $finalTotalProfitSPModel,
+            'total_sp_items' => $finalTotalSPItems,
+            'total_sp_non_items' => $finalTotalSPNonItems,
+            'total_non_model' => $finalTotalProfitNonSPModel,
+            'total_est_net_profit' => $total,
+            'total_est_profit_pre' => $finalTotalProfitNetPre,
+            'total_ex_vat' => $finalTotalExVat,
         ];
 
         if ($request->ajax()) {
@@ -2683,28 +2669,29 @@ class SalesController extends Controller
         return view('sales.dashboard', compact('counting', 'stockList', 'field'));
     }
 
-    public function  exportCsv(Request  $request){
+    public function exportCsv(Request $request)
+    {
 
         ini_set('max_execution_time', 30000);
-        ini_set("memory_limit","2048M");
+        ini_set("memory_limit", "2048M");
 
         $stock = Sale::orderBy('id', 'desc')->limit(200);
 
-        if($request->start_date && $request->last_date ){
+        if ($request->start_date && $request->last_date) {
 
             $stock->whereNotIn('invoice_status', ['voided']);
             $stock->whereBetween('created_at', [$request->start_date, $request->last_date]);
         }
-        if($request->customer_id){
-            $stock->where('customer_api_id',$request->customer_id);
+        if ($request->customer_id) {
+            $stock->where('customer_api_id', $request->customer_id);
         }
 
-        if($request->status!==""){
+        if ($request->status !== "") {
             if ($request->status == 'open_paid_other_recycler' || !$request->status) {
                 $stock->whereIn('invoice_status', ['open', 'paid'])->orWhere(function ($q) {
                     return $q->whereNotNull('other_recycler')->whereIn('invoice_status', ['open', 'paid']);
                 })->orderBy('id', 'desc');
-            }elseif($request->status == 'paid')
+            } elseif ($request->status == 'paid')
                 $stock->whereIn('invoice_status', ['paid'])->whereNull('other_recycler')->orderBy('id', 'desc');
             elseif ($request->status == 'open_paid' || !$request->status)
                 $stock->whereIn('invoice_status', ['open', 'paid'])->whereNull('other_recycler')->orderBy('id', 'desc');
@@ -2722,31 +2709,31 @@ class SalesController extends Controller
             'Customer' => 'customer',
             'Buyers Ref' => 'buyers_ref',
             'Ship to' => 'ship_to',
-            'Date' =>  'created_at',
-            'Item count'=>'item_count',
-            'Items'=>'item_name',
-            'Sale VAT Type'=>'vat_type',
+            'Date' => 'created_at',
+            'Item count' => 'item_count',
+            'Items' => 'item_name',
+            'Sale VAT Type' => 'vat_type',
             'Sale Total incCarriag' => 'sale_carriage',
-            'Sale Total ex Vat incCarriage'=>'sale_total_ex_vat',
+            'Sale Total ex Vat incCarriage' => 'sale_total_ex_vat',
             'Total Purchase Cost' => 'total_purchase_cost',
-            'Profit'=>'profit',
+            'Profit' => 'profit',
             'Profit%' => 'profit_per',
             'Marg VAT' => 'margin_vat',
             'True Profit' => 'true_profit',
             'Platform Name' => 'platform',
             'True Profit %' => 'true_profit_pre',
             'Status' => 'invoice_status',
-            'Invoice'=>'invoice',
-            'Seller Fees + Accessories Cost'=>'platform_fee',
+            'Invoice' => 'invoice',
+            'Seller Fees + Accessories Cost' => 'platform_fee',
             'Est Shipping Cost' => 'shipping_cost',
             'Est Net Profit' => 'est_net_profit',
 //            'Est Net Profit %'=>'est_net_profit_pre',
-            'Est Net Profit (Non P/S)'=>'est_net_profit_non_ps',
-            'Recomm P/S' =>'est_net_profit_ps',
-            'Items Sold Non P/S'=>'items_sold_non_ps',
-            'Items Sold P/S'=>'items_sold_ps',
-            'Total Est Net Profit'=>'total_est_net_profit',
-            'Net Profit%'=>'net_profit_pre'
+            'Est Net Profit (Non P/S)' => 'est_net_profit_non_ps',
+            'Recomm P/S' => 'est_net_profit_ps',
+            'Items Sold Non P/S' => 'items_sold_non_ps',
+            'Items Sold P/S' => 'items_sold_ps',
+            'Total Est Net Profit' => 'total_est_net_profit',
+            'Net Profit%' => 'net_profit_pre'
 
         ];
 
@@ -2761,117 +2748,117 @@ class SalesController extends Controller
         $stock->chunk(500, function ($items) use ($fields, $fh) {
 
             foreach ($items as $item) {
-                $shipTo='-';
-                $postCode='';
+                $shipTo = '-';
+                $postCode = '';
                 $totalExVat = 0;
-                $totalPurchasePrice=0;
-                $totalProfit=0;
-                $totalTrueProfit=0;
-                $totalSalePrice=0;
-                $totalVatMargin=0;
-                $totalPurchaseCost=0;
-                $purchasePrice=0;
-                $totalSalePriceDelivery=0;
-                $totalUnlockCost=0;
-                $totalPartCost=0;
-                $totalRepairCost=0;
-                $vatType='';
-                $vatTypeList=[];
-                $saleTotalIncCarriage=0;
-                $vatMrg=0;
-                $totalItemsSoldPS=0;
-                $estProfitSPModel=0;
-                $totalItemsSoldNonPS=0;
-                $estProfitNonSPModel=0;
-                $totalNonPsModel=0;
-                $totalPsModel=0;
-                $PStotalExVat=0;
-                $PSTotalSalePrice=0;
-                $PSTotalVatMargin=0;
-                $finaNetProfit=0;
-                $ftProfit=0;
-                $ftTrueProfit=0;
-                $pVatMargin=0;
+                $totalPurchasePrice = 0;
+                $totalProfit = 0;
+                $totalTrueProfit = 0;
+                $totalSalePrice = 0;
+                $totalVatMargin = 0;
+                $totalPurchaseCost = 0;
+                $purchasePrice = 0;
+                $totalSalePriceDelivery = 0;
+                $totalUnlockCost = 0;
+                $totalPartCost = 0;
+                $totalRepairCost = 0;
+                $vatType = '';
+                $vatTypeList = [];
+                $saleTotalIncCarriage = 0;
+                $vatMrg = 0;
+                $totalItemsSoldPS = 0;
+                $estProfitSPModel = 0;
+                $totalItemsSoldNonPS = 0;
+                $estProfitNonSPModel = 0;
+                $totalNonPsModel = 0;
+                $totalPsModel = 0;
+                $PStotalExVat = 0;
+                $PSTotalSalePrice = 0;
+                $PSTotalVatMargin = 0;
+                $finaNetProfit = 0;
+                $ftProfit = 0;
+                $ftTrueProfit = 0;
+                $pVatMargin = 0;
 
 
-                if($item->customer_api_id){
+                if ($item->customer_api_id) {
                     $customerUser = User::where('invoice_api_id', $item->customer_api_id)->firstOrFail();
-                    $customerName = $customerUser->first_name.' '.$customerUser->last_name.' '.$customerUser->company_name;
+                    $customerName = $customerUser->first_name . ' ' . $customerUser->last_name . ' ' . $customerUser->company_name;
 
-                }else{
-                    $customerName='-';
+                } else {
+                    $customerName = '-';
                 }
 
 
-                if(count($item->ebay_orders)>0){
+                if (count($item->ebay_orders) > 0) {
 
                     foreach ($item->ebay_orders as $ebay) {
-                        $postCode=strtoupper($ebay->post_to_postcode);
+                        $postCode = strtoupper($ebay->post_to_postcode);
                         foreach ($ebay->EbayOrderItems as $ebayOrdersItem) {
                             $taxRate = 0;
                             $totalCosts = 0;
-                            $vatType='';
-                            $itemsPrice=0;
-                            $purchasePriceStock=0;
+                            $vatType = '';
+                            $itemsPrice = 0;
+                            $purchasePriceStock = 0;
 
-                            if($ebayOrdersItem->quantity>1){
-                                if(!is_null(json_decode($ebayOrdersItem->stock_id))){
-                                    foreach (json_decode($ebayOrdersItem->stock_id) as $stockId){
+                            if ($ebayOrdersItem->quantity > 1) {
+                                if (!is_null(json_decode($ebayOrdersItem->stock_id))) {
+                                    foreach (json_decode($ebayOrdersItem->stock_id) as $stockId) {
                                         $totalCosts += getStockDetatils($stockId)->total_cost_with_repair;
                                         $totalPurchaseCost += getStockDetatils($stockId)->total_cost_with_repair;
-                                        $purchasePrice+=getStockDetatils($stockId)->purchase_price;
-                                        $purchasePriceStock+=getStockDetatils($stockId)->purchase_price;
+                                        $purchasePrice += getStockDetatils($stockId)->purchase_price;
+                                        $purchasePriceStock += getStockDetatils($stockId)->purchase_price;
 
-                                        $vatType=getStockDetatils($stockId)->vat_type;
-                                        $totalUnlockCost+=getStockDetatils($stockId)->unlock_cost;
-                                        $totalPartCost+=getStockDetatils($stockId)->part_cost;
-                                        $totalRepairCost+=getStockDetatils($stockId)->total_repair_cost-getStockDetatils($stockId)->part_cost;
-                                        $totalSalePriceDelivery+=getStockDetatils($stockId)->sale_price;
+                                        $vatType = getStockDetatils($stockId)->vat_type;
+                                        $totalUnlockCost += getStockDetatils($stockId)->unlock_cost;
+                                        $totalPartCost += getStockDetatils($stockId)->part_cost;
+                                        $totalRepairCost += getStockDetatils($stockId)->total_repair_cost - getStockDetatils($stockId)->part_cost;
+                                        $totalSalePriceDelivery += getStockDetatils($stockId)->sale_price;
 
-                                        if($ebay->platform === Stock::PLATFROM_MOBILE_ADVANTAGE || $ebay->platform === Stock::PLATFROM_EBAY){
-                                            $itemsPrice=$ebayOrdersItem['individual_item_price']*$ebayOrdersItem['quantity'];
-                                        }else{
-                                            $itemsPrice=$ebayOrdersItem['individual_item_price'];
+                                        if ($ebay->platform === Stock::PLATFROM_MOBILE_ADVANTAGE || $ebay->platform === Stock::PLATFROM_EBAY) {
+                                            $itemsPrice = $ebayOrdersItem['individual_item_price'] * $ebayOrdersItem['quantity'];
+                                        } else {
+                                            $itemsPrice = $ebayOrdersItem['individual_item_price'];
                                         }
 
                                         $taxRate = $ebayOrdersItem->tax_percentage * 100 > 0 ? ($ebayOrdersItem->tax_percentage) : 0;
                                     }
                                 }
-                            }else{
-                                $tProfit=0;
-                                $fTrueProfit=0;
+                            } else {
+                                $tProfit = 0;
+                                $fTrueProfit = 0;
                                 foreach ($ebayOrdersItem->stock()->get() as $ebayOrderstock) {
 
 
                                     $totalCosts += $ebayOrderstock->total_cost_with_repair;
                                     $totalPurchaseCost += $ebayOrderstock->total_cost_with_repair;
-                                    $purchasePrice+=$ebayOrderstock->purchase_price;
-                                    $purchasePriceStock +=$ebayOrderstock->purchase_price;
-                                    $vatType=$ebayOrderstock->vat_type;
-                                    $totalUnlockCost+=$ebayOrderstock->unlock_cost;
-                                    $totalPartCost+=$ebayOrderstock->part_cost;
-                                    $totalRepairCost+=$ebayOrderstock->total_repair_cost-$ebayOrderstock->part_cost;
-                                    $itemsPrice+=$ebayOrdersItem['individual_item_price'];
-                                    $totalSalePriceDelivery+=$ebayOrderstock->sale_price;
+                                    $purchasePrice += $ebayOrderstock->purchase_price;
+                                    $purchasePriceStock += $ebayOrderstock->purchase_price;
+                                    $vatType = $ebayOrderstock->vat_type;
+                                    $totalUnlockCost += $ebayOrderstock->unlock_cost;
+                                    $totalPartCost += $ebayOrderstock->part_cost;
+                                    $totalRepairCost += $ebayOrderstock->total_repair_cost - $ebayOrderstock->part_cost;
+                                    $itemsPrice += $ebayOrdersItem['individual_item_price'];
+                                    $totalSalePriceDelivery += $ebayOrderstock->sale_price;
                                     $taxRate = $ebayOrdersItem->tax_percentage * 100 > 0 ? ($ebayOrdersItem->tax_percentage) : 0;
-                                    $tProfit+=$ebayOrderstock->profit;
-                                    $fTrueProfit +=$ebayOrderstock->true_profit;
-                                    $pVatMargin+=$ebayOrderstock->marg_vat;
+                                    $tProfit += $ebayOrderstock->profit;
+                                    $fTrueProfit += $ebayOrderstock->true_profit;
+                                    $pVatMargin += $ebayOrderstock->marg_vat;
 
 
                                 }
                             }
 
-                            if ($ebayOrdersItem->tax_percentage * 100 > 0 || !$ebayOrdersItem->tax_percentage * 100  && $vatType==="Standard" ) {
+                            if ($ebayOrdersItem->tax_percentage * 100 > 0 || !$ebayOrdersItem->tax_percentage * 100 && $vatType === "Standard") {
                                 $vatType = "Standard";
-                                array_push($vatTypeList,$vatType);
+                                array_push($vatTypeList, $vatType);
                             } else {
                                 $vatType = "Margin";
-                                array_push($vatTypeList,$vatType);
+                                array_push($vatTypeList, $vatType);
                             }
 
-                            $ftProfit+=$tProfit;
-                            $ftTrueProfit+=$fTrueProfit;
+                            $ftProfit += $tProfit;
+                            $ftTrueProfit += $fTrueProfit;
 
 //                            $calculations = calculationOfProfitEbay($taxRate, $itemsPrice, $totalCosts, $vatType,$purchasePriceStock);
 //                            $totalExVat+= $calculations['total_price_ex_vat'];
@@ -2881,17 +2868,17 @@ class SalesController extends Controller
 //                            $totalVatMargin+= $calculations['marg_vat'];
 
 
-                            $calculations = calculationOfProfitEbay($taxRate, $itemsPrice, $totalCosts, $vatType,$purchasePriceStock);
-                            if($vatType===\App\Stock::VAT_TYPE_STD){
-                                $totalProfit=($item->invoice_total_amount/1.2) - $totalPurchaseCost;
-                                $totalTrueProfit=$item->invoice_total_amount/1.2 - $totalPurchaseCost;
-                                $totalExVat= $item->invoice_total_amount/1.2;
-                            }else{
-                                $totalExVat= $calculations['total_price_ex_vat'];
+                            $calculations = calculationOfProfitEbay($taxRate, $itemsPrice, $totalCosts, $vatType, $purchasePriceStock);
+                            if ($vatType === Stock::VAT_TYPE_STD) {
+                                $totalProfit = ($item->invoice_total_amount / 1.2) - $totalPurchaseCost;
+                                $totalTrueProfit = $item->invoice_total_amount / 1.2 - $totalPurchaseCost;
+                                $totalExVat = $item->invoice_total_amount / 1.2;
+                            } else {
+                                $totalExVat = $calculations['total_price_ex_vat'];
                                 $totalTrueProfit = $calculations['true_profit'];
-                                $totalProfit=$calculations['profit'];
-                                $totalSalePrice=$itemsPrice;
-                                $totalVatMargin= $calculations['marg_vat'];
+                                $totalProfit = $calculations['profit'];
+                                $totalSalePrice = $itemsPrice;
+                                $totalVatMargin = $calculations['marg_vat'];
 
                             }
 
@@ -2912,251 +2899,281 @@ class SalesController extends Controller
                         }
                     }
 
-                    if(!is_null($item->delivery_charges)){
-                        $totalProfit=0;
-                        $totalTrueProfit=0;
-                        $totalVatMargin=0;
-                        $totalExVat=0;
-                        $totalSalePrice=0;
-                        if($ebayOrdersItem->tax_percentage * 100 > 0 || !$ebayOrdersItem->tax_percentage * 100  && $vatType==="Standard"){
-                            $totalProfit+=($item->invoice_total_amount/1.2) - $totalPurchaseCost;
-                            $totalTrueProfit+=$item->invoice_total_amount/1.2 - $totalPurchaseCost;
-                            $totalExVat+= $item->invoice_total_amount/1.2;
-                        }else{
-                            $totalProfit+=$item->invoice_total_amount - $totalPurchaseCost-($item->delivery_charges*20/100);
-                            $totalVatMargin += ((($totalSalePriceDelivery-$purchasePrice)*16.67)/100);
+                    if (!is_null($item->delivery_charges)) {
+                        $totalProfit = 0;
+                        $totalTrueProfit = 0;
+                        $totalVatMargin = 0;
+                        $totalExVat = 0;
+                        $totalSalePrice = 0;
+                        if ($ebayOrdersItem->tax_percentage * 100 > 0 || !$ebayOrdersItem->tax_percentage * 100 && $vatType === "Standard") {
+                            $totalProfit += ($item->invoice_total_amount / 1.2) - $totalPurchaseCost;
+                            $totalTrueProfit += $item->invoice_total_amount / 1.2 - $totalPurchaseCost;
+                            $totalExVat += $item->invoice_total_amount / 1.2;
+                        } else {
+                            $totalProfit += $item->invoice_total_amount - $totalPurchaseCost - ($item->delivery_charges * 20 / 100);
+                            $totalVatMargin += ((($totalSalePriceDelivery - $purchasePrice) * 16.67) / 100);
 
-                            $totalTrueProfit+=($item->invoice_total_amount - $totalPurchaseCost-$item->delivery_charges*20/100)- ((($totalSalePriceDelivery-$purchasePrice)*16.67)/100);
-                            $totalSalePrice+=$item->invoice_total_amount - $item->delivery_charges*20/100;
+                            $totalTrueProfit += ($item->invoice_total_amount - $totalPurchaseCost - $item->delivery_charges * 20 / 100) - ((($totalSalePriceDelivery - $purchasePrice) * 16.67) / 100);
+                            $totalSalePrice += $item->invoice_total_amount - $item->delivery_charges * 20 / 100;
 
                         }
 
                     }
-                }else{
-                    $supplierPre='';
-                    foreach($item->stock as $stock) {$totalExVat+= $stock->total_price_ex_vat;}
-                    foreach($item->stock as $stock) {$totalPurchasePrice+= $stock->purchase_price;}
-                    foreach($item->stock as $stock) {$totalProfit+= $stock->profit;}
-                    foreach($item->stock as $stock) {$totalTrueProfit+= $stock->true_profit;}
-                    foreach($item->stock as $stock) {$totalSalePrice+= $stock->sale_price;}
-                    foreach($item->stock as $stock) {$totalVatMargin+= $stock->marg_vat;}
-                    foreach($item->stock as $stock) {$totalPurchaseCost+= $stock->total_cost_with_repair;}
-                    foreach ($item->stock as $stock){$purchasePrice+=$stock->purchase_price;}
-                    foreach($item->stock as $stock) {$totalSalePriceDelivery+= $stock->sale_price;}
-                    foreach($item->stock as $stock) {$totalUnlockCost+= $stock->unlock_cost;}
-                    foreach($item->stock as $stock) {$totalPartCost+= $stock->part_cost;}
-                    foreach($item->stock as $stock) {$totalRepairCost+= $stock->total_repair_cost-$stock->part_cost;}
+                } else {
+                    $supplierPre = '';
+                    foreach ($item->stock as $stock) {
+                        $totalExVat += $stock->total_price_ex_vat;
+                    }
+                    foreach ($item->stock as $stock) {
+                        $totalPurchasePrice += $stock->purchase_price;
+                    }
+                    foreach ($item->stock as $stock) {
+                        $totalProfit += $stock->profit;
+                    }
+                    foreach ($item->stock as $stock) {
+                        $totalTrueProfit += $stock->true_profit;
+                    }
+                    foreach ($item->stock as $stock) {
+                        $totalSalePrice += $stock->sale_price;
+                    }
+                    foreach ($item->stock as $stock) {
+                        $totalVatMargin += $stock->marg_vat;
+                    }
+                    foreach ($item->stock as $stock) {
+                        $totalPurchaseCost += $stock->total_cost_with_repair;
+                    }
+                    foreach ($item->stock as $stock) {
+                        $purchasePrice += $stock->purchase_price;
+                    }
+                    foreach ($item->stock as $stock) {
+                        $totalSalePriceDelivery += $stock->sale_price;
+                    }
+                    foreach ($item->stock as $stock) {
+                        $totalUnlockCost += $stock->unlock_cost;
+                    }
+                    foreach ($item->stock as $stock) {
+                        $totalPartCost += $stock->part_cost;
+                    }
+                    foreach ($item->stock as $stock) {
+                        $totalRepairCost += $stock->total_repair_cost - $stock->part_cost;
+                    }
 
-                    $totalProfit=0;
-                    $totalTrueProfit=0;
-                    $totalVatMargin=0;
-                    $totalExVat=0;
-                    $totalSalePrice=0;
-                    if(count($item->stock)){
-                        if($item->stock[0]->vat_type==="Margin"){
-                            $totalProfit+=$item->invoice_total_amount - $totalPurchaseCost-($item->delivery_charges*20/100);
-                            $totalVatMargin += ((($totalSalePriceDelivery-$purchasePrice)*16.67)/100);
-                            $totalTrueProfit+=($item->invoice_total_amount - $totalPurchaseCost- $item->delivery_charges*20/100)- ((($totalSalePriceDelivery-$purchasePrice)*16.67)/100);
-                            $totalSalePrice+=$item->invoice_total_amount - $item->delivery_charges*20/100;
-                        }else{
-                            $totalProfit+=($item->invoice_total_amount/1.2) - $totalPurchaseCost;
-                            $totalTrueProfit+=$item->invoice_total_amount/1.2 - $totalPurchaseCost;
-                            $totalExVat+= $item->invoice_total_amount/1.2;
+                    $totalProfit = 0;
+                    $totalTrueProfit = 0;
+                    $totalVatMargin = 0;
+                    $totalExVat = 0;
+                    $totalSalePrice = 0;
+                    if (count($item->stock)) {
+                        if ($item->stock[0]->vat_type === "Margin") {
+                            $totalProfit += $item->invoice_total_amount - $totalPurchaseCost - ($item->delivery_charges * 20 / 100);
+                            $totalVatMargin += ((($totalSalePriceDelivery - $purchasePrice) * 16.67) / 100);
+                            $totalTrueProfit += ($item->invoice_total_amount - $totalPurchaseCost - $item->delivery_charges * 20 / 100) - ((($totalSalePriceDelivery - $purchasePrice) * 16.67) / 100);
+                            $totalSalePrice += $item->invoice_total_amount - $item->delivery_charges * 20 / 100;
+                        } else {
+                            $totalProfit += ($item->invoice_total_amount / 1.2) - $totalPurchaseCost;
+                            $totalTrueProfit += $item->invoice_total_amount / 1.2 - $totalPurchaseCost;
+                            $totalExVat += $item->invoice_total_amount / 1.2;
                         }
                     }
                 }
-                if(count($item->ebay_orders)){
+                if (count($item->ebay_orders)) {
 
-                    if(count(array_unique($vatTypeList))>1){
-                        $itemVatType='Mixed';
-                    }else{
-                        if($item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100 > 0 ||  !$item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100  && $vatType==="Standard"){
-                            $itemVatType="Standard";
-                        }else{
-                            $itemVatType="Margin";
+                    if (count(array_unique($vatTypeList)) > 1) {
+                        $itemVatType = 'Mixed';
+                    } else {
+                        if ($item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100 > 0 || !$item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100 && $vatType === "Standard") {
+                            $itemVatType = "Standard";
+                        } else {
+                            $itemVatType = "Margin";
                         }
                     }
 
-                }else{
-                    $itemVatType=count($item->stock)>0 ? $item->stock[0]->vat_type:'-';
+                } else {
+                    $itemVatType = count($item->stock) > 0 ? $item->stock[0]->vat_type : '-';
                 }
 
-                if($item->buyers_ref!==''){
-                    $buyersRef=$item->buyers_ref;
-                }else{
-                    $buyersRef='-';
+                if ($item->buyers_ref !== '') {
+                    $buyersRef = $item->buyers_ref;
+                } else {
+                    $buyersRef = '-';
                 }
 
-                if(Auth::user()->type === 'admin' && $item->stock()->count() && $item->stock()->first()->batch_id){
-                    $itemName="Batch no ". $item->stock()->first()->batch->id .'-'.$item->stock()->first()->batch->name;
+                if (Auth::user()->type === 'admin' && $item->stock()->count() && $item->stock()->first()->batch_id) {
+                    $itemName = "Batch no " . $item->stock()->first()->batch->id . '-' . $item->stock()->first()->batch->name;
 
-                }else{
-                    $itemName=implode(', ',  str_replace( array('@rt'), ' GB', $item->stock->lists('name')) );
+                } else {
+                    $itemName = implode(', ', str_replace(array('@rt'), ' GB', $item->stock->lists('name')));
                 }
 //                if($item->item_name){
 //                    $itemName= str_replace( array('GB'), '@rt', $item->item_name);
 //                }
-                if($item->other_recycler){
-                    $shipTo=$item->other_recycler;
-                }else{
-                    if($item->customer_api_id){
-                        if($postCode !==""){
-                            $shipTo=$postCode;
+                if ($item->other_recycler) {
+                    $shipTo = $item->other_recycler;
+                } else {
+                    if ($item->customer_api_id) {
+                        if ($postCode !== "") {
+                            $shipTo = $postCode;
 
-                        }else{
-                            if(isset($customerUser->billingAddress->postcode)){
-                                $shipTo=strtoupper($customerUser->billingAddress->postcode);
-                            }elseif (isset($customerUser->address->postcode)){
-                                $shipTo=strtoupper($customerUser->address->postcode);
-                            }else{
-                                $shipTo='-';
+                        } else {
+                            if (isset($customerUser->billingAddress->postcode)) {
+                                $shipTo = strtoupper($customerUser->billingAddress->postcode);
+                            } elseif (isset($customerUser->address->postcode)) {
+                                $shipTo = strtoupper($customerUser->address->postcode);
+                            } else {
+                                $shipTo = '-';
                             }
 
                         }
 
-                    }else{
-                        $shipTo='-';
+                    } else {
+                        $shipTo = '-';
 
                     }
                 }
 
-                if(count($item->ebay_orders)){
-                    if(isset($item->ebay_orders)){
-                        if(is_null($item->delivery_charges)|| $item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100 > 0 ||  !$item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100  && $vatType==="Standard"){
-                            $saleTotalIncCarriage= $item->amount ? $item->amount_formatted : "Replacements";
-                        }else{
-                            $saleTotalIncCarriage= money_format(config('app.money_format'), $item->amount-($item->delivery_charges*20/100));
+                if (count($item->ebay_orders)) {
+                    if (isset($item->ebay_orders)) {
+                        if (is_null($item->delivery_charges) || $item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100 > 0 || !$item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100 && $vatType === "Standard") {
+                            $saleTotalIncCarriage = $item->amount ? $item->amount_formatted : "Replacements";
+                        } else {
+                            $saleTotalIncCarriage = money_format(config('app.money_format'), $item->amount - ($item->delivery_charges * 20 / 100));
 
                         }
                     }
 
-                }else{
-                    if(count($item->stock)){
-                        if(is_null($item->delivery_charges)|| $item->stock[0]->vat_type==="Standard"){
-                            $saleTotalIncCarriage=$item->amount ? $item->amount_formatted : "Replacements";
+                } else {
+                    if (count($item->stock)) {
+                        if (is_null($item->delivery_charges) || $item->stock[0]->vat_type === "Standard") {
+                            $saleTotalIncCarriage = $item->amount ? $item->amount_formatted : "Replacements";
 
-                        }else{
-                            $saleTotalIncCarriage=money_format(config('app.money_format'), $item->amount-($item->delivery_charges*20/100));
+                        } else {
+                            $saleTotalIncCarriage = money_format(config('app.money_format'), $item->amount - ($item->delivery_charges * 20 / 100));
 
                         }
                     }
 
                 }
 
-                if(count($item->ebay_orders)){
+                if (count($item->ebay_orders)) {
 
-                    if(count(array_unique($vatTypeList))>1){
-                        $saleTotalexVatincCarriage=money_format(config('app.money_format'),  $item->amount/1.2);
-                    }else{
-                        if($item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100 > 0 ||  !$item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100  && $vatType==="Standard"){
-                            $saleTotalexVatincCarriage=money_format(config('app.money_format'),  $item->amount/1.2);
-                        }else{
-                            $saleTotalexVatincCarriage='-';
+                    if (count(array_unique($vatTypeList)) > 1) {
+                        $saleTotalexVatincCarriage = money_format(config('app.money_format'), $item->amount / 1.2);
+                    } else {
+                        if ($item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100 > 0 || !$item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100 && $vatType === "Standard") {
+                            $saleTotalexVatincCarriage = money_format(config('app.money_format'), $item->amount / 1.2);
+                        } else {
+                            $saleTotalexVatincCarriage = '-';
                         }
                     }
 
 
-                }else{
-                    if(isset($item->stock[0]) && $item->stock[0]->vat_type==="Standard"){
-                        $saleTotalexVatincCarriage=money_format(config('app.money_format'),  $item->amount/1.2);
-                    }else{
-                        $saleTotalexVatincCarriage='-';
+                } else {
+                    if (isset($item->stock[0]) && $item->stock[0]->vat_type === "Standard") {
+                        $saleTotalexVatincCarriage = money_format(config('app.money_format'), $item->amount / 1.2);
+                    } else {
+                        $saleTotalexVatincCarriage = '-';
                     }
 
                 }
 
                 //  $totalProfitPer
-                if(count($item->ebay_orders)){
-                    if(count(array_unique($vatTypeList))>1){
+                if (count($item->ebay_orders)) {
+                    if (count(array_unique($vatTypeList)) > 1) {
 
-                        $totalProfitPer=$totalSalePrice?($ftProfit/$totalSalePrice)*100:0;
+                        $totalProfitPer = $totalSalePrice ? ($ftProfit / $totalSalePrice) * 100 : 0;
 
                         //  $totalProfitPer=$totalSalePrice?($totalProfit/$totalSalePrice) * 100:0 ;
-                    }else{
-                        if($item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100 > 0 ||  !($item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100)  && $vatType==="Standard"){
-                            $totalProfitPer=$totalExVat ?(number_format($totalProfit,2)/number_format($totalExVat,2)) * 100:0 ;
-                        }else{$totalProfitPer=$totalSalePrice?($totalProfit/$totalSalePrice) * 100:0;}
+                    } else {
+                        if ($item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100 > 0 || !($item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100) && $vatType === "Standard") {
+                            $totalProfitPer = $totalExVat ? (number_format($totalProfit, 2) / number_format($totalExVat, 2)) * 100 : 0;
+                        } else {
+                            $totalProfitPer = $totalSalePrice ? ($totalProfit / $totalSalePrice) * 100 : 0;
+                        }
                     }
-                }else{
-                    if(isset($item->stock[0]) && $item->stock[0]->vat_type === "Standard"){$totalProfitPer=$totalExVat ?($totalProfit/$totalExVat) * 100:0 ;}else{$totalProfitPer=$totalSalePrice?($totalProfit/$totalSalePrice) * 100:0 ;}
+                } else {
+                    if (isset($item->stock[0]) && $item->stock[0]->vat_type === "Standard") {
+                        $totalProfitPer = $totalExVat ? ($totalProfit / $totalExVat) * 100 : 0;
+                    } else {
+                        $totalProfitPer = $totalSalePrice ? ($totalProfit / $totalSalePrice) * 100 : 0;
+                    }
                 }
 
-                if(count($item->ebay_orders)){
-                    if(count(array_unique($vatTypeList))>1){
+                if (count($item->ebay_orders)) {
+                    if (count(array_unique($vatTypeList)) > 1) {
 
-                        $vatMrg=money_format(config('app.money_format'), $pVatMargin);
-                    }else{
-                        if(!$item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100  && $vatType==="Margin"){
-                            $vatMrg=money_format(config('app.money_format'), $totalVatMargin);
+                        $vatMrg = money_format(config('app.money_format'), $pVatMargin);
+                    } else {
+                        if (!$item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100 && $vatType === "Margin") {
+                            $vatMrg = money_format(config('app.money_format'), $totalVatMargin);
                         }
                     }
 
-                }else{
-                    if(isset($item->stock[0]) && $item->stock[0]->vat_type==="Margin"){
-                        $vatMrg=money_format(config('app.money_format'), $totalVatMargin);
-                    }else{
-                        $vatMrg="-";
+                } else {
+                    if (isset($item->stock[0]) && $item->stock[0]->vat_type === "Margin") {
+                        $vatMrg = money_format(config('app.money_format'), $totalVatMargin);
+                    } else {
+                        $vatMrg = "-";
                     }
 
                 }
 
 //$totalTrueProfitPer
-                if(count($item->ebay_orders)){
-                    if(count(array_unique($vatTypeList))>1){
-                        $totalTrueProfitPer=$totalSalePrice?($ftTrueProfit/$totalSalePrice) * 100:0;
+                if (count($item->ebay_orders)) {
+                    if (count(array_unique($vatTypeList)) > 1) {
+                        $totalTrueProfitPer = $totalSalePrice ? ($ftTrueProfit / $totalSalePrice) * 100 : 0;
 
                         //    $totalTrueProfitPer=$totalSalePrice?($totalTrueProfit/$totalSalePrice) * 100:0;
-                    }else{
-                        if($item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100 > 0 ||  !$item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100  && $vatType==="Standard"){
+                    } else {
+                        if ($item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100 > 0 || !$item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100 && $vatType === "Standard") {
 
-                            $totalTrueProfitPer=$totalExVat ?(number_format($totalTrueProfit,2)/number_format($totalExVat,2)) * 100:0 ;
-                        }else{
+                            $totalTrueProfitPer = $totalExVat ? (number_format($totalTrueProfit, 2) / number_format($totalExVat, 2)) * 100 : 0;
+                        } else {
 
-                            $totalTrueProfitPer=$totalSalePrice?($totalTrueProfit/$totalSalePrice) * 100:0 ;
+                            $totalTrueProfitPer = $totalSalePrice ? ($totalTrueProfit / $totalSalePrice) * 100 : 0;
 
                         }
                     }
-                }else{
+                } else {
 
-                    if(isset($item->stock[0]) && $item->stock[0]->vat_type === "Standard"){
-                        $totalTrueProfitPer=$totalExVat ?($totalTrueProfit/$totalExVat) * 100:0 ;
-                    }else{
-                        $totalTrueProfitPer=$totalSalePrice?($totalTrueProfit/$totalSalePrice) * 100:0 ;
+                    if (isset($item->stock[0]) && $item->stock[0]->vat_type === "Standard") {
+                        $totalTrueProfitPer = $totalExVat ? ($totalTrueProfit / $totalExVat) * 100 : 0;
+                    } else {
+                        $totalTrueProfitPer = $totalSalePrice ? ($totalTrueProfit / $totalSalePrice) * 100 : 0;
                     }
 
                 }
-                if(count(array_unique($vatTypeList))>1){
-                    $estProfit= $ftTrueProfit-$item->platform_fee-$item->shipping_cost;
-                }else{
-                    $estProfit= $totalTrueProfit-$item->platform_fee-$item->shipping_cost;
+                if (count(array_unique($vatTypeList)) > 1) {
+                    $estProfit = $ftTrueProfit - $item->platform_fee - $item->shipping_cost;
+                } else {
+                    $estProfit = $totalTrueProfit - $item->platform_fee - $item->shipping_cost;
                 }
 
                 //$totalEstProfitPre
-                if(count($item->ebay_orders)){
-                    if($item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100 > 0 ||  !$item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100  && $vatType==="Standard"){
-                        $vat=$item->amount/1.2;
-                        $totalEstProfitPre=$item->shipping_cost > 0 ?   number_format(($estProfit/$vat) * 100,2)."%" :'-';
+                if (count($item->ebay_orders)) {
+                    if ($item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100 > 0 || !$item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100 && $vatType === "Standard") {
+                        $vat = $item->amount / 1.2;
+                        $totalEstProfitPre = $item->shipping_cost > 0 ? number_format(($estProfit / $vat) * 100, 2) . "%" : '-';
 
 
-                    }else{
-                        if(is_null($item->delivery_charges)){
-                            $totalEstProfitPre=$item->shipping_cost > 0 && $item->amount > 0 ?   number_format(($estProfit/$item->amount) * 100,2)."%" :'-';
-                        }else{
-                            $amount=$item->amount-$item->delivery_charges*20/100;
-                            $totalEstProfitPre=$item->shipping_cost > 0 && $amount > 0 ?   number_format(($estProfit/$amount) * 100,2)."%" :'-';
+                    } else {
+                        if (is_null($item->delivery_charges)) {
+                            $totalEstProfitPre = $item->shipping_cost > 0 && $item->amount > 0 ? number_format(($estProfit / $item->amount) * 100, 2) . "%" : '-';
+                        } else {
+                            $amount = $item->amount - $item->delivery_charges * 20 / 100;
+                            $totalEstProfitPre = $item->shipping_cost > 0 && $amount > 0 ? number_format(($estProfit / $amount) * 100, 2) . "%" : '-';
                         }
                     }
-                }else{
-                    if(count($item->stock)>0){
-                        if($item->stock[0]->vat_type === "Standard"){
-                            $vat=$item->amount/1.2;
-                            $totalEstProfitPre=$item->shipping_cost > 0 ?   number_format(($estProfit/$vat) * 100,2)."%" :'-';
-                        }else{
-                            if(is_null($item->delivery_charges)){
-                                $totalEstProfitPre= $item->shipping_cost > 0 ?   number_format(($estProfit/$item->amount) * 100,2)."%" :'-';
-                            }else{
+                } else {
+                    if (count($item->stock) > 0) {
+                        if ($item->stock[0]->vat_type === "Standard") {
+                            $vat = $item->amount / 1.2;
+                            $totalEstProfitPre = $item->shipping_cost > 0 ? number_format(($estProfit / $vat) * 100, 2) . "%" : '-';
+                        } else {
+                            if (is_null($item->delivery_charges)) {
+                                $totalEstProfitPre = $item->shipping_cost > 0 ? number_format(($estProfit / $item->amount) * 100, 2) . "%" : '-';
+                            } else {
                                 $amount = $item->amount - $item->delivery_charges * 20 / 100;
-                                $totalEstProfitPre= $item->shipping_cost > 0 ?   number_format(($estProfit/$amount) * 100,2)."%" :'-' ;
+                                $totalEstProfitPre = $item->shipping_cost > 0 ? number_format(($estProfit / $amount) * 100, 2) . "%" : '-';
 
                             }
                         }
@@ -3164,37 +3181,37 @@ class SalesController extends Controller
                     }
 
                 }
-                if($item->invoice_creation_status === 'success'){
+                if ($item->invoice_creation_status === 'success') {
 
-                    if(!is_null($item->invoice_doc_number)){
-                        $invoice="Invoice #". $item->invoice_number ."-".$item->invoice_doc_number ;
-                    }else{
-                        $invoice="Invoice #". $item->invoice_number ;
+                    if (!is_null($item->invoice_doc_number)) {
+                        $invoice = "Invoice #" . $item->invoice_number . "-" . $item->invoice_doc_number;
+                    } else {
+                        $invoice = "Invoice #" . $item->invoice_number;
                     }
 
-                }elseif ($item->other_recycler){
-                    $invoice= "Recyclers Order #".$item->recyclers_order_number ? : '-';
-                }else{
-                    $invoice= $item->invoice_creation_status_alt;
+                } elseif ($item->other_recycler) {
+                    $invoice = "Recyclers Order #" . $item->recyclers_order_number ?: '-';
+                } else {
+                    $invoice = $item->invoice_creation_status_alt;
                 }
 
-                foreach($item->stock as $stock) {
-                    if($stock->ps_model){
-                        if(!is_null($stock->supplier_id)){
+                foreach ($item->stock as $stock) {
+                    if ($stock->ps_model) {
+                        if (!is_null($stock->supplier_id)) {
 
 
-                            if(!is_null($stock->supplier->recomm_ps)){
+                            if (!is_null($stock->supplier->recomm_ps)) {
                                 $totalItemsSoldPS++;
-                                $supplierPre=$stock->supplier->recomm_ps;
+                                $supplierPre = $stock->supplier->recomm_ps;
 
-                                if($stock->vat_type===\App\Stock::VAT_TYPE_STD){
-                                    $est=($stock->total_price_ex_vat*$stock->supplier->recomm_ps)/100;
-                                    $estProfitSPModel+=$est;
-                                }else{
+                                if ($stock->vat_type === Stock::VAT_TYPE_STD) {
+                                    $est = ($stock->total_price_ex_vat * $stock->supplier->recomm_ps) / 100;
+                                    $estProfitSPModel += $est;
+                                } else {
 
-                                    $salePrice=$stock->sale_price - $stock->marg_vat;
-                                    $estM=($salePrice*$stock->supplier->recomm_ps)/100;
-                                    $estProfitSPModel+=$estM;
+                                    $salePrice = $stock->sale_price - $stock->marg_vat;
+                                    $estM = ($salePrice * $stock->supplier->recomm_ps) / 100;
+                                    $estProfitSPModel += $estM;
 
                                 }
 
@@ -3204,25 +3221,25 @@ class SalesController extends Controller
                         }
 
 
-                    }else{
+                    } else {
                         $totalItemsSoldNonPS++;
-                        $estProfitNonSPModel+=$stock->true_profit - $item->platform_fee;
+                        $estProfitNonSPModel += $stock->true_profit - $item->platform_fee;
                     }
                 }
-                if(abs($estProfitSPModel)>0){
-                    if(abs($estProfitNonSPModel) >0){
-                        $totalNonPsModel+=$estProfitNonSPModel+ $item->delivery_charges;
+                if (abs($estProfitSPModel) > 0) {
+                    if (abs($estProfitNonSPModel) > 0) {
+                        $totalNonPsModel += $estProfitNonSPModel + $item->delivery_charges;
                     }
-                }else{
-                    $totalNonPsModel+=$estProfit;
+                } else {
+                    $totalNonPsModel += $estProfit;
                 }
-                if(abs($estProfitSPModel)>0){
-                    if($totalItemsSoldPS && !$totalItemsSoldNonPS){
+                if (abs($estProfitSPModel) > 0) {
+                    if ($totalItemsSoldPS && !$totalItemsSoldNonPS) {
 
-                        $totalPsModel+=($estProfit *$supplierPre)/100;
+                        $totalPsModel += ($estProfit * $supplierPre) / 100;
 
-                    }else{
-                        $totalPsModel+= ($estProfitSPModel + $item->delivery_charges)- $item->shipping_cost;
+                    } else {
+                        $totalPsModel += ($estProfitSPModel + $item->delivery_charges) - $item->shipping_cost;
                     }
                 }
                 $psNonModel = 0;
@@ -3235,64 +3252,69 @@ class SalesController extends Controller
                     $psModel = ($estProfitSPModel + $item->delivery_charges) - $item->shipping_cost;
                 }
 
-                if($totalItemsSoldPS && !$totalItemsSoldNonPS){
-                    $totalNetProfit=($estProfit *$supplierPre)/100;
-                }elseif($estProfitSPModel>0){
-                    $totalNetProfit=$psNonModel + $psModel;
+                if ($totalItemsSoldPS && !$totalItemsSoldNonPS) {
+                    $totalNetProfit = ($estProfit * $supplierPre) / 100;
+                } elseif ($estProfitSPModel > 0) {
+                    $totalNetProfit = $psNonModel + $psModel;
 
+                } else {
+                    $totalNetProfit = $estProfit;
                 }
-                else{
-                    $totalNetProfit=$estProfit;
+                foreach ($item->stock as $stock) {
+                    $PStotalExVat += $stock->total_price_ex_vat;
                 }
-                foreach($item->stock as $stock) {$PStotalExVat+= $stock->total_price_ex_vat;}
-                foreach($item->stock as $stock) {$PSTotalSalePrice+= $stock->sale_price;}
-                foreach($item->stock as $stock) {$PSTotalVatMargin+= $stock->marg_vat;}
+                foreach ($item->stock as $stock) {
+                    $PSTotalSalePrice += $stock->sale_price;
+                }
+                foreach ($item->stock as $stock) {
+                    $PSTotalVatMargin += $stock->marg_vat;
+                }
 
-                if(count($item->ebay_orders)){
-                    if($item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100 > 0 ||  !$item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100  && $vatType==="Standard"){
-                        $fVatType=\App\Stock::VAT_TYPE_STD;
-                    }else{
-                        $fVatType=\App\Stock::VAT_TYPE_MAG;
+                if (count($item->ebay_orders)) {
+                    if ($item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100 > 0 || !$item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100 && $vatType === "Standard") {
+                        $fVatType = Stock::VAT_TYPE_STD;
+                    } else {
+                        $fVatType = Stock::VAT_TYPE_MAG;
                     }
-                }else{
-                    if(isset($item->stock[0]) && $item->stock[0]->vat_type==="Standard"){
-                        $fVatType=\App\Stock::VAT_TYPE_STD;
-                    }else{
-                        $fVatType=\App\Stock::VAT_TYPE_MAG;
+                } else {
+                    if (isset($item->stock[0]) && $item->stock[0]->vat_type === "Standard") {
+                        $fVatType = Stock::VAT_TYPE_STD;
+                    } else {
+                        $fVatType = Stock::VAT_TYPE_MAG;
                     }
                 }
-                if($fVatType===\App\Stock::VAT_TYPE_STD){
-                    $finaNetProfit+= $PStotalExVat>0?  ($totalNetProfit/$PStotalExVat)*100:0;
-                }else{
-                    $totalVatAndSalePrice=$PSTotalSalePrice-$PSTotalVatMargin;
-                    $finaNetProfit+=$totalVatAndSalePrice>0 ? ($totalNetProfit/$totalVatAndSalePrice)*100:0;
+                if ($fVatType === Stock::VAT_TYPE_STD) {
+                    $finaNetProfit += $PStotalExVat > 0 ? ($totalNetProfit / $PStotalExVat) * 100 : 0;
+                } else {
+                    $totalVatAndSalePrice = $PSTotalSalePrice - $PSTotalVatMargin;
+                    $finaNetProfit += $totalVatAndSalePrice > 0 ? ($totalNetProfit / $totalVatAndSalePrice) * 100 : 0;
                 }
-                if(count($item->stock)){
-                    $item->created_at= Carbon::createFromFormat('Y-m-d H:i:s', $item->created_at)->format('Y-m-d');
-                    $item->customer= $customerName;
-                    $item->ship_to=$shipTo;
-                    $item->item_count=count($item->stock)>0?count($item->stock):0;
-                    $item->buyers_ref=$buyersRef;
-                    $item->item_name=$itemName;
-                    $item->vat_type=$itemVatType;
-                    $item->sale_carriage=$saleTotalIncCarriage;
-                    $item->sale_total_ex_vat= $saleTotalexVatincCarriage;
-                    $item->total_purchase_cost=$totalPurchaseCost>0? money_format(config('app.money_format'), $totalPurchaseCost):'-';
-                    $item->profit= $itemVatType==="Mixed"? money_format(config('app.money_format'), $ftProfit)  :money_format(config('app.money_format'), $totalProfit);
-                    $item->profit_per= number_format($totalProfitPer,2)."%";
-                    $item->margin_vat=$vatMrg;
-                    $item->invoice=$invoice;
-                    $item->true_profit= $itemVatType==="Mixed" ?  money_format(config('app.money_format'), $ftTrueProfit)  : money_format(config('app.money_format'), $totalTrueProfit);
-                    $item->true_profit_pre=number_format($totalTrueProfitPer,2)."%";
+                if (count($item->stock)) {
+                    $item->created_at = Carbon::createFromFormat('Y-m-d H:i:s', $item->created_at)->format('Y-m-d');
+                    $item->customer = $customerName;
+                    $item->ship_to = $shipTo;
+                    $item->item_count = count($item->stock) > 0 ? count($item->stock) : 0;
+                    $item->buyers_ref = $buyersRef;
+                    $item->item_name = $itemName;
+                    $item->vat_type = $itemVatType;
+                    $item->sale_carriage = $saleTotalIncCarriage;
+                    $item->sale_total_ex_vat = $saleTotalexVatincCarriage;
+                    $item->total_purchase_cost = $totalPurchaseCost > 0 ? money_format(config('app.money_format'), $totalPurchaseCost) : '-';
+                    $item->profit = $itemVatType === "Mixed" ? money_format(config('app.money_format'), $ftProfit) : money_format(config('app.money_format'), $totalProfit);
+                    $item->profit_per = number_format($totalProfitPer, 2) . "%";
+                    $item->margin_vat = $vatMrg;
+                    $item->invoice = $invoice;
+                    $item->true_profit = $itemVatType === "Mixed" ? money_format(config('app.money_format'), $ftTrueProfit) : money_format(config('app.money_format'), $totalTrueProfit);
+                    $item->true_profit_pre = number_format($totalTrueProfitPer, 2) . "%";
 
-                    $item->est_net_profit=money_format(config('app.money_format'), $estProfit) ;
+                    $item->est_net_profit = money_format(config('app.money_format'), $estProfit);
                     //  $item->est_net_profit_pre=$totalEstProfitPre;
-                    $item->est_net_profit_non_ps=money_format(config('app.money_format'), $totalNonPsModel);
-                    $item->est_net_profit_ps=money_format(config('app.money_format'), $totalPsModel);
-                    $item->items_sold_non_ps=$totalItemsSoldNonPS;
-                    $item->items_sold_ps=$totalItemsSoldPS;
-                    $item->total_est_net_profit=money_format(config('app.money_format'), $totalNetProfit);
-                    $item->net_profit_pre=number_format($finaNetProfit,2).'%';
+                    $item->est_net_profit_non_ps = money_format(config('app.money_format'), $totalNonPsModel);
+                    $item->est_net_profit_ps = money_format(config('app.money_format'), $totalPsModel);
+                    $item->items_sold_non_ps = $totalItemsSoldNonPS;
+                    $item->items_sold_ps = $totalItemsSoldPS;
+                    $item->total_est_net_profit = money_format(config('app.money_format'), $totalNetProfit);
+                    $item->net_profit_pre = number_format($finaNetProfit, 2) . '%';
 
                     $row = array_map(function ($field) use ($item) {
                         return $item->$field;
@@ -3300,7 +3322,6 @@ class SalesController extends Controller
                     fputcsv($fh, $row);
 
                 }
-
 
 
             }
@@ -3316,39 +3337,38 @@ class SalesController extends Controller
     }
 
 
-    public function deliveryNoteDownload($id){
+    public function deliveryNoteDownload($id)
+    {
 
-        $delivery=App\DeliveryNotes::where('sales_id',$id)->first();
-        $sales=Sale::find($id);
-        $ebayOrder=App\EbayOrders::where('new_sale_id',$id)->first();
-        $buyer_name='';
-        $shipping_name='';
-        $stockList='';
-        $note='';
-        $atArray=[];
-        $condition='';
+        $delivery = DeliveryNotes::where('sales_id', $id)->first();
+        $sales = Sale::find($id);
+        $ebayOrder = EbayOrders::where('new_sale_id', $id)->first();
+        $buyer_name = '';
+        $shipping_name = '';
+        $stockList = '';
+        $note = '';
+        $atArray = [];
+        $condition = '';
 
-        if(!is_null($ebayOrder)){
-            $note.="Notes:". str_replace(' ', '', $ebayOrder->platform)." Order: ".$ebayOrder->sales_record_number ;
+        if (!is_null($ebayOrder)) {
+            $note .= "Notes:" . str_replace(' ', '', $ebayOrder->platform) . " Order: " . $ebayOrder->sales_record_number;
 
 
-            foreach ($ebayOrder->EbayOrderItems as $item){
+            foreach ($ebayOrder->EbayOrderItems as $item) {
                 // $condition=$item->quantity." X ";
 
-                if($ebayOrder->platform === Stock::PLATFROM_BACKMARCKET)
-                {
-                    $condition=getBackMarketCondition($item->condition);
-                    $stockList.=$item->quantity." X ".' ';
+                if ($ebayOrder->platform === Stock::PLATFROM_BACKMARCKET) {
+                    $condition = getBackMarketCondition($item->condition);
+                    $stockList .= $item->quantity . " X " . ' ';
                 }
 
 
             }
             //   dd($note);
-            if(count($sales->stock()->get()))
-            {
-                foreach ($sales->stock()->get() as $stock){
-                    $stock_name=$stock->name.' '.$stock->capacity.'-'.$stock->colour.' '.$condition;
-                    array_push($atArray, ($item->quantity/count($sales->stock()->get()))." X ".' '.$stock_name);
+            if (count($sales->stock()->get())) {
+                foreach ($sales->stock()->get() as $stock) {
+                    $stock_name = $stock->name . ' ' . $stock->capacity . '-' . $stock->colour . ' ' . $condition;
+                    array_push($atArray, ($item->quantity / count($sales->stock()->get())) . " X " . ' ' . $stock_name);
 
 
                 }
@@ -3356,24 +3376,20 @@ class SalesController extends Controller
         }
 
 
+        if (!is_null($ebayOrder)) {
+            $buyer_name = $ebayOrder->buyer_name;
+            $shipping_name = $ebayOrder->post_to_name;
 
-
-
-        if(!is_null($ebayOrder)){
-            $buyer_name=$ebayOrder->buyer_name;
-            $shipping_name=$ebayOrder->post_to_name;
-
-        }else{
-            if($sales->platform===Stock::PLATFROM_RECOMM){
-                $buyer_name=$sales->user->first_name.' '.$sales->user->last_name;
-                $shipping_name=$sales->user->first_name.' '.$sales->user->last_name;
+        } else {
+            if ($sales->platform === Stock::PLATFROM_RECOMM) {
+                $buyer_name = $sales->user->first_name . ' ' . $sales->user->last_name;
+                $shipping_name = $sales->user->first_name . ' ' . $sales->user->last_name;
             }
         }
-        if(!is_null($delivery)){
-            $pdf = PDF::loadView('sales.delivery-note-pdf', compact('delivery','sales','buyer_name','shipping_name','note','atArray','condition'));
+        if (!is_null($delivery)) {
+            $pdf = PDF::loadView('sales.delivery-note-pdf', compact('delivery', 'sales', 'buyer_name', 'shipping_name', 'note', 'atArray', 'condition'));
             return $pdf->download('delivery_note.pdf');
         }
-
 
 
         // return view('sales.delivery-note-pdf',compact('delivery','sales','buyer_name','shipping_name','note','atArray','condition'));
