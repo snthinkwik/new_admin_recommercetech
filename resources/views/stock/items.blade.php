@@ -313,7 +313,8 @@ foreach ($stock as $item) {
 					</td>
 					{{--<td>{{ $item->vat_type }}</td>--}}
 					@if (Auth::user()->type !== 'user')
-						<td>{{ $item->purchase_date ? $item->purchase_date->format('Y-m-d') : '' }}</td>
+{{--						<td>{{ $item->purchase_date ? $item->purchase_date->format('Y-m-d') : '' }}</td>--}}
+                        <td>{{$item->purchase_date }}</td>
 					@endif
 					@if (Auth::user()->type == 'admin' && in_array(Auth::user()->admin_type, ['admin', 'manager']))
 					<td>

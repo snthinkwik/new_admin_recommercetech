@@ -130,7 +130,7 @@ $billingAddress=json_decode($delivery->billing_address);
 
 $shippingAddress=json_decode($delivery->shipping_address);
 
-if($sales->platform===\App\Stock::PLATFROM_MOBILE_ADVANTAGE){
+if($sales->platform===\App\Models\Stock::PLATFROM_MOBILE_ADVANTAGE){
     $logoPath=public_path('img/mobile_advantage_.jpg');
     $width="180";
     $height="50" ;

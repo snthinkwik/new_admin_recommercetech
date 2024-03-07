@@ -6,8 +6,8 @@
 
                     <div class="d-flex  bg-warning-dark dashboardCard">
                         <div class="px-3 pt-4 pb-3" style="width: 50%;border-right:5px solid #ffffff ">
-{{--                            <h3 class="pb-3">{{money_format(config('app.money_format'), $counting[0]['total_res']- $counting[0]['value_of_credited'])  }}</h3>--}}
-                            <h3 class="pb-3">{{$counting[0]['total_res']- $counting[0]['value_of_credited']  }}</h3>
+                            <h3 class="pb-3">{{money_format($counting[0]['total_res']- $counting[0]['value_of_credited'])  }}</h3>
+
                             <p class="mb-0">Total Revenue </p>
 
 
@@ -68,8 +68,8 @@
             <div class="col-sm-3 col-md-3 col-lg-3">
                 <a class="text-white" href="">
                     <div class="px-3 pt-4 pb-3 bg-danger-dark mb-4 dashboardCard">
-{{--                        <h3 class="pb-3">{{money_format(config('app.money_format'), $counting[0]['total_non_model'])}}</h3>--}}
-                        <h3 class="pb-3">{{$counting[0]['total_non_model']}}</h3>
+                        <h3 class="pb-3">{{money_format($counting[0]['total_non_model'])}}</h3>
+
                         <p class="mb-0">Est Profit Non P/S</p>
                     </div>
                 </a>
@@ -89,8 +89,7 @@
             <div class="col-sm-3 col-md-3 col-lg-3">
                 <a class="text-white" href="">
                     <div class="px-3 pt-4 pb-3 bg-danger-dark mb-4 dashboardCard">
-{{--                        <h3 class="pb-3">{{ money_format(config('app.money_format'), $counting[0]['total_sp_model']) }}</h3>--}}
-                        <h3 class="pb-3">{{ $counting[0]['total_sp_model'] }}</h3>
+                        <h3 class="pb-3">{{ money_format($counting[0]['total_sp_model']) }}</h3>
                         <p class="mb-0">Est Profit P/S</p>
                     </div>
                 </a>
@@ -106,8 +105,8 @@
             <div class="col-sm-3 col-md-3 col-lg-3">
                 <a class="text-white" href="">
                     <div class="px-3 pt-4 pb-3 bg-success-dark mb-4 dashboardCard">
-{{--                        <h3 class="pb-3 text-white">{{money_format(config('app.money_format'),$counting[0]['value_of_credited']) }}</h3>--}}
-                        <h3 class="pb-3 text-white">{{$counting[0]['value_of_credited'] }}</h3>
+                        <h3 class="pb-3 text-white">{{money_format($counting[0]['value_of_credited']) }}</h3>
+
                         <p class="mb-0 text-white">Value of Credit Notes</p>
                     </div>
                 </a>
@@ -125,8 +124,8 @@
             <div class="col-sm-3 col-md-3 col-lg-3">
                 <a class="text-white" href="">
                     <div class="px-3 pt-4 pb-3 bg-primary mb-4 dashboardCard">
-{{--                        <h3 class="pb-3">{{ money_format(config('app.money_format'), $counting[0]['total_est_net_profit'] - $counting[0]['profit_lost_from_customer'])}}</h3>--}}
-                        <h3 class="pb-3">{{ $counting[0]['total_est_net_profit'] - $counting[0]['profit_lost_from_customer']}}</h3>
+                        <h3 class="pb-3">{{ money_format($counting[0]['total_est_net_profit'] - $counting[0]['profit_lost_from_customer'])}}</h3>
+
                         <p class="mb-0">Total Est Net Profit</p>
                     </div>
                 </a>
@@ -208,36 +207,34 @@
                     <td>{{$data['number_of_sold']}} </td>
 
                     <td @if($data['rev']<0) class="text-danger" @endif>
-{{--                        {{ money_format(config('app.money_format'),$data['rev'])}}--}}
-                        {{ $data['rev']}}
+                        {{ money_format($data['rev'])}}
+
                     </td>
                     <td>
-{{--                        {{ money_format(config('app.money_format'),$data['est_net_profit'])}}--}}
-                        {{ $data['est_net_profit']}}
+                        {{ money_format($data['est_net_profit'])}}
+
                     </td>
                     <td>{{$data['total_items_sold_non_ps']}}</td>
                     <td>
-{{--                        {{money_format(config('app.money_format'),$data['est_profit_sp_non_model'])}}--}}
-
-                        {{$data['est_profit_sp_non_model']}}
+                        {{money_format($data['est_profit_sp_non_model'])}}
                     </td>
                     <td>{{$data['total_items_sold_ps']}}</td>
                     <td>
-{{--                        {{money_format(config('app.money_format'),$data['est_profit_sp_model'])}} --}}
+                        {{money_format($data['est_profit_sp_model'])}}
 
-                        {{$data['est_profit_sp_model']}}
+
                     </td>
                     @if(abs($data['est_profit_sp_non_model'])>0 && abs($data['est_profit_sp_model']) > 0 )
                         <td style="background: #808080">
-{{--                            {{ money_format(config('app.money_format'),$data['est_profit_sp_model']+ $data['est_profit_sp_non_model'])}}--}}
+                            {{ money_format($data['est_profit_sp_model']+ $data['est_profit_sp_non_model'])}}
 
-                            {{ $data['est_profit_sp_model']+ $data['est_profit_sp_non_model']}}
+
                         </td>
                     @else
 
                         <td style="background: #808080">
-{{--                            {{ money_format(config('app.money_format'),$data['total_est_net_profit']) }}--}}
-                            {{ $data['total_est_net_profit'] }}
+                            {{ money_format($data['total_est_net_profit']) }}
+
                         </td>
                     @endif
 

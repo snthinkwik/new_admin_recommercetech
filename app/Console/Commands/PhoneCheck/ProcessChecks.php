@@ -1,10 +1,10 @@
 <?php namespace App\Console\Commands\PhoneCheck;
 
-use App\Models\Mobicode\GsxCheck;
-use App\Models\PhoneCheck;
-use App\Models\Product;
-use App\Models\Stock;
-use App\Models\StockLog;
+use App\Mobicode\GsxCheck;
+use App\PhoneCheck;
+use App\Product;
+use App\Stock;
+use App\StockLog;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -12,47 +12,51 @@ use Symfony\Component\Console\Input\InputArgument;
 
 class ProcessChecks extends Command {
 
-	/**
-	 * The console command name.
-	 *
-	 * @var string
-	 */
-	protected $name = 'phone-check:process-checks';
+    /**
+     * The console command name.
+     *
+     * @var string
+     */
+    protected $name = 'phone-check:process-checks';
 
-	/**
-	 * The console command description.
-	 *
-	 * @var string
-	 */
-	protected $description = 'Check if Make, Model, Capacity, IMEI, Network, Does Touch ID Work
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Check if Make, Model, Capacity, IMEI, Network, Does Touch ID Work
 	                          in report is same as item data';
 
-	/**
-	 * Execute the console command.
-	 *
-	 * @return mixed
-	 */
-	public function handle()
-	{
+    /**
+     * Execute the console command.
+     *
+     * @return mixed
+     */
+    public function fire()
+    {
         $date = \Carbon\Carbon::today()->subDays(2);
         $checks = PhoneCheck::where('status', PhoneCheck::STATUS_NEW)->where('created_at', '>=', $date)->get();
 
-		if(!count($checks)) {
-			$this->info("Nothing to Process");
-			return;
-		}
+        if(!count($checks)) {
+            $this->info("Nothing to Process");
+            return;
+        }
 
-		$this->info("Checks Found: ".$checks->count());
+        $this->info("Checks Found: ".$checks->count());
         $click2Unlock = app('App\Contracts\Click2Unlock');
-		foreach($checks as $check) {
+        foreach($checks as $check) {
 
-			$stock = $check->stock;
-			if($stock && !in_array($stock->status,[Stock::STATUS_SOLD,Stock::STATUS_PAID,Stock::STATUS_LOST,Stock::STATUS_RETURNED_TO_SUPPLIER]) ) {
-				$this->info("Check: " . $check->id . " | Stock: $stock->id");
-				$report = json_decode($check->response);
+
+
+            $stock = $check->stock;
+            if($stock && !in_array($stock->status,[Stock::STATUS_SOLD,Stock::STATUS_PAID,Stock::STATUS_LOST,Stock::STATUS_RETURNED_TO_SUPPLIER]) ) {
+                $this->info("Check: " . $check->id . " | Stock: $stock->id");
+
+                $report = json_decode($check->response);
+
                 $productName=$report->Model.' '.$report->Memory.' '.$report->Color;
                 $name=str_replace('+',' Plus',$productName);
-              //  $productName=Product::where('product_name',$name)->where('archive','0')-
+                //  $productName=Product::where('product_name',$name)->where('archive','0')-
 
                 $productName=Product::where('slug','!=',$report->ProductCode)->where('slug',$report->ProductCode)->where('archive','0')->first();
                 if(!is_null($productName)){
@@ -82,115 +86,122 @@ class ProcessChecks extends Command {
 
                 }
 
-				if(!$report){
-				        $reportList = "Test Status:- " . "Untested in Recomm system and Reports" . "\n";
-                        $contains = str_contains($reportList, $stock->notes);
-                        if(!$contains){
-                            $stock->notes = $reportList;
-                        }
-                        $stock->test_status=Stock::TEST_STATUS_UNTESTED;
-                        $stock->save();
+                if(!$report){
+                    $reportList = "Test Status:- " . "Untested in Recomm system and Reports" . "\n";
+                    $contains = str_contains($reportList, $stock->notes);
+                    if(!$contains){
+                        $stock->notes = $reportList;
+                    }
+                    $stock->test_status=Stock::TEST_STATUS_UNTESTED;
+                    $stock->save();
 
 
                 }
-				if (isset($report->ResolvedMake) && $report->ResolvedMake && $stock->make != $report->ResolvedMake) {
-					$stock->make = $report->ResolvedMake;
-				} elseif (isset($report->Make) && $report->Make && $stock->make != $report->Make) {
-					$stock->make = $report->Make;
-				}
-				if(is_null($product)){
+                if(!empty($report->LPN)){
+                    $stock->imei=$report->MEID;
+
+                }
+                if (isset($report->ResolvedMake) && $report->ResolvedMake && $stock->make != $report->ResolvedMake) {
+                    $stock->make = $report->ResolvedMake;
+                } elseif (isset($report->Make) && $report->Make && $stock->make != $report->Make) {
+                    $stock->make = $report->Make;
+                }
+                if(is_null($product)){
                     if ($stock->name != $report->Model && $report->Model) {
                         $stock->name = $report->Model;
                     }
                 }
 
-				if ($stock->network != $report->Carrier && $report->Carrier) {
-					if (!$stock->network_checks()->where('status', GsxCheck::STATUS_DONE)->count()) {
-						$stock->network = $report->Carrier;
-					}
-				}
-				if ($stock->capacity != $report->Memory && $report->Memory) {
-					$stock->capacity = $report->Memory;
-				}
-				if ($stock->colour != $report->Color && $report->Color) {
-					$stock->colour = $report->Color;
-				}
+                if ($stock->network != $report->Carrier && $report->Carrier) {
+                    if (!$stock->network_checks()->where('status', GsxCheck::STATUS_DONE)->count()) {
+                        $stock->network = $report->Carrier;
+                    }
+                }
+                if ($stock->capacity != $report->Memory && $report->Memory) {
+                    $stock->capacity = $report->Memory;
+                }
+                if ($stock->colour != $report->Color && $report->Color) {
+                    $stock->colour = $report->Color;
+                }
 
-				if(isset($report->Grade) && $report->Grade && $report->Grade != $stock->condition) {
-					$stock->condition = $report->Grade;
-				}
+                if(isset($report->Grade) && $report->Grade && $report->Grade != $stock->condition) {
+                    $stock->condition = $report->Grade;
+                }
 
-				if(isset($report->Serial) && $report->Serial && $report->Serial != $stock->serial) {
-					$stock->serial = $report->Serial;
-				}
+                if(isset($report->Serial) && $report->Serial && $report->Serial != $stock->serial) {
+                    $stock->serial = $report->Serial;
+                }
 
 
 
-				$failed = ""; // notes
+                $failed = ""; // notes
                 $reportList='';
 
-				if ($report->Failed) {
-					$failedFormatted = $report->Failed;
-					if (strpos($failedFormatted, 'Headset Port') !== false && strpos($failedFormatted, 'Headset-Right') !== false) {
-						$failedFormatted = str_replace(',Headset-Right', '', $failedFormatted);
-					}
-					if (strpos($failedFormatted, 'Headset Port') !== false && strpos($failedFormatted, 'Headset-Left') !== false) {
-						$failedFormatted = str_replace(',Headset-Left', '', $failedFormatted);
-					}
+                if ($report->Failed) {
+                    $failedFormatted = $report->Failed;
+                    if (strpos($failedFormatted, 'Headset Port') !== false && strpos($failedFormatted, 'Headset-Right') !== false) {
+                        $failedFormatted = str_replace(',Headset-Right', '', $failedFormatted);
+                    }
+                    if (strpos($failedFormatted, 'Headset Port') !== false && strpos($failedFormatted, 'Headset-Left') !== false) {
+                        $failedFormatted = str_replace(',Headset-Left', '', $failedFormatted);
+                    }
 
-					if (strpos(strtolower($report->Model), 'iphone 7') !== false && strpos($failedFormatted, 'Front Microphone')
-                         !== false && strpos($failedFormatted, 'Microphone')
-                         !== false && strpos($failedFormatted, 'Video Microphone') !== false
+                    if (strpos(strtolower($report->Model), 'iphone 7') !== false && strpos($failedFormatted, 'Front Microphone')
+                        !== false && strpos($failedFormatted, 'Microphone')
+                        !== false && strpos($failedFormatted, 'Video Microphone') !== false
                     ) {
-						$failedFormatted = str_replace(',Front Microphone', '', $failedFormatted);
-						$failedFormatted = str_replace('Front Microphone', '', $failedFormatted);
-						$failedFormatted = str_replace(',Microphone', '', $failedFormatted);
-						$failedFormatted = str_replace(',Video Microphone', '', $failedFormatted);
-						$failedFormatted = str_replace('Video Microphone', '', $failedFormatted);
-						$failedFormatted = str_replace('Microphone', '', $failedFormatted);
-						if (strlen($failedFormatted) > 0) {
-							$failedFormatted .= ",Sound IC Issue";
-						} else {
-							$failedFormatted = "Sound IC Issue";
-						}
-					}
+                        $failedFormatted = str_replace(',Front Microphone', '', $failedFormatted);
+                        $failedFormatted = str_replace('Front Microphone', '', $failedFormatted);
+                        $failedFormatted = str_replace(',Microphone', '', $failedFormatted);
+                        $failedFormatted = str_replace(',Video Microphone', '', $failedFormatted);
+                        $failedFormatted = str_replace('Video Microphone', '', $failedFormatted);
+                        $failedFormatted = str_replace('Microphone', '', $failedFormatted);
+                        if (strlen($failedFormatted) > 0) {
+                            $failedFormatted .= ",Sound IC Issue";
+                        } else {
+                            $failedFormatted = "Sound IC Issue";
+                        }
+                    }
 
-					$failedFormatted = explode(',', $failedFormatted);
-					$this->info($stock->notes);
-					foreach ($failedFormatted as &$f) {
-						//$f = 'Failed ' . $f;
-						$this->comment($f);
-					}
-					$failed = implode(", ", $failedFormatted);
-					$reportList .= "Failed:-" . rtrim($failed,', ') . "\n";
-
-
-				}
+                    $failedFormatted = explode(',', $failedFormatted);
+                    $this->info($stock->notes);
+                    foreach ($failedFormatted as &$f) {
+                        //$f = 'Failed ' . $f;
+                        $this->comment($f);
+                    }
+                    $failed = implode(", ", $failedFormatted);
+                    $reportList .= "Failed:-" . rtrim($failed,', ') . "\n";
 
 
+                }
 
-				if (strpos($report->Passed, 'LCD') !== false && strpos($report->Passed, 'Glass Cracked') !== false) {
-					$this->info('good lcd, good glass');
-					$stock->lcd_status = Stock::LCD_GOOD_GLASS_GOOD;
-				} elseif (strpos($report->Passed, 'LCD') !== false && strpos($report->Failed, 'Glass Cracked') !== false) {
-					$this->info('good lcd, broken glass');
-					$stock->lcd_status = Stock::LCD_GOOD_GLASS_BAD;
-				} elseif (strpos($report->Failed, 'LCD') !== false && strpos($report->Passed, 'Glass Cracked') !== false) {
-					$this->info('bad lcd, good glass');
-					$stock->lcd_status = Stock::LCD_BAD_GLASS_GOOD;
-				} elseif (strpos($report->Failed, 'LCD') !== false && strpos($report->Failed, 'Glass Cracked') !== false) {
-					$this->info('bad lcd, broken glass');
-					$stock->lcd_status = Stock::LCD_BAD_GLASS_BAD;
-				}
+//				if(!$stock->manual_notes) { #1649
+//					$stock->notes = $failed;
+//				}
 
 
-				if (strpos($report->Passed, 'Fingerprint Sensor') !== false && $stock->touch_id_working != Stock::TOUCH_ID_WORKING_YES) {
-					$stock->touch_id_working = Stock::TOUCH_ID_WORKING_YES;
-				} elseif (strpos($report->Failed, 'Fingerprint Sensor') !== false && $stock->touch_id_working != Stock::TOUCH_ID_WORKING_NO) {
-					$stock->touch_id_working = Stock::TOUCH_ID_WORKING_NO;
-				} elseif (strpos($report->Passed, 'Fingerprint Sensor') === false && strpos($report->Failed, 'Fingerprint Sensor') === false && $stock->touch_id_working != Stock::TOUCH_ID_WORKING_NA) {
-					$stock->touch_id_working = Stock::TOUCH_ID_WORKING_NA;
-				}
+                if (strpos($report->Passed, 'LCD') !== false && strpos($report->Passed, 'Glass Cracked') !== false) {
+                    $this->info('good lcd, good glass');
+                    $stock->lcd_status = Stock::LCD_GOOD_GLASS_GOOD;
+                } elseif (strpos($report->Passed, 'LCD') !== false && strpos($report->Failed, 'Glass Cracked') !== false) {
+                    $this->info('good lcd, broken glass');
+                    $stock->lcd_status = Stock::LCD_GOOD_GLASS_BAD;
+                } elseif (strpos($report->Failed, 'LCD') !== false && strpos($report->Passed, 'Glass Cracked') !== false) {
+                    $this->info('bad lcd, good glass');
+                    $stock->lcd_status = Stock::LCD_BAD_GLASS_GOOD;
+                } elseif (strpos($report->Failed, 'LCD') !== false && strpos($report->Failed, 'Glass Cracked') !== false) {
+                    $this->info('bad lcd, broken glass');
+                    $stock->lcd_status = Stock::LCD_BAD_GLASS_BAD;
+                }
+
+
+                if (strpos($report->Passed, 'Fingerprint Sensor') !== false && $stock->touch_id_working != Stock::TOUCH_ID_WORKING_YES) {
+                    $stock->touch_id_working = Stock::TOUCH_ID_WORKING_YES;
+                } elseif (strpos($report->Failed, 'Fingerprint Sensor') !== false && $stock->touch_id_working != Stock::TOUCH_ID_WORKING_NO) {
+                    $stock->touch_id_working = Stock::TOUCH_ID_WORKING_NO;
+                } elseif (strpos($report->Passed, 'Fingerprint Sensor') === false && strpos($report->Failed, 'Fingerprint Sensor') === false && $stock->touch_id_working != Stock::TOUCH_ID_WORKING_NA) {
+                    $stock->touch_id_working = Stock::TOUCH_ID_WORKING_NA;
+                }
 
                 if (strpos($report->Passed, 'Face ID') !== false && $stock->touch_id_working != Stock::TOUCH_ID_WORKING_YES) {
                     $stock->touch_id_working = Stock::TOUCH_ID_WORKING_YES;
@@ -216,74 +227,74 @@ class ProcessChecks extends Command {
                     }
 
                 }
-				$this->info("Failed: " . $report->Failed);
-				$this->question("Battery Percentage: " . $report->BatteryHealthPercentage);
-				if(strtolower($report->OS) == 'android') {
-					$this->question("Android");
-					if ($stock->lcd_status == Stock::LCD_GOOD_GLASS_GOOD && !$report->Failed && in_array($stock->touch_id_working, [Stock::TOUCH_ID_WORKING_YES, Stock::TOUCH_ID_WORKING_NA])) {
-						$this->info("Fully Working");
-						$stock->grade = Stock::GRADE_FULLY_WORKING;
-					} elseif ($stock->lcd_status == Stock::LCD_GOOD_GLASS_GOOD && !$report->Failed && in_array($stock->touch_id_working, [Stock::TOUCH_ID_WORKING_NO])) {
-						$this->info("Fully Working - No Touch ID");
-						$stock->grade = Stock::GRADE_FULLY_WORKING_NO_TOUCH_ID;
-					} elseif (strpos($report->Failed, 'Fingerprint Sensor') !== false && isset($failedFormatted) && count($failedFormatted) == 1) {
-						$this->info("Fully Working - No Touch ID - only Fingerprint Sensor is Failed");
-						$stock->grade = Stock::GRADE_FULLY_WORKING_NO_TOUCH_ID;
-					} elseif (strpos($report->Failed, 'Fingerprint Sensor') !== false && isset($failedFormatted) && count($failedFormatted) > 1) {
-						$this->info('Major Fault - Fingerprint Sensor and other faults');
-						$stock->grade = Stock::GRADE_MAJOR_FAULT;
-					} elseif (
-						($report->Failed && strpos($failed, 'Sound IC Issue') !== false) ||
-						($report->Failed && strpos($failed, 'Network Connectivity') !== false) ||
-						($report->Failed && strpos($failed, 'Sim Reader') !== false)
-					) {
-						$this->info('Major Fault');
-						$stock->grade = Stock::GRADE_MAJOR_FAULT;
-					} elseif ($report->Failed) {
-						$this->info("Minor Fault");
-						$stock->grade = Stock::GRADE_MINOR_FAULT;
-					}
-				} else {
-					if ($stock->lcd_status == Stock::LCD_GOOD_GLASS_GOOD && !$report->Failed && $report->BatteryHealthPercentage > 80 && in_array($stock->touch_id_working, [Stock::TOUCH_ID_WORKING_YES, Stock::TOUCH_ID_WORKING_NA])) {
-						$this->info("Fully Working");
-						$stock->grade = Stock::GRADE_FULLY_WORKING;
-					} elseif ($stock->lcd_status == Stock::LCD_GOOD_GLASS_GOOD && !$report->Failed && $report->BatteryHealthPercentage > 80 && in_array($stock->touch_id_working, [Stock::TOUCH_ID_WORKING_NO])) {
-						$this->info("Fully Working - No Touch ID");
-						$stock->grade = Stock::GRADE_FULLY_WORKING_NO_TOUCH_ID;
-					} elseif (strpos($report->Failed, 'Fingerprint Sensor') !== false && isset($failedFormatted) && count($failedFormatted) == 1) {
-						$this->info("Fully Working - No Touch ID - only Fingerprint Sensor is Failed");
-						$stock->grade = Stock::GRADE_FULLY_WORKING_NO_TOUCH_ID;
-					} elseif (strpos($report->Failed, 'Fingerprint Sensor') !== false && isset($failedFormatted) && count($failedFormatted) > 1) {
-						$this->info('Major Fault - Fingerprint Sensor and other faults');
-						$stock->grade = Stock::GRADE_MAJOR_FAULT;
-					}elseif(strpos($report->Failed, 'Face ID') !== false && isset($failedFormatted) && count($failedFormatted) > 1){
+                $this->info("Failed: " . $report->Failed);
+                $this->question("Battery Percentage: " . $report->BatteryHealthPercentage);
+                if(strtolower($report->OS) == 'android') {
+                    $this->question("Android");
+                    if ($stock->lcd_status == Stock::LCD_GOOD_GLASS_GOOD && !$report->Failed && in_array($stock->touch_id_working, [Stock::TOUCH_ID_WORKING_YES, Stock::TOUCH_ID_WORKING_NA])) {
+                        $this->info("Fully Working");
+                        $stock->grade = Stock::GRADE_FULLY_WORKING;
+                    } elseif ($stock->lcd_status == Stock::LCD_GOOD_GLASS_GOOD && !$report->Failed && in_array($stock->touch_id_working, [Stock::TOUCH_ID_WORKING_NO])) {
+                        $this->info("Fully Working - No Touch ID");
+                        $stock->grade = Stock::GRADE_FULLY_WORKING_NO_TOUCH_ID;
+                    } elseif (strpos($report->Failed, 'Fingerprint Sensor') !== false && isset($failedFormatted) && count($failedFormatted) == 1) {
+                        $this->info("Fully Working - No Touch ID - only Fingerprint Sensor is Failed");
+                        $stock->grade = Stock::GRADE_FULLY_WORKING_NO_TOUCH_ID;
+                    } elseif (strpos($report->Failed, 'Fingerprint Sensor') !== false && isset($failedFormatted) && count($failedFormatted) > 1) {
+                        $this->info('Major Fault - Fingerprint Sensor and other faults');
+                        $stock->grade = Stock::GRADE_MAJOR_FAULT;
+                    } elseif (
+                        ($report->Failed && strpos($failed, 'Sound IC Issue') !== false) ||
+                        ($report->Failed && strpos($failed, 'Network Connectivity') !== false) ||
+                        ($report->Failed && strpos($failed, 'Sim Reader') !== false)
+                    ) {
+                        $this->info('Major Fault');
+                        $stock->grade = Stock::GRADE_MAJOR_FAULT;
+                    } elseif ($report->Failed) {
+                        $this->info("Minor Fault");
+                        $stock->grade = Stock::GRADE_MINOR_FAULT;
+                    }
+                } else {
+                    if ($stock->lcd_status == Stock::LCD_GOOD_GLASS_GOOD && !$report->Failed && $report->BatteryHealthPercentage > 80 && in_array($stock->touch_id_working, [Stock::TOUCH_ID_WORKING_YES, Stock::TOUCH_ID_WORKING_NA])) {
+                        $this->info("Fully Working");
+                        $stock->grade = Stock::GRADE_FULLY_WORKING;
+                    } elseif ($stock->lcd_status == Stock::LCD_GOOD_GLASS_GOOD && !$report->Failed && $report->BatteryHealthPercentage > 80 && in_array($stock->touch_id_working, [Stock::TOUCH_ID_WORKING_NO])) {
+                        $this->info("Fully Working - No Touch ID");
+                        $stock->grade = Stock::GRADE_FULLY_WORKING_NO_TOUCH_ID;
+                    } elseif (strpos($report->Failed, 'Fingerprint Sensor') !== false && isset($failedFormatted) && count($failedFormatted) == 1) {
+                        $this->info("Fully Working - No Touch ID - only Fingerprint Sensor is Failed");
+                        $stock->grade = Stock::GRADE_FULLY_WORKING_NO_TOUCH_ID;
+                    } elseif (strpos($report->Failed, 'Fingerprint Sensor') !== false && isset($failedFormatted) && count($failedFormatted) > 1) {
+                        $this->info('Major Fault - Fingerprint Sensor and other faults');
+                        $stock->grade = Stock::GRADE_MAJOR_FAULT;
+                    }elseif(strpos($report->Failed, 'Face ID') !== false && isset($failedFormatted) && count($failedFormatted) > 1){
                         $this->info('Major Fault - Face ID and other faults');
                         $stock->grade = Stock::GRADE_MAJOR_FAULT;
                     }
                     elseif (
-						($report->Failed && strpos($failed, 'Sound IC Issue') !== false) ||
-						($report->Failed && strpos($failed, 'Network Connectivity') !== false) ||
-						($report->Failed && strpos($failed, 'Sim Reader') !== false)
-					) {
-						$this->info('Major Fault');
-						$stock->grade = Stock::GRADE_MAJOR_FAULT;
-					} elseif ($report->Failed) {
-						$this->info("Minor Fault");
-						$stock->grade = Stock::GRADE_MINOR_FAULT;
-					}
-				}
+                        ($report->Failed && strpos($failed, 'Sound IC Issue') !== false) ||
+                        ($report->Failed && strpos($failed, 'Network Connectivity') !== false) ||
+                        ($report->Failed && strpos($failed, 'Sim Reader') !== false)
+                    ) {
+                        $this->info('Major Fault');
+                        $stock->grade = Stock::GRADE_MAJOR_FAULT;
+                    } elseif ($report->Failed) {
+                        $this->info("Minor Fault");
+                        $stock->grade = Stock::GRADE_MINOR_FAULT;
+                    }
+                }
 
-				if($report->Working === "Yes" && empty($reportList) ){
+                if($report->Working === "Yes" && empty($reportList) ){
                     $stock->grade = Stock::GRADE_FULLY_WORKING;
                     if(in_array($stock->condition,[Stock::CONDITION_A,Stock::CONDITION_B,Stock::CONDITION_C])){
-                     if(!in_array($stock->status,[Stock::STATUS_SOLD,Stock::STATUS_PAID,Stock::STATUS_LOST,Stock::STATUS_RETURNED_TO_SUPPLIER])){
+                        if(!in_array($stock->status,[Stock::STATUS_SOLD,Stock::STATUS_PAID,Stock::STATUS_LOST,Stock::STATUS_RETURNED_TO_SUPPLIER])){
 
 
-                         if($stock->network===Stock::NETWORK_CHECK_UNLOCKED){
-                             $stock->status=Stock::STATUS_RETAIL_STOCK;
-                         }
+                            if($stock->network===Stock::NETWORK_CHECK_UNLOCKED){
+                                $stock->status=Stock::STATUS_RETAIL_STOCK;
+                            }
 
-                     }
+                        }
                     }
                 }else{
                     if(in_array($stock->condition,[Stock::CONDITION_A,Stock::CONDITION_B,Stock::CONDITION_C])){
@@ -298,6 +309,11 @@ class ProcessChecks extends Command {
                 if($report->DeviceLock==="On"){
                     $stock->grade = Stock::GRADE_LOCKED;
                 }
+//                $blacklist=['Bad','Bad/OB','Bad/UB'];
+//
+//                if(in_array($report->ESN,$blacklist)){
+//                    $stock->grade = Stock::GRADE_BLACKLISTED;
+//                }
 
                 $black=$click2Unlock->getBlackListed($stock->imei);
 
@@ -481,9 +497,9 @@ class ProcessChecks extends Command {
 
                             if (strpos($cosmetic, 'cracked back glass') !== false) {
 
-                                 $getString=   substr($cosmetic, strpos($cosmetic, "cracked back glass")  -6);
-                                 $word=explode(' ',$getString);
-                                 array_push($crackedBackList,$word[0]);
+                                $getString=   substr($cosmetic, strpos($cosmetic, "cracked back glass")  -6);
+                                $word=explode(' ',$getString);
+                                array_push($crackedBackList,$word[0]);
 
                             }
 
@@ -503,39 +519,36 @@ class ProcessChecks extends Command {
 
 
                 }
-				if ($stock->isDirty()) {
+                if ($stock->isDirty()) {
 
-					$changes = "";
-					foreach ($stock->getAttributes() as $key => $value) {
-						if ($value !== $stock->getOriginal($key) && !checkUpdatedFields($value, $stock->getOriginal($key))) {
-							$orgVal = $stock->getOriginal($key);
+                    $changes = "";
+                    foreach ($stock->getAttributes() as $key => $value) {
+                        if ($value !== $stock->getOriginal($key) && !checkUpdatedFields($value, $stock->getOriginal($key))) {
+                            $orgVal = $stock->getOriginal($key);
 
-							$changes .= "Changed \"$key\" from \"$orgVal\" to \"$value\".\n";
-						}
-					}
-					if ($changes) {
-						$this->comment($changes);
-						StockLog::create([
-							'stock_id' => $stock->id,
-							'content' => "Process Phone Check:\n " . $changes
-						]);
-					}
-					$options = ['phone_check_save' => 1];
-					$stock->save($options);
-				}
+                            $changes .= "Changed \"$key\" from \"$orgVal\" to \"$value\".\n";
+                        }
+                    }
+                    if ($changes) {
+                        $this->comment($changes);
+                        StockLog::create([
+                            'stock_id' => $stock->id,
+                            'content' => "Process Phone Check:\n " . $changes
+                        ]);
+                    }
+                    $options = ['phone_check_save' => 1];
+                    $stock->save($options);
+                }
 
-				$stock->phone_check_create_at=$report->DeviceCreatedDate;
+                $stock->phone_check_create_at=$report->DeviceCreatedDate;
                 $stock->save();
 
 
 
-				$check->status = PhoneCheck::STATUS_DONE;
-				$check->save();
-			}
-		}
-
-
-
+                $check->status = PhoneCheck::STATUS_DONE;
+                $check->save();
+            }
+        }
     }
 
 }

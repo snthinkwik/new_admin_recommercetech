@@ -60,6 +60,7 @@ class CreateShipping implements ShouldQueue
         ));
 
         $response = curl_exec($curl);
+
         curl_close($curl);
         $sale=Sale::find($this->saleId);
         $sale->shipment_id=json_decode($response)->data->shipmentId;

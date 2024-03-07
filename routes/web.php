@@ -16,6 +16,16 @@ use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\CustomersController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\BasketController;
+use App\Http\Controllers\SavedBasketController;
+use App\Http\Controllers\SellerFeesController;
+use App\Http\Controllers\CustomerReturnController;
+use App\Http\Controllers\MasterAverageController;
+use App\Http\Controllers\AveragePriceController;
+use App\Http\Controllers\CategoryController;
+
+use App\Http\Controllers\CustomerReturnsController;
+
 
 
 
@@ -41,7 +51,7 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 
 Route::group(['middleware' => ['auth']], function () {
 
-    Route::get('/deleted-sales', ['middleware' => 'admin', 'uses' => 'CustomerReturnController@getDeleteSaleData', 'as' => 'repairs']);
+    Route::get('/deleted-sales', ['middleware' => 'admin', CustomerReturnController::class,'getDeleteSaleData'])->name('repairs');
     Route::get('/stats', ['middleware' => 'admin', 'as' => 'stats', function () {
         return view('stats');
     }]);
@@ -147,11 +157,11 @@ Route::group(['middleware' => ['auth']], function () {
 
     // Saved Baskets
     Route::group(['prefix' => 'saved-baskets', 'middleware' => ['admin']], function () {
-        Route::get('/', ['uses' => 'SavedBasketController@getIndex', 'as' => 'saved-baskets']);
-        Route::get('/{id}', ['uses' => 'SavedBasketController@getSingle', 'as' => 'saved-baskets.single']);
-        Route::post('/create-sale', ['uses' => 'SavedBasketController@postCreateSale', 'as' => 'saved-baskets.create-sale']);
-        Route::post('/delete', ['uses' => 'SavedBasketController@postDelete', 'as' => 'saved-baskets.delete']);
-        Route::post('/delete-from-basket', ['uses' => 'SavedBasketController@postDeleteFromBasket', 'as' => 'saved-baskets.delete-from-basket']);
+        Route::get('/', [SavedBasketController::class,'getIndex'])->name('saved-baskets');
+        Route::get('/{id}', [SavedBasketController::class,'getSingle'])->name('saved-baskets.single');
+        Route::post('/create-sale', [SavedBasketController::class,'postCreateSale'])->name('saved-baskets.create-sale');
+        Route::post('/delete', [SavedBasketController::class,'postDelete'])->name('saved-baskets.delete');
+        Route::post('/delete-from-basket', [SavedBasketController::class,'postDeleteFromBasket'])->name('saved-baskets.delete-from-basket');
     });
 
     // Products
@@ -583,10 +593,10 @@ Route::group(['middleware' => ['auth']], function () {
             Route::post('/shipping_cost', [SalesController::class,'updateShippingCost'])->name('sales.shipping_cost');
             Route::get('/dashboard', [SalesController::class,'getDashboard'])->name('sales.dashboard');
 
-            Route::get('/customer_return', ['uses' => 'CustomerReturnsController@getIndex', 'as' => 'sales.customer_return']);
-            Route::get('/customer_return/create', ['uses' => 'CustomerReturnsController@create', 'as' => 'sales.customer_return.create']);
-            Route::post('/customer_return/save', ['uses' => 'CustomerReturnsController@postSave', 'as' => 'sales.customer_return.save']);
-            Route::get('/customer_return/{id}', ['uses' => 'CustomerReturnsController@getCustomerReturn', 'as' => 'sales.customer_return.single']);
+            Route::get('/customer_return', [CustomerReturnsController::class,'getIndex'])->name('sales.customer_return');
+            Route::get('/customer_return/create', [CustomerReturnsController::class,'create'])->name('sales.customer_return.create');
+            Route::post('/customer_return/save', [CustomerReturnsController::class,'postSave'])->name('sales.customer_return.save');
+            Route::get('/customer_return/{id}', [CustomerReturnsController::class,'getCustomerReturn'])->name('sales.customer_return.single');
 
             Route::post('/export/csv', [SalesController::class,'exportCsv'])->name('sales.export.filter');
         });
@@ -712,13 +722,13 @@ Route::group(['middleware' => ['auth']], function () {
     //Category
 
     Route::group(['prefix' => 'category', 'middleware' => ['admin', 'not_staff']], function () {
-        Route::get('/', ['uses' => 'CategoryController@index', 'as' => 'category.index']);
-        Route::get('/delete/{id}', ['uses' => 'CategoryController@removeCategory', 'as' => 'category.delete']);
-        Route::get('/{id}', ['uses' => 'CategoryController@update', 'as' => 'category.update']);
-        Route::get('/create', ['uses' => 'CategoryController@create', 'as' => 'category.create']);
-        Route::post('/create/save', ['uses' => 'CategoryController@postSave', 'as' => 'category.save']);
-        Route::get('cron-job/assigned', ['uses' => 'CategoryController@eBayCategoryIdAssignedCronJob', 'as' => 'cron-job.assigned']);
-        Route::post('update-validation', ['uses' => 'CategoryController@updateValidation', 'as' => 'update.validation']);
+        Route::get('/', [CategoryController::class,'index'])->name('category.index');
+        Route::get('/delete/{id}', [CategoryController::class,'removeCategory'])->name('category.delete');
+        Route::get('/{id}', [CategoryController::class,'update'])->name('category.update');
+        Route::get('/create', [CategoryController::class,'create'])->name('category.create');
+        Route::post('/create/save', [CategoryController::class,'postSave'])->name('category.save');
+        Route::get('cron-job/assigned', [CategoryController::class,'eBayCategoryIdAssignedCronJob'])->name('cron-job.assigned');
+        Route::post('update-validation', [CategoryController::class,'updateValidation'])->name('update.validation');
 
 
     });
@@ -743,41 +753,46 @@ Route::group(['middleware' => ['auth']], function () {
 // Average Price
 
     Route::group(['prefix' => 'average-price', 'middleware' => ['admin', 'not_staff']], function () {
-        Route::get('/ebay', ['uses' => 'AveragePriceController@getEbayIndex', 'as' => 'average_price.ebay']);
-        Route::get('/back-market', ['uses' => 'AveragePriceController@getBackMarketIndex', 'as' => 'average_price.back_market']);
-        Route::get('remove-data', ['uses' => 'AveragePriceController@removeAllDataFromTable', 'as' => 'ebay.remove-all']);
-        Route::get('/ebay/{id}', ['uses' => 'AveragePriceController@getSoldItem', 'as' => 'average_price.ebay.single']);
-        Route::get('/back-market', ['uses' => 'AveragePriceBackMarketController@index', 'as' => 'average_price.back-market.single']);
-        Route::get('/remove-tablet', ['uses' => 'AveragePriceController@removeTabletAndComputer', 'as' => 'average_price.remove-tablet']);
-        Route::get('/remove-back-market', ['uses' => 'AveragePriceBackMarketController@removeAllDataFromTable', 'as' => 'average_price.back-market.remove-tablet']);
-        Route::post('/advanced-search', ['uses' => 'AveragePriceController@advancedSearch', 'as' => 'advance.search']);
-        Route::get('/master', ['uses' => 'MasterAverageController@index', 'as' => 'average_price.master']);
-        Route::post('/master/edit-diff-percentage', ['uses' => 'MasterAverageController@editDiffPercentage', 'as' => 'average_price.master.edit']);
-        Route::post('/search-product-info', ['uses' => 'AveragePriceController@searchProductInfo', 'as' => 'average_price.search-info']);
-        Route::get('/master/remove-data', ['uses' => 'MasterAverageController@removeMasterData', 'as' => 'average_price.master.remove']);
-        Route::get('/master/back-market/raw-data', ['uses' => 'AveragePriceBackMarketController@getRawData', 'as' => 'average_price.back_market.raw-data']);
+        Route::get('/ebay', [AveragePriceController::class,'getEbayIndex'])->name('average_price.ebay');
+        Route::get('/back-market', [AveragePriceController::class,'getBackMarketIndex'])->name('average_price.back_market');
+        Route::get('remove-data', [AveragePriceController::class,'removeAllDataFromTable'])->name('ebay.remove-all');
+        Route::get('/ebay/{id}', [AveragePriceController::class,'getSoldItem'])->name('average_price.ebay.single');
+        Route::get('/back-market', [AveragePriceBackMarket::class,'ontroller@index'])->name('average_price.back-market.single');
+        Route::get('/remove-tablet', [AveragePriceController::class,'removeTabletAndComputer'])->name('average_price.remove-tablet');
+        Route::get('/remove-back-market', [AveragePriceBackMarket::class,'ontroller@removeAllDataFromTable'])->name('average_price.back-market.remove-tablet');
+        Route::post('/advanced-search', [AveragePriceController::class,'advancedSearch'])->name('advance.search');
+
+        Route::get('/master', [MasterAverageController::class,'index'])->name('average_price.master');
+
+        Route::post('/master/edit-diff-percentage', [MasterAverageController::class,'editDiffPercentage'])->name('average_price.master.edit');
+
+        Route::post('/search-product-info', [AveragePriceController::class,'searchProductInfo'])->name('average_price.search-info');
+
+        Route::get('/master/remove-data', [MasterAverageController::class,'removeMasterData'])->name('average_price.master.remove');
+
+        Route::get('/master/back-market/raw-data', [AveragePriceBackMarketController::class,'getRawData'])->name('average_price.back_market.raw-data');
     });
 
 
     //Seller Fees
 
     Route::group(['prefix' => 'seller_fees', 'middleware' => ['admin', 'not_staff']], function () {
-        Route::get('/', ['uses' => 'SellerFeesController@getIndex', 'as' => 'seller_fees.index']);
-        Route::get('/create', ['uses' => 'SellerFeesController@getCreate', 'as' => 'seller_fees.create']);
-        Route::post('/save', ['uses' => 'SellerFeesController@postSave', 'as' => 'seller_fees.save']);
-        Route::get('/{id}', ['uses' => 'SellerFeesController@getSellerFees', 'as' => 'seller_fees.single']);
+        Route::get('/', [SellerFeesController::class,'getIndex'])->name('seller_fees.index');
+        Route::get('/create', [SellerFeesController::class,'getCreate'])->name('seller_fees.create');
+        Route::post('/save', [SellerFeesController::class,'postSave'])->name('seller_fees.save');
+        Route::get('/{id}', [SellerFeesController::class,'getSellerFees'])->name('seller_fees.single');
 
     });
 
-    Route::get('/customer-return', ['uses' => 'CustomerReturnController@index', 'as' => 'customer.return.index']);
-    Route::get('/customer-return/create', ['uses' => 'CustomerReturnController@create', 'as' => 'customer.return.create']);
-    Route::get('/customer-return/items/{id}', ['uses' => 'CustomerReturnController@getCustomerReturnItem', 'as' => 'customer.return.single']);
-    Route::get('/customer-return/change-status/{id}', ['uses' => 'CustomerReturnController@changeStockStatus', 'as' => 'customer.return.change-status']);
-    Route::get('/customer-return/view/{id}', ['uses' => 'CustomerReturnController@customerReturnSingle', 'as' => 'customer.return.view']);
-    Route::get('/customer-return/data/sold', ['uses' => 'CustomerReturnController@getSoldDate', 'as' => 'customer.return.data']);
-    Route::post('/customer-return/update/{id}', ['uses' => 'CustomerReturnController@customerReturnUpdate', 'as' => 'customer.return.update']);
-    Route::post('/create/customer-return/save', ['uses' => 'CustomerReturnController@customerReturnCreate', 'as' => 'customer.return.save']);
-    Route::get('/export/customer-return', ['uses' => 'CustomerReturnController@exportCsv', 'as' => 'customer.export']);
+    Route::get('/customer-return', [CustomerReturnController::class,'index'])->name('customer.return.index');
+    Route::get('/customer-return/create', [CustomerReturnController::class,'create'])->name('customer.return.create');
+    Route::get('/customer-return/items/{id}', [CustomerReturnController::class,'getCustomerReturnItem'])->name('customer.return.single');
+    Route::get('/customer-return/change-status/{id}', [CustomerReturnController::class,'changeStockStatus'])->name('customer.return.change-status');
+    Route::get('/customer-return/view/{id}', [CustomerReturnController::class,'customerReturnSingle'])->name('customer.return.view');
+    Route::get('/customer-return/data/sold', [CustomerReturnController::class,'getSoldDate'])->name('customer.return.data');
+    Route::post('/customer-return/update', [CustomerReturnController::class,'customerReturnUpdate'])->name('customer.return.update');
+    Route::post('/create/customer-return/save', [CustomerReturnController::class,'customerReturnCreate'])->name('customer.return.save');
+    Route::get('/export/customer-return', [CustomerReturnController::class,'exportCsv'])->name('customer.export');
 });
 
 Route::get('/', [HomeController::class,'getRedirect', 'as' => ''])->name('home.redirect');
@@ -890,7 +905,7 @@ Route::group(['prefix' => 'processing-image'], function () {
 
 Route::get('phone-check', ['uses' => 'PhoneCheckController@getData']);
 
-Route::get('/all-customer-return', ['uses' => 'CustomerReturnController@getAllCustomerReturn']);
+Route::get('/all-customer-return', [CustomerReturnController::class,'getAllCustomerReturn']);
 
 
 

@@ -1,10 +1,10 @@
 <?php
-$deadline = \App\Sale::PAYMENT_WAIT_HOURS;
+$deadline = \App\Models\Sale::PAYMENT_WAIT_HOURS;
 ?>
 @extends('email')
 
 @section('content')
-    <p>Hi {{ $customer->first_name }},</p>
+    <p>Hi {{ $customer['first_name'] }},</p>
     <p>Thank you for placing your order with {{ config('app.company_name') }}.</p>
     <p>Attached is your invoice for {{ $sale->amount_formatted }} - payment is due immediately.</p>
 
@@ -15,7 +15,7 @@ $deadline = \App\Sale::PAYMENT_WAIT_HOURS;
         <strong>Sort Code:</strong> 30-98-97<br/>
         <strong>Bank:</strong> Lloyds
     </p>
-                        
+
     <p>Once payment has been made please send remittance to {{ config('mail.finance_address') }}</p>
     <p>We appreciate your business.</p>
 

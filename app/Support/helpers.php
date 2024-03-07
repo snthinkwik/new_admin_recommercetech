@@ -10,6 +10,7 @@ use Symfony\Component\DomCrawler\Crawler;
 use App\Models\Stock;
 use Money\Money;
 use Money\Currency;
+use \App\Models\SellerFees;
 
 use Money\Currencies\ISOCurrencies;
 use Money\Parser\DecimalMoneyParser;
@@ -921,7 +922,7 @@ function getShippingCost($country, $sales_price, $platform)
 {
 
 
-    $setting = \App\SellerFees::where('platform', $platform)->first();
+    $setting = SellerFees::where('platform', $platform)->first();
 
 
     if ($country === "UK" || $country === "United Kingdom" || $country === "Great Britain") {

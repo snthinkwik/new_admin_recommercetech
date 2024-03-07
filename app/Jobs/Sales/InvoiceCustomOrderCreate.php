@@ -90,7 +90,22 @@ class InvoiceCustomOrderCreate implements ShouldQueue
 
 //            Queue::pushOn('emails', new EmailSend($this->sale, EmailSend::EMAIL_CREATED));
 
-            dispatch(new EmailSend($this->sale, EmailSend::EMAIL_CREATED));
+            $inoicing= app('App\Contracts\Invoicing');
+            $customer = $inoicing->getCustomer($this->sale->customer_api_id);
+            $invoicePath =$inoicing->getInvoiceDocument($this->sale);
+            $newCustomer=[];
+            if(!is_null($customer)){
+                $newCustomer=[
+                    'first_name'=>$customer->first_name,
+                    'last_name'=>$customer->last_name,
+                    'email'=>$customer->email,
+                    'external_id'=>$customer->external_id,
+                    'phone'=>isset($customer->phone)?$customer->phone:null,
+                ];
+            }
+
+            dispatch(new EmailSend($this->sale,EmailSend::EMAIL_CREATED,$newCustomer,$invoicePath));
+          //  dispatch(new EmailSend($this->sale, EmailSend::EMAIL_CREATED));
 
         }
         catch (Exception $e) {
