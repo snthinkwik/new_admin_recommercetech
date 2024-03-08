@@ -1,6 +1,6 @@
 <?php namespace App\Validation\Sales;
 
-use App\Stock;
+use App\Models\Stock;
 use App\Validation\Validator;
 use Illuminate\Support\Facades\Auth;
 use  Illuminate\Contracts\Translation\Translator;
@@ -10,6 +10,7 @@ class PricesValidator extends Validator {
 
 	public function __construct(Translator $translator, array $data, array $rules = array(), array $messages = array(), array $customAttributes = array())
 	{
+
 		$user = Auth::user();
 
 		// Regular users have to have invoicing API id.
@@ -21,7 +22,7 @@ class PricesValidator extends Validator {
 			}
 		}
 
-		if(count(Auth::user()->part_basket)>0) {
+		if(!is_null(Auth::user()->part_basket)) {
 			$this->items = isset($data['items']) ? $data['items'] : [];
 		} else {
             $this->items = isset($data['items']) ? $data['items'] : [];

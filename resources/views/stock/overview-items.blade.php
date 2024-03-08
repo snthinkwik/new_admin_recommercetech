@@ -13,29 +13,6 @@
 			<strong class="text-success">UnMapped items:{{$inBoundUnmpping+$inBoundUnmappingWithZero}}</strong>
 		</div>
 
-{{--		<div class="col-md-9">--}}
-{{--			<div class="row">--}}
-{{--				<div class="col-md-3">--}}
-{{--			<strong class="text-success">Total Purchase Price:{{$allTotalOfPurchase}}</strong><br>--}}
-{{--			<strong class="text-success">Total Qty in Stock:{{$totalQty}}</strong><br>--}}
-{{--			<strong class="text-success">Total Qty Tested:{{$unmpping+$unmappingWithZero}}</strong><br>--}}
-{{--					<strong class="text-success">Total Inbound Qty:{{$totalQty + $unmpping+$unmappingWithZero}}</strong><br>--}}
-{{--			</div>--}}
-{{--				<div class="col-md-3">--}}
-
-{{--					<strong class="text-success">Total Of Grade A:{{$totalQty}}</strong><br>--}}
-{{--					<strong class="text-success">Total Of Grade B:{{$unmpping+$unmappingWithZero}}</strong><br>--}}
-{{--					<strong class="text-success">Total Of Grade C:{{$unmpping+$unmappingWithZero}}</strong><br>--}}
-{{--					<strong class="text-success">Total Of Grade D:{{$unmpping+$unmappingWithZero}}</strong><br>--}}
-{{--					<strong class="text-success">Total Of Grade E:{{$unmpping+$unmappingWithZero}}</strong><br>--}}
-{{--				</div>--}}
-{{--				<div class="col-md-3">--}}
-{{--					<strong class="text-success">Total Of Cracked Back:{{$totalQty + $unmpping+$unmappingWithZero}}</strong><br>--}}
-{{--					<strong class="text-success">Total Of No Touch/Face ID:{{$totalQty}}</strong><br>--}}
-{{--					<strong class="text-success">Total Of Network Locked:{{$unmpping+$unmappingWithZero}}</strong>--}}
-{{--				</div>--}}
-{{--			</div>--}}
-{{--		</div>--}}
 
 
 	</div>
@@ -57,7 +34,7 @@
 			<th class="totalBlank"></th>
 
 			<th class="totalHeader">Totals</th>
-			<th class="totalHeader"  >{{ money_format(config('app.money_format'), $totalQtyPurchasePrice)}}</th>
+			<th class="totalHeader"  >{{ money_format($totalQtyPurchasePrice)}}</th>
 			<th class="totalHeader" >{{$totalQtyInStock}}</th>
 			<th class="totalHeader" >{{$totalQtyTested}}</th>
 			<th class="totalHeader" >{{$totalOfInBound}}</th>
@@ -177,8 +154,8 @@
 					<td style="text-align: center" >{{$item->status}}</td>
 
 					<td style="text-align: center" >{{  $item->vat_type }}</td>
-					<td  style=" text-align: center;">{{ money_format(config('app.money_format'), $item->total_purchase_price)   }}</td>
-					<td style="text-align: center;border-right: 2px solid #000000;"> @if($item->qty_in_stock>0) {{ money_format(config('app.money_format'),($item->total_purchase_price/$item->qty_in_stock))  }} @else - @endif</td>
+					<td  style=" text-align: center;">{{ money_format($item->total_purchase_price)   }}</td>
+					<td style="text-align: center;border-right: 2px solid #000000;"> @if($item->qty_in_stock>0) {{ money_format($item->total_purchase_price/$item->qty_in_stock)  }} @else - @endif</td>
 					<td  style="text-align: center"> <strong>{{$item->qty_in_stock}}</strong></td>
 					<td  style="text-align: center">
 						{{$item->qty_in_tested}}

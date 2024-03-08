@@ -1,5 +1,5 @@
 <?php
-use App\Stock;
+use App\Models\Stock;
 $grades = ['' => ''] + Stock::getAvailableGradesWithKeys();
 //$networks = ['' => ''] + Stock::getAvailableNetworksWithKeys();
 $networksList = Stock::getAllAvailableNetworks();
@@ -26,7 +26,7 @@ $networksList = Stock::getAllAvailableNetworks();
                                 @endif
                             @endforeach
 			</select>
-                        
+
 		</div>
 	</div>
 	<div class="form-group">

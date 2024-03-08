@@ -6,7 +6,6 @@ use App\Jobs\EbayRefunds\CreateCreditNote;
 use App\Models\Address;
 use App\Models\Batch;
 use App\Commands\Sales\EmailSend;
-use App\Commands\Sales\InvoiceCreate;
 use App\Commands\Sales\OrderImeis;
 use App\Commands\Sales\PaymentReceived;
 use App\Commands\Sales\TrackingUpdated;
@@ -34,6 +33,8 @@ use App\Models\CustomerReturns;
 use Illuminate\Support\Facades\Auth;
 use App\Models\DeliveryNotes;
 use PDF;
+use Session;
+use App\Jobs\Sales\InvoiceCreate;
 
 class SalesController extends Controller
 {
@@ -926,19 +927,7 @@ class SalesController extends Controller
             $errorMessage = session()->get('pre_data')['validation_message'];
         }
 
-        /*$customers = $invoicing->getRegisteredSelectedCustomers();
-        if($customers->isEmpty() || $customers->count() < 50) {
-            $customers = $invoicing->getCustomers()->keyBy('external_id');
-            foreach($customers as $customer=>$val) {
-                $user = User::where('invoice_api_id', $customer)->first();
-                if(!$user) {
-                    unset($customers[$customer]);
-                }
-            }
-        }
-        $customersForAutocomplete = $customers->map(
-            function($a) { return ['label' => $a->full_name, 'value' => $a->external_id]; }
-        );*/
+
         $customersForAutocomplete = [];
         $parts = Auth::user()->part_basket;
         if (!isset($data['items']) && count($parts) > 0) {
@@ -992,7 +981,7 @@ class SalesController extends Controller
 
         } else {
             foreach ($productQty as $value => $id) {
-                $product = App\Product::find($id);
+                $product = Product::find($id);
                 if ($product->non_serialised) {
                     $qty = explode('-', $value);
                     if ($product->multi_quantity < $qty[1]) {
@@ -1004,16 +993,24 @@ class SalesController extends Controller
         }
 
         // remove all non numeric symbols
-        if (count($data['items'])) {
-            foreach ($data['items'] as $key => $price) {
-                $data['items'][$key]['price'] = preg_replace("/[^0-9.]/", "", $data['items'][$key]['price']);
+        if(count($data)){
+            if (count($data['items'])) {
+                foreach ($data['items'] as $key => $price) {
+                    $data['items'][$key]['price'] = preg_replace("/[^0-9.]/", "", $data['items'][$key]['price']);
+                }
             }
         }
 
+
         foreach (Auth::user()->basket as $item) {
-            if (!in_array($item->id, $stock->lists('id'))) {
-                Auth::user()->basket()->detach($item->id);
+
+
+            if(count($stock)){
+                if (!in_array($item->id, $stock->pluck('id')->toArray())) {
+                    Auth::user()->basket()->detach($item->id);
+                }
             }
+
         }
         if (Auth::user()->type == 'admin' && $request->grade) {
 
@@ -1082,7 +1079,7 @@ class SalesController extends Controller
             }
 
         }
-        return view('sales.summary', compact('stock', 'parts', 'request', 'customers', 'customersForAutocomplete', 'data', 'errorMessage'));
+        return view('sales.summary', compact('stock', 'parts', 'request', 'customersForAutocomplete', 'data', 'errorMessage'));
     }
 
     public function getSummaryOther(Request $request)
@@ -1244,7 +1241,7 @@ class SalesController extends Controller
         }
 
         $partsItemsBasket = Auth::user()->part_basket;
-        if (count($partsItemsBasket)) {
+        if (!is_null($partsItemsBasket)) {
             foreach ($partsItemsBasket as $item) {
                 $part = Part::where('id', $item->part_id)->first();
                 if ($part->quantity < $item->quantity) {
@@ -1263,24 +1260,6 @@ class SalesController extends Controller
             SysLog::log("Setting lock_key to \"$lockKey\".", Auth::user()->id, $ids);
             Stock::whereIn('id', $ids)->where('locked_by', '')->update(['locked_by' => $lockKey]);
             $countLocked = Stock::whereIn('id', $ids)->where('locked_by', $lockKey)->count();
-
-//            if (count($ids) !== $countLocked) {
-//                Stock::whereIn('id', $ids)->where('locked_by', $lockKey)->update(['locked_by' => '']);
-//
-//                if ($countLocked === 0) {
-//                    return redirect('stock')->with(
-//                        'messages.warning',
-//                        "While you were creating your sale the requested items have been sold. Sorry for your inconvenience"
-//                    )->send();
-//                } else {
-//                    Session::put('set_ids',$ids);
-//                    return redirect()->route('sales.new')->with(
-//                        'messages.warning',
-//                        "While you were creating your sale some of the requested items have been sold. Sorry for your " .
-//                        "inconvenience. Below you can see the items still available."
-//                    )->send();
-//                }
-//            }
 
             $items = Stock::whereIn('id', $ids)->get();
         }
@@ -1309,7 +1288,7 @@ class SalesController extends Controller
 
         $partsItems = [];
 
-        if (count($partsItemsBasket)) {
+        if (!is_null($partsItemsBasket)) {
             foreach ($partsItemsBasket as $item) {
                 $partsItems[] = new SalePart([
                     'part_id' => $item->part->id,
@@ -1403,17 +1382,13 @@ class SalesController extends Controller
         }
 
 
-        Queue::pushOn(
-            'invoices',
-            new InvoiceCreate(
-                $sale,
-                $customerUser,
-                $saleName,
-                $request->platform,
-                $deliveryName
 
-            )
-        );
+        dispatch( new InvoiceCreate($sale,
+            $customerUser,
+            $saleName,
+            $request->platform,
+            $deliveryName));
+
 
 
         //Queue::pushOn('emails', new UnlockEmail($sale));

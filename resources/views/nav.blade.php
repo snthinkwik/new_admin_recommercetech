@@ -81,22 +81,6 @@
                         @endif
                     @endif
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                     @if (Auth::user() && Auth::user()->type !== 'user')
                         @if(in_array(Auth::user()->admin_type, ['admin', 'manager']))
                             <li @active><a href="{{ route('stats') }}">Stats</a></li>
@@ -148,13 +132,6 @@
                             </li>
                         @endif
                     @endif
-
-
-
-
-
-
-
                 </ul>
 
                 @section('nav-middle')

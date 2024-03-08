@@ -19,7 +19,7 @@
 					</tr>
 					<tr>
 						<th>Click2unlock Balance</th>
-						<td @if($data->balance < 250) class="text-danger" @endif>{{ money_format(config('app.money_format'), $data->balance) }}</td>
+						<td @if($data->balance < 250) class="text-danger" @endif>{{ money_format($data->balance) }}</td>
 					</tr>
 					<tr>
 						<th>Users to Add to What's App</th>
@@ -31,11 +31,15 @@
 					</tr>
 					<tr>
 						<th>Unlocks</th>
-						<td>{{ count($data->notifications_unlocks) }}</td>
+						<td>
+                            @if(!is_null($data->notifications_unlocks))
+                                {{dd($data->notifications_unlocks)}}
+                            @endif
+                        </td>
 					</tr>
 				</table>
 			</div>
-			@if(count($data->notifications_unlocks))
+			@if(!is_null($data->notifications_unlocks))
 				<div class="col-md-12 mt-5">
 					<div class="panel panel-default">
 						<div class="panel-heading">Unlocks Notifications</div>

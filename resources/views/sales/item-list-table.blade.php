@@ -134,7 +134,7 @@ $networks = Stock::getAdminUnlockableNetworks();
             <td>{{ $item->imei }}</td>
             <td>{{ $item->serial }}</td>
             {{--<td>{{ money_format(config('app.money_format'),  $item->total_price_ex_vat)   }}</td>--}}
-            <td>{{  money_format(config('app.money_format'),  $item->total_cost_with_repair)  }}</td>
+            <td>{{  money_format($item->total_cost_with_repair)  }}</td>
 
             <td>{{ $item->vat_type }}</td>
 
@@ -174,12 +174,12 @@ $networks = Stock::getAdminUnlockableNetworks();
             </td>
 
             @if($item->vat_type === "Standard")
-                <td @if($item->total_price_ex_vat<0 ) class="text-danger" @endif>{{money_format(config('app.money_format'),  $item->sale_price/1.2)}}</td>
+                <td @if($item->total_price_ex_vat<0 ) class="text-danger" @endif>{{money_format($item->sale_price/1.2)}}</td>
                 @else
                 <td>N/A</td>
             @endif
             <td @if($item->profit < 0) class="text-danger" @endif>
-                {{ money_format(config('app.money_format'), $item->profit)  }}
+                {{ money_format($item->profit)  }}
             </td>
             <?php
             if($item->vat_type === "Standard"){
@@ -204,14 +204,14 @@ $networks = Stock::getAdminUnlockableNetworks();
             @if($item->vat_type==="Margin")
                 <td @if($item->marg_vat < 0) class="text-danger" @endif>
 
-                    {{ money_format(config('app.money_format'), $item->marg_vat)}}
+                    {{ money_format($item->marg_vat)}}
 
                 </td>
                 @else
                 <td>-</td>
             @endif
             <td @if($item->true_profit < 0) class="text-danger" @endif >
-            {{money_format(config('app.money_format'), $item->true_profit) }}
+            {{money_format($item->true_profit) }}
             </td>
 
             <?php
@@ -251,7 +251,7 @@ $networks = Stock::getAdminUnlockableNetworks();
 
             ?>
             <td @if($estProfit<0) class="text-danger" @endif>
-                {{ money_format(config('app.money_format'),$estProfit)}}
+                {{ money_format($estProfit)}}
             </td>
             <?php
             if($item->vat_type===Stock::VAT_TYPE_STD){
@@ -313,7 +313,7 @@ $networks = Stock::getAdminUnlockableNetworks();
             <td>
                 @foreach($item->sale_network_checks as $check)
                     <span data-toggle="popover" data-placement="left" data-title="{{ $check->created_at->format('d/m/y H:i:s') }}" data-html="true" data-content="{{ $check->report }}">
-                    @if($check->status == \App\Mobicode\GsxCheck::STATUS_DONE)
+                    @if($check->status == \App\Models\Mobicode\GsxCheck::STATUS_DONE)
                             {{ ReportParser::getNetwork($check->report) ? : "Unknown" }} <i class="fa fa-info-circle"></i>
                         @else
                             {{ ucfirst($check->status) }}

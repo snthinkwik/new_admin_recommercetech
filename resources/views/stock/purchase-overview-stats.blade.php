@@ -80,7 +80,7 @@
 							<td>{{ $item->network }}</td>
 							<td>{{ $item->status }}</td>
 							<td>{{ $item->sale_price_formatted }}</td>
-							<td>{{ $item->purchase_date ? $item->purchase_date->format('Y-m-d') : '' }}</td>
+							<td>{{ $item->purchase_date ? $item->purchase_date: '' }}</td>
 							<td>{{ $item->purchase_price_formatted }}</td>
 						</tr>
 					@endforeach
@@ -128,7 +128,7 @@
 							<td>{{ $item->network }}</td>
 							<td>{{ $item->status }}</td>
 							<td>{{ $item->sale_price_formatted }}</td>
-							<td>{{ $item->purchase_date ? $item->purchase_date->format('Y-m-d') : '' }}</td>
+							<td>{{ $item->purchase_date ? $item->purchase_date: '' }}</td>
 							<td>{{ $item->purchase_price_formatted }}</td>
 						</tr>
 					@endforeach

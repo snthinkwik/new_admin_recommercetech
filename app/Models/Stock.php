@@ -25,7 +25,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\File\File;
-
+use Illuminate\Support\Facades\DB;
 class Stock extends Model
 {
     use HasFactory;
@@ -1838,8 +1838,8 @@ class Stock extends Model
 
     public function getPurchasePriceFormattedAttribute()
     {
-      //  return $this->purchase_price ? money_format(config('app.money_format'), $this->purchase_price) : '';
-        return $this->purchase_price?$this->purchase_price:'';
+        return $this->purchase_price ? money_format($this->purchase_price) : '';
+
     }
 
     public function getPurchasePriceNoCostsAttribute()
@@ -1855,8 +1855,8 @@ class Stock extends Model
             $unlockPrice = $this->unlock->cost_added;
         }
         $price = $this->purchase_price - $unlockPrice - $partsPrice;
-      //  return $price ? money_format(config('app.money_format'), $price) : "";
-        return $price? $price:'';
+        return $price ? money_format($price) : "";
+
     }
 
     public function getPurchaseForeignPriceFormattedAttribute()
@@ -1867,8 +1867,8 @@ class Stock extends Model
 
     public function getSalePriceFormattedAttribute()
     {
-      //  return $this->sale_price ? money_format(config('app.money_format'), $this->sale_price) : '';
-        return $this->sale_price;
+        return $this->sale_price ? money_format($this->sale_price) : '';
+
     }
 
     public function getNetworkFormattedAttribute()
@@ -1906,8 +1906,8 @@ class Stock extends Model
 
     public function getGrossProfitFormattedAttribute()
     {
-       // return money_format(config('app.money_format'), $this->gross_profit);
-        return  $this->gross_profit;
+        return money_format($this->gross_profit);
+
     }
 
     public function getGrossProfitPercentageAttribute()
@@ -1931,8 +1931,8 @@ class Stock extends Model
 
     public function getTotalGrossProfitFormattedAttribute()
     {
-      //  return money_format(config('app.money_format'), $this->total_gross_profit);
-        return $this->total_gross_profit;
+        return money_format($this->total_gross_profit);
+
     }
 
     public function getTotalGrossProfitPercentageAttribute()
@@ -1960,8 +1960,8 @@ class Stock extends Model
 
     public function getVatFormattedAttribute()
     {
-      //  return money_format(config('app.money_format'), $this->vat);
-        return $this->vat;
+        return money_format($this->vat);
+
     }
 
     public function getNetProfitAttribute()
@@ -1971,20 +1971,20 @@ class Stock extends Model
 
     public function getNetProfitFormattedAttribute()
     {
-      //  return money_format(config('app.money_format'), $this->net_profit);
-        return  $this->net_profit;
+        return money_format($this->net_profit);
+
     }
 
     public function getUnlockCostFormattedAttribute()
     {
-       // return money_format(config('app.money_format'), $this->unlock_cost);
-        return  $this->unlock_cost;
+        return money_format($this->unlock_cost);
+
     }
 
     public function getPartCostFormattedAttribute()
     {
-      //  return money_format(config('app.money_format'), $this->part_cost);
-        return $this->part_cost;
+        return money_format($this->part_cost);
+
     }
 
     public function getTotalCostsAttribute()
@@ -2038,13 +2038,13 @@ class Stock extends Model
 
     public function getTotalCostsFormattedAttribute()
     {
-       // return money_format(config('app.money_format'), $this->total_costs);
-        return $this->total_costs;
+        return money_format( $this->total_costs);
+
     }
 
     public function getTotalCostWithRepairFormattedAttribute(){
-       // return money_format(config('app.money_format'), $this->total_cost_with_repair);
-        return $this->total_cost_with_repair;
+        return money_format($this->total_cost_with_repair);
+
     }
 
     public function getOrderhubNewSkuAttribute()

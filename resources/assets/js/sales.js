@@ -1,6 +1,6 @@
 class Sales
 {
-	constructor(props) 
+	constructor(props)
 	{
 		// Initial state of the customer data used to determine if the user modified anything.
 
@@ -24,7 +24,7 @@ class Sales
 			});
 
 		this.customerInitialState = '';
-		
+
 		this.cacheDom();
 		this.bindMethods()
 		this.bindEvents();
@@ -148,7 +148,7 @@ class Sales
 		this.$customerFormWrapper.html('<img src="' + url('/img/ajax-loader.gif') + '">')
 		this.getCustomerDetails(id, true).then(this.showCustomerDetails);
 	}
-	
+
 	changeStatus(event)
 	{
 		var $target = $(event.target);
@@ -167,21 +167,21 @@ class Sales
 			error: APP.ajaxError
 		});
 	}
-	
+
 	checkCustomerModified()
 	{
 		this.$customerModifiedField.val(this.customerInitialState !== this.$customerFormWrapper.serialize() ? 1 : 0);
 		this.$summaryFormSubmitButton.prop('disabled', true);
 		this.$summaryFormSubmitButton.hide();
 	}
-	
+
 	showCustomerDetails(data)
 	{
 		var formHtml = data.formHtml;
 		this.$customerFormWrapper.html(formHtml);
 		this.customerInitialState = this.$customerFormWrapper.serialize();
 	}
-	
+
 	/**
 	 * @param string external_id
 	 * @param bool|int delay Should we delay returning the response if it arrives very quickly. Used to avoid the loading
@@ -222,7 +222,7 @@ class Sales
 	{
 		return confirm("Are you sure you want to cancel this sale?");
 	}
-	
+
 	statusCheck()
 	{
 		const idsToCheck = [];
@@ -295,25 +295,6 @@ class Sales
                     const $amountTotalEstProfitPre = $('td.estProfitPre', $row);
                     $amountTotalEstProfitPre.text(saleInfo.est_net_profit_per);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                     $statusTd.data('creation-status', saleInfo.status);
 					$statusTd.data('creation-status-finished', saleInfo.status_finished);
 
@@ -325,7 +306,7 @@ class Sales
 			}
 		});
 	}
-	
+
 	intervalForStatusCheck()
 	{
 		const statusCheck = () => {

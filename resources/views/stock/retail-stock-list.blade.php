@@ -1,8 +1,8 @@
 <p>
 	No. Items: {{ $items->count() }}<br/>
 	No. Missing SKU: {{ $missingSku->count() }}<br/>
-	Purchase Total: {{ money_format(config('app.money_format'), $items->sum('total_costs')) }}<br/>
-	Sales Total: {{ money_format(config('app.money_format'), $items->sum('sale_price')) }}
+	Purchase Total: {{ money_format($items->sum('total_costs')) }}<br/>
+	Sales Total: {{ money_format($items->sum('sale_price')) }}
 </p>
 
 @if (!count($items))

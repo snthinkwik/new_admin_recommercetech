@@ -113,6 +113,7 @@
 		@endif
 	</div>
 	<div id="basket-wrapper" class="navbar-right pr0">
+
 		@include('basket.navbar')
 	</div>
 @endsection

@@ -1,6 +1,7 @@
 <?php
-use App\Sale;
-use App\Stock;
+use App\Models\Sale;
+use App\Models\Stock;
+use App\Models\SellerFees;
 use Illuminate\Support\Facades\Request;
 $hasAvailabilityError = false;
 if(Request::input('items')) {
@@ -60,7 +61,7 @@ if($stock[0]['vat_type']==="Standard"){
 
 session()->forget('pre_data');
 
-$SellerFess = \App\SellerFees::groupBy('platform')->get();
+$SellerFess = SellerFees::groupBy('platform')->get();
 $platformList=[];
 
 foreach ($SellerFess as $key=>$platform){
@@ -115,7 +116,7 @@ foreach ($SellerFess as $key=>$platform){
 		@endif
 		@if ($errors->has('order_amount'))
 			<div class="alert alert-danger">
-				Your order value is below the MOQ of {{ money_format(config('app.money_format'), Sale::MINIMUM_ORDER_AMOUNT) }} -
+				Your order value is below the MOQ of {{ money_format(Sale::MINIMUM_ORDER_AMOUNT) }} -
 				please add more items to check out
 			</div>
 		@endif
@@ -132,15 +133,15 @@ foreach ($SellerFess as $key=>$platform){
 		{!! Form::open(['method' => 'POST', 'route' => 'sales.save', 'id' => 'sale-summary-form', 'class' => 'mb15']) !!}
 		@if(count($stock)>0)
 			<h4>Items</h4>
-			<p>Total Purchase Price: {{ money_format(config('app.money_format'), $totalPurchasePrice) }}</p>
-			<p>Total Sales Price: {{ money_format(config('app.money_format'), $totalSalePrice) }}</p>
-			<p>Total Sales Price Ex Vat: {{ money_format(config('app.money_format'), $totalExVatPrice) }}</p>
-			<p><span>Total Profit: {{ money_format(config('app.money_format'), $totalProfit) }}</span>
+			<p>Total Purchase Price: {{ money_format( $totalPurchasePrice) }}</p>
+			<p>Total Sales Price: {{ money_format( $totalSalePrice) }}</p>
+			<p>Total Sales Price Ex Vat: {{ money_format( $totalExVatPrice) }}</p>
+			<p><span>Total Profit: {{ money_format( $totalProfit) }}</span>
 				<span class="p45">Total Profit %:{{$profitPercentage."%"}}</span>
 
 			</p>
 			@if($stock[0]['vat_type']!=="Standard")
-				<p>Total True Profit: {{ money_format(config('app.money_format'), $totalTrueProfit) }}
+				<p>Total True Profit: {{ money_format($totalTrueProfit) }}
 					<span class="p15">Total True Profit %:{{$trueProfitPercentage."%"}}</span>
 				</p>
 			@endif
@@ -204,7 +205,7 @@ foreach ($SellerFess as $key=>$platform){
 							<td>{{ $item->grade }}</td>
 							<td>{{ $item->network }}</td>
 							@if (Auth::user()->type !== 'user')
-								<td width="5%">{{ money_format(config('app.money_format'), $item->total_cost_with_repair)  }}</td>
+								<td width="5%">{{ money_format($item->total_cost_with_repair)  }}</td>
 							@endif
 							<td>
 								@if (isset($data['items'][$item->id]['price']) && !empty($data['items'][$item->id]['price']))
@@ -214,9 +215,9 @@ foreach ($SellerFess as $key=>$platform){
 								@endif
 							</td>
 
-							<td width="4%" @if($item->total_price_ex_vat < 0) class="text-danger" @endif>@if($item->total_price_ex_vat){{ money_format(config('app.money_format'), $item->total_price_ex_vat)  }} @else - @endif</td>
+							<td width="4%" @if($item->total_price_ex_vat < 0) class="text-danger" @endif>@if($item->total_price_ex_vat){{ money_format($item->total_price_ex_vat)  }} @else - @endif</td>
 							<td>{{ $item->vat_type }}</td>
-							<td @if($item->profit < 0) class="text-danger" @endif>{{ money_format(config('app.money_format'), $item->profit)   }}</td>
+							<td @if($item->profit < 0) class="text-danger" @endif>{{ money_format($item->profit)   }}</td>
 
                             <?php
                             if($item->vat_type === "Standard"){
@@ -241,9 +242,9 @@ foreach ($SellerFess as $key=>$platform){
 
 							</td>
 							@if($stock[0]['vat_type']==="Margin")
-								<td>{{money_format(config('app.money_format'),$item->marg_vat) }}</td>
+								<td>{{money_format($item->marg_vat) }}</td>
 							@endif
-							<td @if($item->true_profit < 0) class="text-danger" @endif>{{  money_format(config('app.money_format'), $item->true_profit)  }}</td>
+							<td @if($item->true_profit < 0) class="text-danger" @endif>{{  money_format($item->true_profit)  }}</td>
 
                             <?php
                             if($item->vat_type === "Standard"){
@@ -301,7 +302,8 @@ foreach ($SellerFess as $key=>$platform){
 					</tbody>
 				</table>
 				@endif
-				@if(count($parts)>0)
+
+				@if(!is_null($parts)>0)
 					<h4>Parts</h4>
 					<table class="table table-striped table-hover">
 						<thead>
@@ -317,8 +319,8 @@ foreach ($SellerFess as $key=>$platform){
 							<tr>
 								<td>{{ $part->part->long_name }}</td>
 								<td>{{ $part->quantity }}</td>
-								<td>{{ money_format(config('app.money_format'), $part->part->sale_price) }}</td>
-								<td>{{ money_format(config('app.money_format'), $part->part_total_amount) }}</td>
+								<td>{{ money_format($part->part->sale_price) }}</td>
+								<td>{{ money_format($part->part_total_amount) }}</td>
 							</tr>
 						@endforeach
 						</tbody>
@@ -386,7 +388,7 @@ foreach ($SellerFess as $key=>$platform){
 									If you can't find an existing {{ $invoicing->getSystemName() }} customer, please
 									<a target="_blank" href="{{ route('admin.users') }}">add them</a> first.
 								</p>
-								@error('customer_external_id')
+								@error('customer_external_id') @enderror
 							</div>
 						</div>
 						<div class="col-md-8">
