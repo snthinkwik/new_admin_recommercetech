@@ -27,9 +27,9 @@
 				<tr>
 					<td>{{ $item->name }}</td>
 					<td>{{ $item->items }}</td>
-					<td>{{ money_format(config('app.money_format'), $item->total_sales_price) }}</td>
-					<td>{{ money_format(config('app.money_format'), $item->total_purchase_price) }}</td>
-					<td>{{ money_format(config('app.money_format'), $item->profit) }}</td>
+					<td>{{ money_format($item->total_sales_price) }}</td>
+					<td>{{ money_format($item->total_purchase_price) }}</td>
+					<td>{{ money_format($item->profit) }}</td>
 					<td>{{ $item->items_to_sell }}</td>
 					<td><a class="btn btn-sm btn-default" href="{{ route('stock.purchase-overview-stats', [ 'name' => $item->name ]) }}">Details</a></td>
 				</tr>

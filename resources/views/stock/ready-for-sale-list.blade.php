@@ -1,7 +1,7 @@
 <p>
 	No. Items: {{ $items->count() }}<br/>
-	Purchase Total: {{ money_format(config('app.money_format'), $items->sum('purchase_price')) }}<br/>
-	Sales Total: {{ money_format(config('app.money_format'), $items->sum('sale_price')) }}
+	Purchase Total: {{ money_format($items->sum('purchase_price')) }}<br/>
+	Sales Total: {{ money_format($items->sum('sale_price')) }}
 </p>
 
 @if (!count($items))

@@ -412,8 +412,8 @@ $repairIdList = \App\Models\Repair::select('repair_id')->get();
                                                     @endif</td>
 
                                                 <td>
-{{--                                                    {{ money_format(config('app.money_format'),$item->part_cost )  }}--}}
-                                                {{$item->part_cost}}
+                                                    {{ money_format($item->part_cost )  }}
+
                                                 </td>
 
                                                 <td> @if($repair->created_at)
@@ -676,7 +676,7 @@ $repairIdList = \App\Models\Repair::select('repair_id')->get();
                                         <td>
                                             <a href="{{route('admin.ebay-orders.view',['id' => $log->master_ebay_order_id])}}">{{ $log->order_no}}</a>
                                         </td>
-                                        <td>{{ money_format(config('app.money_format'), $log->price) }}</td>
+                                        <td>{{ money_format($log->price) }}</td>
                                         <td class="word-break-all">{{$log->customer}}</td>
                                         <td>
                                             @if($log->order)
@@ -834,7 +834,7 @@ $repairIdList = \App\Models\Repair::select('repair_id')->get();
                                     @if($item->vat_type==="Margin")
 
                                         <h4>Net
-                                            Profit: {{  money_format(config('app.money_format'), $item->profit - $item->marg_vat)  }}</h4>
+                                            Profit: {{  money_format($item->profit - $item->marg_vat)  }}</h4>
                                     @else
                                         <h4>Net Profit: {{ $item->true_profit }}</h4>
                                     @endif

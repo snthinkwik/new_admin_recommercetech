@@ -1,5 +1,5 @@
 <?php
-use App\Stock;
+use App\Models\Stock;
 $countries = ['' => 'Please Select'] + Stock::getAvailablePurchaseCountriesWithKeys();
 ?>
 @extends('app')

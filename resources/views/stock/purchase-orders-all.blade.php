@@ -1,7 +1,8 @@
 <?php
-use App\Supplier;
-$suppliers = ['' => 'None'] + Supplier::get()->lists('name', 'id');
-$ordersList = \App\Stock::where('purchase_order_number', '<>', '')->orderBy('purchase_date','desc')->groupBy('purchase_order_number')->get();
+use App\Models\Supplier;
+use App\Models\Stock;
+$suppliers = ['' => 'None'] + Supplier::get()->pluck('name', 'id')->toArray();
+$ordersList = Stock::where('purchase_order_number', '<>', '')->orderBy('purchase_date','desc')->groupBy('purchase_order_number')->get();
 $purchaseOrderNumber=[];
 //foreach ($orders as $order){
 //	array_push($purchaseOrderNumber,$order->purchase_order_number);

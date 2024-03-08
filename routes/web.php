@@ -23,8 +23,10 @@ use App\Http\Controllers\CustomerReturnController;
 use App\Http\Controllers\MasterAverageController;
 use App\Http\Controllers\AveragePriceController;
 use App\Http\Controllers\CategoryController;
-
 use App\Http\Controllers\CustomerReturnsController;
+use App\Http\Controllers\ProductsController;
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\NotificationsController;
 
 
 
@@ -166,25 +168,21 @@ Route::group(['middleware' => ['auth']], function () {
 
     // Products
     Route::group(['prefix' => 'products', 'middleware' => ['admin']], function () {
-        Route::get('/', ['uses' => 'ProductsController@getIndex', 'as' => 'products']);
-        Route::get('export-data', ['uses' => 'ProductsController@getAllExport', 'as' => 'product.export-data']);
-        Route::get('create', ['uses' => 'ProductsController@create', 'as' => 'product.create']);
-        Route::get('/{id}/{page?}', ['uses' => 'ProductsController@getSingle', 'as' => 'products.single']);
-        Route::post('/save', ['uses' => 'ProductsController@postCreate', 'as' => 'products.save']);
-        Route::post('/update', ['uses' => 'ProductsController@postUpdate', 'as' => 'products.update']);
-        Route::get('image/remove/{id}', ['uses' => 'ProductsController@removeImage', 'as' => 'image.remove']);
-        Route::get('deleted/{id}', ['uses' => 'ProductsController@deletedProduct', 'as' => 'product.delete']);
-        Route::post('/import', ['uses' => 'ProductsController@importCsv', 'as' => 'product.import']);
-
-        // Route::get('/temp-upload/remove',['uses'=>'ProductsController@removeTemporaryFile','as'=>'products.temp-remove']);
-        //	Route::post('/temp-upload', ['uses' => 'ProductsController@temporaryUpload', 'as' => 'products.temp-update']);
-
+        Route::get('/', [ProductsController::class,'getIndex'])->name('products');
+        Route::get('export-data', [ProductsController::class,'getAllExport'])->name('product.export-data');
+        Route::get('create', [ProductsController::class,'create'])->name('product.create');
+        Route::get('/{id}/{page?}', [ProductsController::class,'getSingle'])->name('products.single');
+        Route::post('/save', [ProductsController::class,'postCreate'])->name('products.save');
+        Route::post('/update', [ProductsController::class,'postUpdate'])->name('products.update');
+        Route::get('image/remove/{id}', [ProductsController::class,'removeImage'])->name('image.remove');
+        Route::get('deleted/{id}', [ProductsController::class,'deletedProduct'])->name('product.delete');
+        Route::post('/import', [ProductsController::class,'importCsv'])->name('product.import');
 
     });
 
     // Notifications
     Route::group(['prefix' => 'notifications', 'middleware' => ['admin']], function () {
-        Route::get('/', ['uses' => 'NotificationsController@getIndex', 'as' => 'notifications']);
+        Route::get('/', [NotificationsController::class,'getIndex'])->name('notifications');
     });
 
     // Purchases/Suppliers (without using TRG namespace)
@@ -627,24 +625,24 @@ Route::group(['middleware' => ['auth']], function () {
 
     // Basket
     Route::group(['prefix' => 'basket'], function () {
-        Route::get('/', ['uses' => 'BasketController@getIndex', 'as' => 'basket']);
-        Route::post('/toggle', ['uses' => 'BasketController@postToggle', 'as' => 'basket.toggle']);
-        Route::post('/delete', ['uses' => 'BasketController@postDelete', 'as' => 'basket.delete']);
-        Route::get('/delete-item', ['uses' => 'BasketController@getDeleteItem', 'as' => 'basket.delete-item']);
-        Route::post('/empty', ['uses' => 'BasketController@postEmpty', 'as' => 'basket.empty']);
-        Route::get('/get-html', ['uses' => 'BasketController@getHtml', 'as' => 'basket.get-html']);
+        Route::get('/', [BasketController::class,'getIndex'])->name('basket');
+        Route::post('/toggle', [BasketController::class,'postToggle'])->name('basket.toggle');
+        Route::post('/delete', [BasketController::class,'postDelete'])->name('basket.delete');
+        Route::get('/delete-item', [BasketController::class,'getDeleteItem'])->name('basket.delete-item');
+        Route::post('/empty', [BasketController::class,'postEmpty'])->name('basket.empty');
+        Route::get('/get-html', [BasketController::class,'getHtml'])->name('basket.get-html');
     });
 
     // Account
     Route::group(['prefix' => 'my-account'], function () {
-        Route::get('/', ['uses' => 'AccountController@getIndex', 'as' => 'account']);
-        Route::post('/', ['uses' => 'AccountController@postIndex', 'as' => 'account.save']);
-        Route::get('/settings', ['uses' => 'AccountController@getSettings', 'as' => 'account.settings']);
-        Route::post('/settings', ['uses' => 'AccountController@postSettings', 'as' => 'account.settings.save']);
-        Route::get('/balance', ['uses' => 'AccountController@getBalance', 'as' => 'account.balance']);
-        Route::get('/api', ['uses' => 'AccountController@getApi', 'as' => 'account.api']);
-        Route::post('/api-generate-key', ['uses' => 'AccountController@postApiGenerateKey', 'as' => 'account.api.generate-key']);
-        Route::post('/change-password', ['uses' => 'AccountController@postChangePassword', 'as' => 'account.change-password']);
+        Route::get('/', [AccountController::class,'getIndex'])->name('account');
+        Route::post('/', [AccountController::class,'postIndex'])->name('account.save');
+        Route::get('/settings', [AccountController::class,'getSettings'])->name('account.settings');
+        Route::post('/settings', [AccountController::class,'postSettings'])->name('account.settings.save');
+        Route::get('/balance', [AccountController::class,'getBalance'])->name('account.balance');
+        Route::get('/api', [AccountController::class,'getApi'])->name('account.api');
+        Route::post('/api-generate-key', [AccountController::class,'postApiGenerateKey'])->name('account.api.generate-key');
+        Route::post('/change-password', [AccountController::class,'postChangePassword'])->name('account.change-password');
     });
 
     // Unlocks Cost
@@ -832,17 +830,16 @@ Route::group(['prefix' => 'sage'], function () {
 Route::group(['prefix' => 'my-account'], function () {
     Route::get(
         '/disable-notifications',
-        ['uses' => 'AccountController@getDisableNotifications', 'as' => 'account.disable-notifications']
-    );
+        [AccountController::class,'getDisableNotifications'])->name('account.disable-notifications');
     Route::post(
         '/disable-notifications',
-        ['uses' => 'AccountController@postDisableNotifications', 'as' => 'account.disable-notifications.save']
-    );
+        [AccountController::class,'postDisableNotifications']
+    )->name('account.disable-notifications.save');
     Route::get('/registered-disable-notifications',
-        ['uses' => 'AccountController@getRegisteredDisableNotifications', 'as' => 'account.registered-disable-notifications']);
+        [AccountController::class,'getRegisteredDisableNotifications'])->name('account.registered-disable-notifications');
     Route::post('/registered-disable-notifications',
-        ['uses' => 'AccountController@postRegisteredDisableNotifications', 'as' => 'account.registered-disable-notifications.save']);
-    Route::any('/stripe-webhook', ['uses' => 'AccountController@anyStripeWebhook', 'as' => 'account.stripe-webhook']);
+        [AccountController::class,'postRegisteredDisableNotifications'])->name('account.registered-disable-notifications.save');
+    Route::any('/stripe-webhook', ['uses' => 'AccountController@anyStripeWebhook'])->name('account.stripe-webhook');
 });
 
 // API

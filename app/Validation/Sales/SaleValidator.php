@@ -1,7 +1,7 @@
 <?php namespace App\Validation\Sales;
 
-use App\Sale;
-use App\Stock;
+use App\Models\Sale;
+use App\Models\Stock;
 use Illuminate\Support\Facades\Auth;
 use  Illuminate\Contracts\Translation\Translator;
 
@@ -10,7 +10,8 @@ class SaleValidator extends PricesValidator {
 
 	public function __construct(Translator $translator, array $data, array $rules = array(), array $messages = array(), array $customAttributes = array())
 	{
-		if(count(Auth::user()->part_basket)>0) {
+
+		if(!is_null(Auth::user()->part_basket)) {
 			if (isset($data['items'])) {
 				$this->items = $data['items'];
 				$this->stock = Stock::whereIn('id', array_keys($data['items']))->get()->keyBy('id');

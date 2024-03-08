@@ -2,6 +2,7 @@
 
 namespace App\Models\User;
 
+use App\Models\User;
 use App\User\Address;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,7 +24,7 @@ class BillingAddress extends BaseAddress
     }
 
     public function user() {
-        return $this->belongsTo('App\User');
+        return $this->belongsTo(User::class);
     }
 
     public static function getCountryName($id) {

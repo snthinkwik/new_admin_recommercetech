@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Models\EmailTracking;
 use App\Http\Requests\UserRequest;
 use App\Models\Batch;
 use App\Models\BillingAddress;
@@ -17,7 +18,9 @@ use Illuminate\Http\Request;
 use Illuminate\Mail\Message;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\View;
 use App\Jobs\Users\AccountSuspended;
 use App\Models\EmailFormat;
@@ -528,8 +531,268 @@ class UserController extends Controller
     }
 
 
+    /**
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
+     */
+    public function getWhatsAppUsers() {
+        $users = User::where('whatsapp', true)->where('whatsapp_added', false)->get();
+
+        return view('admin.users.whats-app-users', compact('users'));
+    }
+
+    /**
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
+     */
+    public function getNewUserForm(/* Invoicing $invoicing */) {
+        $user = new User();
+
+        return view('admin.users.new-user', compact('user'));
+    }
+
+    /**
+     * @param Request $request
+     * @param Invoicing $invoicing
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function postCreateNewUser(Request $request,Invoicing $invoicing) {
+        $user = User::withUnregistered()->where('email', $request->email)->first() ? : new User();
+        $user->fill($request->except('password'));
+        $user->password = bcrypt($request->password);
+        $user->email_confirmation = md5(rand());
+        $user->registered = true;
+        $user->registration_token = null;
+
+        $user->save();
+        if (array_filter($request->address)) {
+            $address = new \App\Models\User\Address(convert_special_characters($request->address));
+            $address->user()->associate($user);
+            $address->save();
+        }
+
+        if(array_filter($request->billing_address)){
+            $billing_address=new \App\Models\User\BillingAddress(convert_special_characters($request->billing_address));
+            $billing_address->user()->associate($user);
+            $billing_address->save();
+
+        }
 
 
+        $this->getSyncQuickbooksCustomer($user->id, $invoicing);
 
+        return redirect()->route('admin.users.single', ['id' => $user->id])->with('messages.success', 'User Created');
+    }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
+     */
+    public function getBulkAdd(Request $request) {
+        return view('admin.users.bulk-add', compact('request'));
+    }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function postBulkAdd(Request $request) {
+        $countAdded = 0;
+        $skipped = [];
+        $emails = preg_split('/[\s,]+/', $request->emails_raw, -1, PREG_SPLIT_NO_EMPTY);
+
+        if (!$emails) {
+            Session::flash('Required', "email filed required");
+            return back();
+        }
+
+        $request->merge(['emails' => $emails]);
+
+
+        $existing = User::withUnregistered()
+            ->selectRaw('lower(email) email')
+            ->whereIn(DB::raw('lower(email)'), $emails)
+            ->pluck('email')->toArray();
+        if (count($existing)) {
+            $existing = array_combine($existing, array_fill(0, count($existing), true));
+        }
+
+
+        $emailList = [];
+        $i = 0;
+        $errorList = [];
+        foreach ($emails as $email) {
+
+            $i++;
+
+            $existEmail = DB::table('users')->where('email', $email)->get();
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $invalidateEmail = ["#" . $i . " must be a valid email address"];
+                array_push($errorList, $invalidateEmail);
+            } elseif (count($existEmail) > 0) {
+                $alreadyTaken = ["#" . $i . " email already taken"];
+                array_push($errorList, $alreadyTaken);
+            } else {
+                if (empty($existing[$email])) {
+                    $user = new User;
+                    $user->forceFill([
+                        'email' => $email,
+                        'marketing_emails_subscribe' => true,
+                        'registered' => false,
+                        'registration_token' => md5(rand()),
+                        'stock_fully_working' => true,
+                        'stock_minor_fault' => true,
+                        'stock_major_fault' => true,
+                        'stock_no_power' => true,
+                        'stock_icloud_locked' => true,
+                    ]);
+                    $existing[$email] = true;
+                    $user->save();
+                    if ($request->country) {
+                        $address = new \App\Models\User\Address();
+                        $address->user()->associate($user);
+                        $address->country = $request->country;
+                        $address->save();
+                    }
+                    $countAdded++;
+                    array_push($emailList, $email);
+                } else {
+
+
+                    $alreadyTaken = ["#" . $i . " email already taken"];
+                    array_push($errorList, $alreadyTaken);
+
+                    $skipped[] = $email;
+                }
+            }
+        }
+        $messageParts = [];
+        if (count($errorList) > 0) {
+            $messageParts['error'] = ["error.\n"];
+            foreach ($errorList as $error) {
+                array_push($messageParts['error'], $error[0]);
+            }
+        }
+        if (count($emailList) > 0) {
+            //$message['success'] = ["$countAdded users were added as unregistered.\n"];
+            $message['success'] = "$countAdded users were added as unregistered.\n";
+            array_push($messageParts, $message);
+        }
+        if ($skipped) {
+            $messageParts[] = count($skipped) . " users were skipped because they already exist in the database.\n";
+            $messageParts[] = "The skipped emails are: " . implode(', ', $skipped);
+        }
+
+        Session::flash('message', $messageParts);
+
+        return back();
+    }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Http\JsonResponse
+     */
+    public function getUnregistered(Request $request) {
+        $query = User::unregistered();
+        if ($request->term) {
+            $query->where('email', 'like', "%$request->term%");
+        }
+
+        if ($request->country) {
+            $query->whereHas('address', function($q) use($request) {
+                $q->where('country', $request->country);
+            });
+        }
+        $users = $query->paginate(config('app.pagination'));
+
+        if ($request->ajax()) {
+            return response()->json([
+                'usersHtml' => View::make('admin.users.unregistered-list', compact('users'))->render(),
+                'paginationHtml' => '' . $users->appends($request->all())->render(),
+            ]);
+        } else {
+            return view('admin.users.unregistered', compact('users'));
+        }
+    }
+    public function deleteUnregistered(Request $request) {
+        $user = User::unregistered()->findOrFail($request->id);
+        $emailU = $user->email;
+        $emails = EmailTracking::where('user_id', $user->id)->get();
+        if ($emails) {
+            foreach ($emails as $email) {
+                $email->delete();
+            }
+        }
+        // due to global scope, users first need to be set as registered,
+        // otherwise they won't be removed
+        $user->registered = true;
+        $user->save();
+        $user->delete();
+
+
+        return back()->with('messages.success', "User $emailU was removed");
+    }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Http\RedirectResponse
+     */
+    public function postRegisterUnregisteredForm(Request $request) {
+        $user = User::unregistered()->find($request->user_id);
+        if (!$user) {
+            return back()->with('messages.error', 'User Not Found');
+        }
+
+        return view('admin.users.register', compact('user'));
+    }
+
+    /**
+     * @param Request $request
+     * @param Invoicing $invoicing
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function postRegisterUnregistered(Request $request, Invoicing $invoicing) {
+        $user = User::unregistered()->find($request->id);
+        if (!$user) {
+            return back()->with('messages.error', 'User Not Found');
+        }
+        $user->fill($request->except('password'));
+
+        $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-";
+        $password = substr(str_shuffle($chars), 0, 10);
+        $user->business_description = '';
+        $user->password = bcrypt($password);
+        $user->email_confirmation = md5(rand());
+        $user->registered = true;
+        $user->registration_token = null;
+        $user->save();
+
+        $customer = $invoicing->getCustomers()->where('email', $user->email)->first();
+        if ($customer)
+            $user->invoice_api_id = $customer->external_id;
+
+        $user->save();
+
+        if (array_filter($request->address)) {
+            $address = new \App\Models\User\Address(convert_special_characters($request->address));
+            $address->user()->associate($user);
+            $address->save();
+        }
+
+        $isRegular = !$user->type || $user->type === 'user';
+        if ($isRegular && !$user->invoice_api_id) {
+            artisan_call_background('users:try-fix-missing-customer');
+        }
+
+        return redirect()->route('admin.users.single', ['id' => $user->id])->with('messages.success', "User was successfully registered.\n Password: $password");
+    }
+
+    public function postWhatsAppUsersAdded(Request $request) {
+        $user = User::findOrFail($request->id);
+        $user->whatsapp_added = true;
+        $user->save();
+
+        return response()->json([
+            'status' => 'success'
+        ]);
+    }
 
 }

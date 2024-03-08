@@ -14,6 +14,7 @@ use App\Models\Unlock\Order;
 use App\Models\Sale;
 use App\Models\Stock;
 use App\Models\UserDocument;
+use App\Models\Unlock;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -219,7 +220,7 @@ class User extends Authenticatable
 
     public function unlocks()
     {
-        return $this->hasMany('App\Unlock');
+        return $this->hasMany(Unlock::class);
     }
 
     public function pre_orders()
@@ -229,7 +230,7 @@ class User extends Authenticatable
 
     public function basket()
     {
-        return $this->belongsToMany(\App\Models\Stock::class, "baskets")->withPivot('created_at');
+        return $this->belongsToMany(Stock::class, "baskets")->withPivot('created_at');
     }
 
     public function address()
@@ -285,7 +286,7 @@ class User extends Authenticatable
     public function getHasIncorrectCountryAttribute()
     {
         static $acceptedCountryNames;
-        if (!$acceptedCountryNames) $acceptedCountryNames = Country::lists('name');
+        if (!$acceptedCountryNames) $acceptedCountryNames = Country::pluck('name')->toArray();
 
         return $this->type === 'user' &&
             (!$this->address || !in_array($this->address->country, $acceptedCountryNames));

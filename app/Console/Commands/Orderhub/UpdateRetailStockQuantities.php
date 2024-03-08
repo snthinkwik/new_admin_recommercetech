@@ -3,7 +3,7 @@
 use App\Models\ChannelGrabberUpdateLog;
 use App\Models\Stock;
 use Illuminate\Console\Command;
-use DB;
+use Illuminate\Support\Facades\DB;
 
 class UpdateRetailStockQuantities extends Command {
 

@@ -1,5 +1,5 @@
 <?php
-use App\Stock;
+use App\Models\Stock;
 $grades = ['' => ' - '] + Stock::getAvailableGradesWithKeys();
 $vat_types = ['Margin' => 'Margin', 'Standard' => 'Standard'];
 $test_status=[];
@@ -107,14 +107,14 @@ $test_status=[];
 								</div>
 									 </div>
 
-							<p>Purchase Price: {{ money_format(config('app.money_format'), $item->purchase_price)  }}</p>
-							<p>Unlock Cost: {{money_format(config('app.money_format'), $item->unlock_cost)  }}</p>
-							<p>Repair cost : {{ money_format(config('app.money_format'), $item->total_repair_cost) }}</p>
+							<p>Purchase Price: {{ money_format($item->purchase_price)  }}</p>
+							<p>Unlock Cost: {{money_format($item->unlock_cost)  }}</p>
+							<p>Repair cost : {{ money_format($item->total_repair_cost) }}</p>
 							<p>Total Purchase Price: {{ $item->total_cost_with_repair }}</p>
 							<div class="d-flex form-group align-items-center">
 								<p class="cu-mb-2 mr-2">Sale Price:</p>
 								<div>
-									<div class=" @hasError("items.$item->id.price")">
+									<div class="@hasError(items.$item->id.price)">
 										<div class="form-group">
 										<div class="input-group">
 											<div class="input-group-addon custom-group">£</div>
@@ -124,16 +124,16 @@ $test_status=[];
 											<input type="hidden" value="{{$item->id}}" class="ids">
 										</div>
 										</div>
-										@error("items.$item->id.price")
+										@error("items.$item->id.price") @enderror
 									</div>
 								</div>
 							</div>
 							@if($item->vat_type ==="Standard")
-								<p>Sales Price Ex Vat:  {{ money_format(config('app.money_format'), $item->total_price_ex_vat)  }}  </p>
+								<p>Sales Price Ex Vat:  {{ money_format($item->total_price_ex_vat)  }}  </p>
 							@endif
 
 
-							<p><span class="p2">Profit:  {{  money_format(config('app.money_format'), $item->profit)   }}</span>
+							<p><span class="p2">Profit:  {{  money_format($item->profit)   }}</span>
 								<span class="p45"> Profit%: @if($item->vat_type==="Standard" && $item->total_price_ex_vat)
 										{{number_format($item->profit/$item->total_price_ex_vat*100,2)."%"}}
 									@elseif($item->sale_price)
@@ -142,7 +142,7 @@ $test_status=[];
 								  </span>
 							</p>
 							@if($item->vat_type !=="Standard")
-								<p><span class="p2">True Profit: {{  money_format(config('app.money_format'), $item->true_profit)   }}</span>
+								<p><span class="p2">True Profit: {{  money_format($item->true_profit)   }}</span>
 									<span class="p10">True Profit%: @if($item->vat_type==="Standard" && $item->total_price_ex_vat )
 											{{$item->total_price_ex_vat? number_format($item->true_profit/$item->total_price_ex_vat*100,2)  ."%":''}}
 										@elseif($item->sale_price)
@@ -159,10 +159,11 @@ $test_status=[];
 				<input type="hidden" id="network" value="{{$item->network}}">
 					<input type="hidden" value="{{json_encode($test_status)}}" id="test_status">
 				@endif
-				@if(count($parts))
+
+				@if(!is_null($parts))
 					<h4>Parts</h4>
 					@foreach($parts as $part)
-						<p>{{ $part->quantity }}x {{ $part->part->long_name }}, {{ money_format(config('app.money_format'), $part->part->sale_price) }} each</p>
+						<p>{{ $part->quantity }}x {{ $part->part->long_name }}, {{ money_format($part->part->sale_price) }} each</p>
 					@endforeach
 				@endif
 				{!! Form::submit('Go to summary', ['class' => 'btn btn-primary','id'=>'summary']) !!}

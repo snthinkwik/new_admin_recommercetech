@@ -828,7 +828,7 @@ Account No: 49869160';
 
 
 
-		    if(count($item->product)>0){
+		    if(!is_null($item->product)>0){
 
 		        if($item->product->non_serialised){
 

@@ -2,11 +2,13 @@
 use Carbon\Carbon;
 ?>
 
-<a class="btn btn-default btn-block" data-toggle="collapse" data-target="#sales_table">Orders <span class="badge">{{ count($sales) }}</span></a>
+
+<a class="btn btn-default btn-block" data-toggle="collapse" data-target="#sales_table">Orders <span class="badge">@if(!is_null($sales)){{ count($sales) }}@endif</span></a>
 <div class="panel panel-default collapse" id="sales_table">
     <div class="panel-body">
 
-        @if(count($sales))
+
+        @if(!is_null($sales))
             <table class="table table-striped table-condensed">
                 <thead>
                 <tr>

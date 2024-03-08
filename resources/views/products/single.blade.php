@@ -1,11 +1,14 @@
 <?php
-$colours = \App\Colour::orderBy('pr_colour')->lists('pr_colour', 'pr_colour');
-$makes = \App\Stock::getMake();
+use App\Models\Colour;
+use App\Models\Stock;
+use App\Models\Category;
+$colours =Colour::orderBy('pr_colour')->pluck('pr_colour', 'pr_colour')->toArray();
+$makes = Stock::getMake();
 
 $makeList = [];
 
 
-$category = \App\Category::select('name')->get();
+$category = Category::select('name')->get();
 $categoryList = [];
 foreach ($category as $key => $category) {
     $categoryList[$category['name']] = $category['name'];
@@ -13,7 +16,7 @@ foreach ($category as $key => $category) {
 
 
 
-foreach (\App\Stock::getMake() as $key => $make) {
+foreach (Stock::getMake() as $key => $make) {
     $makeList[$make['make']] = $make['make'];
 }
 $vatTypeList = ['' => 'Select Vat Type', 'Margin' => 'Margin', 'Standard' => 'Standard']
@@ -81,14 +84,11 @@ $vatTypeList = ['' => 'Select Vat Type', 'Margin' => 'Margin', 'Standard' => 'St
                         {!! BsForm::groupText('model', null) !!}
                         {!! BsForm::groupText('slug', null, [],['label' => 'MPN']) !!}
                         {!! BsForm::groupText('ean', $product->ean,[],['label' => 'EAN']) !!}
-                        {{--{!! BsForm::groupSelect('vat_type', $vatTypeList,$product->vat_type, ['required' => 'required']) !!}--}}
                         <input type="checkbox" name="retail_comparison" @if($product->retail_comparison) checked @endif>
                         Retail Comparison
                         {!! BsForm::groupText('capacity', null) !!}
 
 
-
-                        {{--{!! BsForm::groupSelect('colour', $colours,$product->colour ,['required' => 'required'],['label' => 'Colour']) !!}--}}
                         <input type="checkbox" name="non_serialised" id="non_serialised"
                                @if($product->non_serialised) checked @endif> Non Serialised
                         {!! BsForm::groupText('multi_quantity',number_format($product->multi_quantity),[!$product->non_serialised ? 'readonly':'','id'=>'multi_qty']) !!}

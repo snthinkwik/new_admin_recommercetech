@@ -8,8 +8,9 @@ if(Auth::user()) {
 }
 
 $part_basket = Auth::user() ? Auth::user()->part_basket : null;
+
 ?>
-@if (($basket && count($basket) > 0) || ($part_basket && count($part_basket) > 0))
+@if (($basket && count($basket) > 0))
     <?php
     $totalAmount = $basket->reduce(function($sum, $a) {
         // Admin users can change the price. Let's check the request and take the price from there. If not present, take
@@ -19,7 +20,7 @@ $part_basket = Auth::user() ? Auth::user()->part_basket : null;
     });
 
     $count = count($basket);
-    if(count($part_basket) > 0) {
+    if(!is_null($part_basket) > 0) {
         $count += $part_basket->sum('quantity');
         $totalAmount += $part_basket->sum('part_total_amount');
     }
@@ -28,7 +29,7 @@ $part_basket = Auth::user() ? Auth::user()->part_basket : null;
     <div class="navbar-text navbar-right pr15" id="basket-count" data-count="{{ count($basket) }}">
         <a href="{{ route('basket') }}">
             <i class="fa fa-shopping-basket"></i>
-            <span class="badge">{{ $count }} &mdash;  {{$totalAmount }}</span>
+            <span class="badge">{{ $count }} &mdash; {{ money_format($totalAmount) }}</span>
         </a>
     </div>
 @endif

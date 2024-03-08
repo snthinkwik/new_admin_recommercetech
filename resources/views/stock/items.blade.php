@@ -109,7 +109,8 @@ foreach ($stock as $item) {
 			@foreach ($stock as $item)
 
 
-				<?php $inBasket = count($basket)? $basket->whereLoose('id', $item->id)->count():0; ?>
+
+				<?php $inBasket = count($basket)? $basket->where('id', $item->id)->count():0; ?>
 				<tr
 					@if(Auth::user()->type === 'admin' && in_array($item->grade, [Stock::GRADE_LOCKED_LOST, Stock::GRADE_LOCKED_CLEAN])) class="bg-red"
 					@elseif(Auth::user()->type === 'admin' && $item->shown_to == Stock::SHOWN_TO_EBAY_AND_SHOP) class="info"
@@ -318,24 +319,18 @@ foreach ($stock as $item) {
 					@endif
 					@if (Auth::user()->type == 'admin' && in_array(Auth::user()->admin_type, ['admin', 'manager']))
 					<td>
-{{--                        {{ money_format(config('app.money_format'), $item->purchase_price) }}--}}
-                        {{$item->purchase_price}}
+                        {{ money_format($item->purchase_price) }}
+
                     </td>
 					@endif
 					<td>
-{{--                        {{money_format(config('app.money_format'), $item->unlock_cost)}}--}}
-                    {{$item->unlock_cost}}
+                        {{money_format($item->unlock_cost)}}
                     </td>
 					<td>
-{{--                        {{money_format(config('app.money_format'), $item['total_repair_cost'] )}}--}}
-
-                        {{$item['total_repair_cost']}}
-
+                        {{money_format($item['total_repair_cost'] )}}
                     </td>
 					<td>
-{{--                        {{ money_format(config('app.money_format'), $item->total_cost_with_repair) }}--}}
-
-                        {{$item->total_cost_with_repair}}
+                        {{ money_format($item->total_cost_with_repair) }}
                     </td>
 					<td>{{ $item->vat_type }}</td>
 					@if (Auth::user()->type == 'admin' && in_array(Auth::user()->admin_type, ['admin', 'manager']))
@@ -353,25 +348,20 @@ foreach ($stock as $item) {
 
 					<td @if($item->total_price_ex_vat < 0) class="text-danger" @endif>
 					@if($item->total_price_ex_vat)
-{{--                            {{money_format(config('app.money_format'), $item->total_price_ex_vat) }}--}}
-                        {{$item->total_price_ex_vat}}
-
+                            {{money_format($item->total_price_ex_vat) }}
                         @else N/A @endif</td>
 
 					<td @if($item->profit < 0) class="text-danger" @endif>
-{{--					{{ money_format(config('app.money_format'), $item->profit) }}--}}
-                        {{$item->profit}}
+					{{ money_format($item->profit) }}
+
                     </td>
 
 					<td @if($item->margin_formatted < 0) class="text-danger" @endif>{{ $item->margin_formatted }}</td>
 					<td @if($item->marg_vat < 0) class="text-danger" @endif>
-{{--						@if(!is_null($item->marg_vat)) {{money_format(config('app.money_format'), $item->marg_vat) }} @else N/A @endif--}}
-                            @if(!is_null($item->marg_vat)) {{$item->marg_vat }} @else N/A @endif
+						@if(!is_null($item->marg_vat)) {{money_format($item->marg_vat) }} @else N/A @endif
 					</td>
 					<td @if($item->true_profit < 0) class="text-danger" @endif>
-{{--                        {{money_format(config('app.money_format'), $item->true_profit) }}--}}
-                        {{$item->true_profit}}
-
+                        {{money_format($item->true_profit) }}
                     </td>
 
 
@@ -408,20 +398,18 @@ foreach ($stock as $item) {
 								@if(isset($item->sale))
 								@if(in_array($item->sale->platform,[Stock::PLATFROM_MOBILE_ADVANTAGE,Stock::PLATFROM_BACKMARCKET,Stock::PLATFROM_EBAY]))
 											<td>
-{{--                                                {{money_format(config('app.money_format'),$estProfit)}}--}}
-                                                {{$estProfit}}
+                                                {{money_format($estProfit)}}
+
                                             </td>
 								@else
 									<td  @if($trueProfit < 0) class="text-danger" @endif >
-{{--                                        {{money_format(config('app.money_format'),$item->true_profit)}}--}}
-                                    {{$item->true_profit}}
+                                        {{money_format($item->true_profit)}}
                                     </td>
 								@endif
 									@endif
                     @else
                         <td @if($trueProfit < 0) class="text-danger" @endif>
-{{--                            {{money_format(config('app.money_format'),$item->true_profit)}}--}}
-                            {{$item->true_profit}}
+                            {{money_format($item->true_profit)}}
                         </td>
                     @endif
 
