@@ -97,8 +97,8 @@ $suppliers = ['' => 'None'] + $ty->toArray();
 <div class="form-group">
     {!! Form::label('user-spend', 'Total Spend') !!}
     <span>
-{{--			{{ money_format(config('app.money_format'),$total_spend) }}--}}
-        {{ $total_spend }}
+			{{ money_format($total_spend) }}
+
 		</span>
 </div>
 

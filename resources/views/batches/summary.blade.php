@@ -23,7 +23,7 @@
 							@foreach($batch->items as $item)
 								{{ $item->quantity }}x {{ $item->name }} - {{ $item->capacity_formatted }} @if($item->network != "Not Applicable")- {{ $item->network_formatted }}@endif<br/>
 							@endforeach
-							<br/>Take All - {{ money_format(config('app.money_format'), $batch->sale_price) }}
+							<br/>Take All - {{ money_format($batch->sale_price) }}
 							<br/>View here: {{ $batch->batch->trg_uk_url }}
 							<br/>
 							<br/>
@@ -39,7 +39,7 @@
 			{{ $item->quantity }}x {{ $item->name }} - {{ $item->capacity_formatted }} @if($item->network != "Not Applicable")- {{ $item->network_formatted }}@endif
 		@endforeach
 
-		Take All - {{ money_format(config('app.money_format'), $batch->sale_price) }}
+		Take All - {{ money_format($batch->sale_price) }}
 		View here: {{ $batch->batch->trg_uk_url }}
 	@endforeach
 </textarea>

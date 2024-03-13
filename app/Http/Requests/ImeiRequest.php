@@ -22,6 +22,9 @@ class ImeiRequest extends Request
             'imeis' => 'required|array|min:1'
         ];
 
+        $imeis = preg_split('/[\s,]+/', $this->imeis_list, -1, PREG_SPLIT_NO_EMPTY);
+        $this->merge(['imeis' => $imeis]);
+
         foreach ($this->imeis as $i => $imei) {
             $rules["imeis.$i"] = 'regex:/^\d{15,16}$/';
         }
@@ -59,6 +62,7 @@ class ImeiRequest extends Request
     public function validate()
     {
 
+        dd("ddd");
         $imeis = preg_split('/[\s,]+/', $this->imeis_list, -1, PREG_SPLIT_NO_EMPTY);
         $this->merge(['imeis' => $imeis]);
         parent::validate();

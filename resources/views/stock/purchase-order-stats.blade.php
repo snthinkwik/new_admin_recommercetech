@@ -227,39 +227,39 @@ $countries = ['' => 'Please Select'] + Stock::getAvailablePurchaseCountriesWithK
                 </tr>
                 <tr class="success-light">
                     <th>Total Purchase Price</th>
-                    <td>{{ money_format(config('app.money_format'),$stats['purchase_price'])   }}</td>
+                    <td>{{ money_format($stats['purchase_price'])   }}</td>
                 </tr>
                 <tr class="success-light">
                     <th>Total Sales Price</th>
-                    <td>{{ money_format(config('app.money_format'),$stats['sales_price']) }}</td>
+                    <td>{{ money_format($stats['sales_price']) }}</td>
                 </tr>
                 @if($stats['vat_type']===\App\Stock::VAT_TYPE_STD)
                     <tr class="success-light">
                         <th>Total Price Ex Vat</th>
-                        <td>{{ money_format(config('app.money_format'),$stats['total_price_ex_vat']) }}</td>
+                        <td>{{ money_format($stats['total_price_ex_vat']) }}</td>
                     </tr>
                 @endif
                 <tr class="success-light">
                     <th>Total Profit</th>
-                    <td>{{ money_format(config('app.money_format'),$stats['total_profit']) }}</td>
+                    <td>{{ money_format($stats['total_profit']) }}</td>
                 </tr>
                 @if($stats['vat_type']===\App\Stock::VAT_TYPE_MAG)
                     <tr class="success-light">
                         <th>Total Vat</th>
-                        <td>{{ money_format(config('app.money_format'),$stats['total_vat']) }}</td>
+                        <td>{{ money_format($stats['total_vat']) }}</td>
                     </tr>
                     <tr class="success-light">
                         <th>Total True Profit</th>
-                        <td>{{ money_format(config('app.money_format'),$stats['total_true_profit']) }}</td>
+                        <td>{{ money_format($stats['total_true_profit']) }}</td>
                     </tr>
                 @endif
                 <tr class="success-light">
                     <th>Total Seller Fees</th>
-                    <td>{{ money_format(config('app.money_format'),$stats['total_fees']) }}</td>
+                    <td>{{ money_format($stats['total_fees']) }}</td>
                 </tr>
                 <tr class="success-light">
                     <th>Total Est Net Profit</th>
-                    <td>{{ money_format(config('app.money_format'),$stats['est_profit']) }}</td>
+                    <td>{{ money_format($stats['est_profit']) }}</td>
                 </tr>
                 <tr class="success-light">
                     <th>Total Est Net Profit %</th>
@@ -322,21 +322,21 @@ $countries = ['' => 'Please Select'] + Stock::getAvailablePurchaseCountriesWithK
                                 <td>{{$item->vat_type}}</td>
 
                                 <td>{{ $item->purchase_date ? $item->purchase_date->format('Y-m-d') : '' }}</td>
-                                <td>{{money_format(config('app.money_format'),$item->purchase_price)}}</td>
+                                <td>{{money_format($item->purchase_price)}}</td>
 
-                                <td>{{ money_format(config('app.money_format'),$item->total_cost_with_repair)  }}</td>
-                                <td>{{money_format(config('app.money_format'),$item->sale_price)  }}</td>
+                                <td>{{ money_format($item->total_cost_with_repair)  }}</td>
+                                <td>{{money_format($item->sale_price)  }}</td>
 
                                 <td>
                                     @if($item->vat_type===Stock::VAT_TYPE_STD)
-                                        {{money_format(config('app.money_format'),$item->sale_price/1.2)  }}
+                                        {{money_format($item->sale_price/1.2)  }}
                                     @else
                                         N/A
                                     @endif
                                 </td>
 
-                                <td>{{ money_format(config('app.money_format'),$item->marg_vat) }}</td>
-                                <td>{{ money_format(config('app.money_format'), $item->true_profit) }}</td>
+                                <td>{{ money_format($item->marg_vat) }}</td>
+                                <td>{{ money_format($item->true_profit) }}</td>
                                 <td>
                                     <?php
                                     $shippingCostAvg=($item->sale->platform_fee + $item->sale->shipping_cost)/count($item->sale->stock);
@@ -354,7 +354,7 @@ $countries = ['' => 'Please Select'] + Stock::getAvailablePurchaseCountriesWithK
                                     ?>
                                     @if(!is_null($item->sale))
 {{--                                        {{money_format(config('app.money_format'),$item->sale->platform_fee + $item->sale->shipping_cost)}}--}}
-                                            {{money_format(config('app.money_format'),$finalShippingCost)}}
+                                            {{money_format($finalShippingCost)}}
                                     @endif
                                 </td>
                                 <?php
@@ -362,9 +362,9 @@ $countries = ['' => 'Please Select'] + Stock::getAvailablePurchaseCountriesWithK
                                 ?>
                                 @if(count($item->sale)>0)
                                     @if(in_array($item->sale->platform,[Stock::PLATFROM_EBAY,Stock::PLATFROM_BACKMARCKET,Stock::PLATFROM_MOBILE_ADVANTAGE]))
-                                        <td>{{ money_format(config('app.money_format'),$estProfit)}}</td>
+                                        <td>{{ money_format($estProfit)}}</td>
                                     @else
-                                        <td>{{  money_format(config('app.money_format'),$estProfit) }}</td>
+                                        <td>{{  money_format($estProfit) }}</td>
                                     @endif
                                 @endif
                                 <?php
@@ -455,20 +455,20 @@ $countries = ['' => 'Please Select'] + Stock::getAvailablePurchaseCountriesWithK
                                 <td>{{ $item->shown_to }}</td>
                                 <td>{{$item->vat_type}}</td>
                                 <td>{{ $item->purchase_date ? $item->purchase_date->format('Y-m-d') : '' }}</td>
-                                <td>{{money_format(config('app.money_format'),$item->purchase_price)}}</td>
+                                <td>{{money_format($item->purchase_price)}}</td>
 
-                                <td>{{ money_format(config('app.money_format'),$item->total_cost_with_repair)  }}</td>
-                                <td>{{money_format(config('app.money_format'),$item->sale_price)  }}</td>
+                                <td>{{ money_format($item->total_cost_with_repair)  }}</td>
+                                <td>{{money_format($item->sale_price)  }}</td>
 
                                 <td>
                                     @if($item->vat_type===Stock::VAT_TYPE_STD)
-                                        {{money_format(config('app.money_format'),$item->total_price_ex_vat)  }}
+                                        {{money_format($item->total_price_ex_vat)  }}
                                     @else
                                         N/A
                                     @endif
                                 </td>
 
-                                <td>{{ money_format(config('app.money_format'),$item->marg_vat) }}</td>
+                                <td>{{ money_format($item->marg_vat) }}</td>
                                 <td><img src="{{ $item->purchase_country_flag }}" alt=""></td>
                             </tr>
                         @endforeach
@@ -527,21 +527,21 @@ $countries = ['' => 'Please Select'] + Stock::getAvailablePurchaseCountriesWithK
                                 <td>{{$item->vat_type}}</td>
 
                                 <td>{{ $item->purchase_date ? $item->purchase_date->format('Y-m-d') : '' }}</td>
-                                <td>{{money_format(config('app.money_format'),$item->purchase_price)}}</td>
+                                <td>{{money_format($item->purchase_price)}}</td>
 
 
-                                <td>{{ money_format(config('app.money_format'),$item->total_cost_with_repair)  }}</td>
-                                <td>{{money_format(config('app.money_format'),$item->sale_price)  }}</td>
+                                <td>{{ money_format($item->total_cost_with_repair)  }}</td>
+                                <td>{{money_format($item->sale_price)  }}</td>
 
                                 <td>
                                     @if($item->vat_type===Stock::VAT_TYPE_STD)
-                                        {{money_format(config('app.money_format'),$item->total_price_ex_vat)  }}
+                                        {{money_format($item->total_price_ex_vat)  }}
                                     @else
                                         N/A
                                     @endif
                                 </td>
 
-                                <td>{{ money_format(config('app.money_format'),$item->marg_vat) }}</td>
+                                <td>{{ money_format($item->marg_vat) }}</td>
                                 <td><img src="{{ $item->purchase_country_flag }}" alt=""></td>
                             </tr>
                         @endforeach
@@ -600,20 +600,20 @@ $countries = ['' => 'Please Select'] + Stock::getAvailablePurchaseCountriesWithK
 
 
                                 <td>{{ $item->purchase_date ? $item->purchase_date->format('Y-m-d') : '' }}</td>
-                                <td>{{money_format(config('app.money_format'),$item->purchase_price)}}</td>
+                                <td>{{money_format($item->purchase_price)}}</td>
 
-                                <td>{{ money_format(config('app.money_format'),$item->total_cost_with_repair)  }}</td>
-                                <td>{{money_format(config('app.money_format'),$item->sale_price)  }}</td>
+                                <td>{{ money_format($item->total_cost_with_repair)  }}</td>
+                                <td>{{money_format($item->sale_price)  }}</td>
 
                                 <td>
                                     @if($item->vat_type===Stock::VAT_TYPE_STD)
-                                        {{money_format(config('app.money_format'),$item->total_price_ex_vat)  }}
+                                        {{money_format($item->total_price_ex_vat)  }}
                                     @else
                                         N/A
                                     @endif
                                 </td>
 
-                                <td>{{ money_format(config('app.money_format'),$item->marg_vat) }}</td>
+                                <td>{{ money_format($item->marg_vat) }}</td>
                                 <td><img src="{{ $item->purchase_country_flag }}" alt=""></td>
                             </tr>
                         @endforeach

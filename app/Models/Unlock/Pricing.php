@@ -62,13 +62,13 @@ class Pricing extends Model
 
     public function getAmountFormattedAttribute()
     {
-        //return money_format(config('app.money_format'), $this->amount);
-        return  $this->amount;
+        return money_format($this->amount);
+
     }
 
     public function getAmountBeforeVatFormattedAttribute()
     {
-        //return money_format(config('app.money_format'), $this->amount_before_vat);
-        return  $this->amount_before_vat;
+        return money_format($this->amount_before_vat);
+
     }
 }

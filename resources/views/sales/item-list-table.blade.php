@@ -1,8 +1,8 @@
 <?php
 
-use App\Stock;
-use App\Invoice;
-use App\Mobicode\GsxCheck;
+use App\Models\Stock;
+use App\Models\Invoice;
+use App\Models\Mobicode\GsxCheck;
 use App\Support\ReportParser;
 
 $networks = Stock::getAdminUnlockableNetworks();

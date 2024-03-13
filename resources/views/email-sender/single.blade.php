@@ -1,9 +1,10 @@
 <?php
-use App\Email;
+use App\Models\Email;
+use Illuminate\Support\Str;
 ?>
 @extends('app')
 
-@section('title', "Email \"" . str_limit($email->subject, 50) . "\"")
+@section('title', "Email \"" . Str::limit($email->subject, 50) . "\"")
 
 @section('pre-scripts')
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/canvasjs/1.7.0/canvasjs.min.js"></script>

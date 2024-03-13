@@ -146,8 +146,8 @@ class Sale extends Model
 
     public function getAmountFormattedAttribute()
     {
-       // return money_format(config('app.money_format'), $this->amount);
-        return $this->amount;
+        return money_format($this->amount);
+
     }
 
     /**
@@ -216,9 +216,8 @@ class Sale extends Model
     {
         $profit = "";
         if($this->stock->sum('total_costs') > 0) {
-//            $profit = money_format(config('app.money_format'), ($this->stock->sum('sale_price')-$this->stock->sum('total_costs')));
+            $profit = money_format($this->stock->sum('sale_price')-$this->stock->sum('total_costs'));
 
-            $profit = $this->stock->sum('sale_price')-$this->stock->sum('total_costs');
         }
         return $profit;
     }
@@ -226,8 +225,7 @@ class Sale extends Model
 
     public function getAmountPaidFormattedAttribute()
     {
-        //return money_format(config('app.money_format'), $this->amount_paid);
-        return $this->amount_paid;
+        return money_format($this->amount_paid);
     }
 
     public function getChangeDueAttribute()
@@ -237,8 +235,8 @@ class Sale extends Model
 
     public function getChangeDueFormattedAttribute()
     {
-       // return money_format(config('app.money_format'), $this->change_due);
-        return$this->change_due;
+        return money_format($this->change_due);
+
     }
 
     public static function getAvailablePaymentMethods()

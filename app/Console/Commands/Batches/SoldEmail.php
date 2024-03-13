@@ -40,7 +40,7 @@ class SoldEmail extends Command {
 		$this->info('Sold Price: '.$soldPrice);
 		$this->info('User: '.$user->id.' '.$user->full_name);
 
-	//	$soldPrice = money_format(config('app.money_format'), $soldPrice);
+		$soldPrice = money_format($soldPrice);
         $soldPrice = $soldPrice;
 		$this->info("Sold Price");
 

@@ -1,10 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Request;
-use App\Part;
+use App\Models\Part;
 
-$colours = ['' => ''] + Part::select('colour')->groupBy('colour')->get()->lists('colour', 'colour');
-$types = ['' => ''] + Part::select('type')->groupBy('type')->get()->lists('type', 'type');
+$colours = ['' => ''] + Part::select('colour')->groupBy('colour')->get()->pluck('colour', 'colour')->toArray();
+$types = ['' => ''] + Part::select('type')->groupBy('type')->get()->pluck('type', 'type')->toArray();
 ?>
 {!! BsForm::open(['id' => 'part-search-form', 'class' => 'form-inline mb15', 'method' => 'get']) !!}
 <div class="form-group">

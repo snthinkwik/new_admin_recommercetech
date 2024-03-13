@@ -1,9 +1,9 @@
 <?php
-use App\Batch;
-use App\Email;
-use App\Country;
-$batchIds = Batch::has('stock')->orderBy('id')->lists('id');
-$countries = Country::orderBy('name')->lists('name');
+use App\Models\Batch;
+use App\Models\Email;
+use App\Models\Country;
+$batchIds = Batch::has('stock')->orderBy('id')->pluck('id')->toArray();
+$countries = Country::orderBy('name')->pluck('name')->toArray();
 $countries = array_combine($countries, $countries);
 $brands = ['' => 'Recomm'] + Email::getAvailableBrandsWithKeys();
 ?>
@@ -74,7 +74,7 @@ $brands = ['' => 'Recomm'] + Email::getAvailableBrandsWithKeys();
 		<div class="form-group hide @hasError('file')" data-attachment-type="{{ Email::ATTACHMENT_FILE }}">
 			<label>Attachment file</label>
 			{!! BsForm::file('file') !!}
-			@error('file')
+			@error('file') @enderror
 		</div>
 		<div class="form-group hide" data-attachment-type="{{ Email::ATTACHMENT_BATCH }}">
 			<label>Batch</label>

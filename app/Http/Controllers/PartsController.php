@@ -6,6 +6,7 @@ use App\Models\Part;
 use App\Models\PartLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Auth;
 
 class PartsController extends Controller
 {
@@ -206,8 +207,7 @@ class PartsController extends Controller
         }
 
         $data = new \stdClass();
-//        $data->total_value_of_parts = money_format(config('app.money_format'), $totalValueOfParts);
-        $data->total_value_of_parts = $totalValueOfParts;
+        $data->total_value_of_parts = money_format($totalValueOfParts);
         $data->total_no_parts = $totalPartsInStock;
         return view('parts.summary', compact('data'));
     }

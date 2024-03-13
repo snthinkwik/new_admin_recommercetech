@@ -29,7 +29,7 @@
 					{!! BsForm::close() !!}
 				</td>
 				<td>{{ $customer->phone }}</td>
-				<td>{{ money_format(config('app.money_format'), $customer->balance_due)  }}</td>
+				<td>{{ money_format($customer->balance_due)  }}</td>
 				<td>{{ $customer->undispatched_orders }}</td>
 				<td>{{ $customer->balance_show ? "No" : "Yes" }}</td>
 			</tr>

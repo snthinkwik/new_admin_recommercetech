@@ -1,5 +1,7 @@
 <?php
 use Carbon\Carbon;
+use App\Models\RepairsItems;
+use App\Models\Stock;
 $totalPurchaseCost=0;
 foreach ($repairs->RepaireItemExternal as $repair){
 
@@ -9,13 +11,13 @@ foreach ($repairs->RepaireItemExternal as $repair){
 }
 
 
-                $status=\App\RepairsItems::STATUS_OPEN;
+                $status=RepairsItems::STATUS_OPEN;
 
                     foreach ($repairs->RepaireItemExternal as $repairItem){
-                        if($repairItem->status===\App\RepairsItems::STATUS_CLOSE){
-                            $status=\App\RepairsItems::STATUS_CLOSE;
+                        if($repairItem->status===RepairsItems::STATUS_CLOSE){
+                            $status=RepairsItems::STATUS_CLOSE;
                         }else{
-                            $status=\App\RepairsItems::STATUS_OPEN;
+                            $status=RepairsItems::STATUS_OPEN;
                         }
                     }
 
@@ -35,9 +37,9 @@ foreach ($repairs->RepaireItemExternal as $repair){
             <strong class="text-success">Open:{{$openCount}}</strong>,
             <strong class="text-danger">Close:{{$closeCount}}</strong>
             <br>
-            <strong class="text-primary">Total Purchase Cost: {{money_format(config('app.money_format'), $totalPurchaseCost)}} </strong><br>
-            <strong class="text-primary">Total Estimate Cost: {{ money_format(config('app.money_format'), $totalCost[0]->total_estimate_cost)   }}</strong><br>
-            <strong class="text-warning">Total Actual Cost: {{ money_format(config('app.money_format'), $totalCost[0]->total_actual_repair_cost)   }}</strong><br>
+            <strong class="text-primary">Total Purchase Cost: {{money_format($totalPurchaseCost)}} </strong><br>
+            <strong class="text-primary">Total Estimate Cost: {{ money_format($totalCost[0]->total_estimate_cost)   }}</strong><br>
+            <strong class="text-warning">Total Actual Cost: {{ money_format($totalCost[0]->total_actual_repair_cost)   }}</strong><br>
 
            <h2> External  Repair #{{ $repairs->id }} - Details</h2>
 
@@ -264,9 +266,9 @@ foreach ($repairs->RepaireItemExternal as $repair){
                     <td>{{$repair->stock->cracked_back}}</td>
                     <td>{{$repair->stock->network}}</td>
                     <td>{{$repair->stock->imei!=="" ?$repair->stock->imei:$repair->stock->serial}}</td>
-                    <td>{{money_format(config('app.money_format'),$repair->stock->purchase_price)  }}</td>
+                    <td>{{money_format($repair->stock->purchase_price)  }}</td>
                     <td>
-                        {{ str_limit(strip_tags($repair->original_faults), 30) }}
+                        {{Str::limit(strip_tags($repair->original_faults), 30) }}
                         <br>
                         @if (strlen(strip_tags($repair->original_faults)) > 30)
                             <a href="#" data-toggle="modal" data-target="#OriginalFaultsModal" class="originReadMore" data-id="{{$repair->id}}" ><i class="fa fa-eye"></i> </a>
@@ -290,7 +292,7 @@ foreach ($repairs->RepaireItemExternal as $repair){
                     </td>
                     <td>
 
-                        {{ str_limit(strip_tags($repair->repaired_faults), 30) }}
+                        {{ Str::limit(strip_tags($repair->repaired_faults), 30) }}
                         <br>
                         <a href="#" data-toggle="modal"  data-target="#exampleModal" class="readMore edit" data-id="{{$repair->id}}" ><i class="fa fa-edit"></i> </a>
 
@@ -315,7 +317,7 @@ foreach ($repairs->RepaireItemExternal as $repair){
 
                     </td>
 
-                    <td>{{ money_format(config('app.money_format'),$repair->stock->total_cost_with_repair)  }}</td>
+                    <td>{{ money_format($repair->stock->total_cost_with_repair)  }}</td>
                     <td>{{$repair->stock->vat_type}}</td>
 
                     <td> {{$repair->no_days}} </td>
@@ -335,7 +337,7 @@ foreach ($repairs->RepaireItemExternal as $repair){
 
                         {!! BsForm::open(['method' => 'post', 'route' => 'repairs.external.delete']) !!}
                         {!! BsForm::hidden('id',  $repair->id) !!}
-                      @if(!in_array($repair->stock->status,[\App\Stock::STATUS_PAID,\App\Stock::STATUS_SOLD]) )
+                      @if(!in_array($repair->stock->status,[Stock::STATUS_PAID,Stock::STATUS_SOLD]) )
                         {!! BsForm::submit('Delete', ['class' => 'confirmed btn-danger', 'data-confirm' => "Are you sure you want to delete this Data?"]) !!}
                         @endif
                         {!! BsForm::close() !!}

@@ -322,7 +322,7 @@ class InvoiceCreate implements ShouldQueue
                 dispatch(new EmailSend($this->sale,EmailSend::EMAIL_CREATED,$newCustomer,$invoicePath));
             }
         }
-        catch (Exception $e) {
+        catch (\Exception $e) {
             $this->sale->invoice_creation_status = Invoice::CREATION_STATUS_ERROR;
             $this->sale->invoice_description = $e;
             $this->sale->save();

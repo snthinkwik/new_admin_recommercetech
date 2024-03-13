@@ -375,7 +375,7 @@ class User extends Authenticatable
 
     public function getBalanceFormattedAttribute()
     {
-        return money_format(config('app.money_format'), $this->balance);
+        return money_format($this->balance);
     }
 
     /**

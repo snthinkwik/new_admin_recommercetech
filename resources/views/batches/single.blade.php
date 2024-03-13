@@ -1,6 +1,6 @@
 <?php
-use App\Stock;
-use App\Batch;
+use App\Models\Stock;
+use App\Models\Batch;
 use Carbon\Carbon;
 $networks = Stock::getAdminUnlockableNetworks();
 ?>
@@ -38,9 +38,9 @@ $networks = Stock::getAdminUnlockableNetworks();
 			<div class="col-md-6">
 				<p>
 					Status: {{ $batch->status }}<br/>
-					Total Purchase Price: {{ money_format(config('app.money_format'), $batch->stock->sum('total_costs')) }}<br/>
-					Total Sales Price: {{ money_format(config('app.money_format'), $batch->stock->sum('sale_price')) }}<br/>
-					Batch Sales Price: {{ money_format(config('app.money_format'), $batch->sale_price) }}<br/>
+					Total Purchase Price: {{ money_format($batch->stock->sum('total_costs')) }}<br/>
+					Total Sales Price: {{ money_format($batch->stock->sum('sale_price')) }}<br/>
+					Batch Sales Price: {{ money_format($batch->sale_price) }}<br/>
 					Batch End TIme: {{ $batch->end_time_formatted }} <i class="btn btn-xs btn-default fa fa-pencil" data-toggle="collapse" data-target="#batch-end-time"></i>
 				</p>
 
@@ -165,7 +165,7 @@ $networks = Stock::getAdminUnlockableNetworks();
 						@endforeach
 						{!! BsForm::submit('Unlock All', ['class' => 'confirmed btn-sm', 'data-confirm' => 'Are you sure you want to unlock all available to unlock items?']) !!}
 					{!! Form::close() !!}
-	
+
 					{!! BsForm::open(['id' => 'batch-clear-notes-form', 'class' => 'form-inline ib', 'method' => 'post', 'route' => 'batches.clear-notes']) !!}
 						{!! BsForm::hidden('id', $batch->id) !!}
 						{!! BsForm::submit("Clear Notes",
@@ -363,7 +363,7 @@ $networks = Stock::getAdminUnlockableNetworks();
 						</td>
 						<td>{{ $item->third_party_ref }}</td>
 						<td>{{ $item->sale_price_formatted }}</td>
-						<td>{{ $item->purchase_date ? $item->purchase_date->format('Y-m-d') : '' }}</td>
+						<td>{{ $item->purchase_date ? $item->purchase_date : '' }}</td>
 						<td>{{ $item->total_costs_formatted }}</td>
 						<td>{{ $item->status }} @if($item->status == "Sold") <a target="_blank" href="{{ route('sales.invoice', ['id' => $item->sale_id]) }}">#{{ $item->sale_id }}</a> @endif</td>
 						@if($batch->status == Batch::STATUS_FOR_SALE)

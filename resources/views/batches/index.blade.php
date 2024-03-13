@@ -20,9 +20,9 @@
 			{!! BsForm::open(['id' => 'batches-merge-form', 'class' => 'form-inline ib', 'method' => 'post', 'route' => 'batches.merge']) !!}
 			<div class="input-group">
 				<span class="input-group-addon">Batch 1</span>
-				{!! BsForm::select('batch_1', $batches->lists('id', 'id')) !!}
+				{!! BsForm::select('batch_1', $batches->pluck('id', 'id')->toArray()) !!}
 				<span class="input-group-addon">Batch 2</span>
-				{!! BsForm::select('batch_2', $batches->lists('id', 'id')) !!}
+				{!! BsForm::select('batch_2', $batches->pluck('id', 'id')->toArray()) !!}
 				<div class="input-group-btn">
 					{!! BsForm::submit("Merge",
 						['class' => 'confirmed',

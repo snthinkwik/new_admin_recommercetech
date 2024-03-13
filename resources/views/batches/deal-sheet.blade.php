@@ -53,7 +53,7 @@
 					<td><a href="{{ route('admin.users.single', ['id' => $offer->user_id]) }}">{{ $offer->user->full_name }}</a></td>
 					<td>{{ $offer->user->invoice_api_id }}</td>
 					<td>{{ $offer->offer_formatted }}</td>
-					<td>{{ money_format(config('app.money_format'), $offer->offer-$batch->stock()->get()->sum('total_costs')) }}</td>
+					<td>{{ money_format($offer->offer-$batch->stock()->get()->sum('total_costs')) }}</td>
 					<td>{{ $offer->seen ? "Yes" : "No" }}
 						@if(!$offer->seen)
 							{!! BsForm::open(['method' => 'post', 'route' => 'batches.deal-sheet-mark-as-seen', 'class' => 'form-inline']) !!}
@@ -72,6 +72,7 @@
 						{!! Form::hidden('batch', $batch->id) !!}
 						@foreach($batch->stock as $item)
 							{!! Form::hidden('items[' . $item->id . ']') !!}
+
 						@endforeach
 
 						{!! BsForm::hidden('price', $offer->offer) !!}

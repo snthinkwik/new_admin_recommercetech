@@ -28,6 +28,7 @@ use App\Models\EmailFormat;
 
 
 
+
 class UserController extends Controller
 {
     protected $auth;
@@ -42,24 +43,17 @@ class UserController extends Controller
      */
     public function getIndex(Request $request) {
 
-
-
-//        $currency = Number::currency(1000);
-//        dd($currency);
-
-
         $users = $this->getUserQuery($request)->paginate(config('app.pagination'));
 
-        return view('admin.users.index', compact('users'));
 
-//        if ($request->ajax()) {
-//            return response()->json([
-//                'usersHtml' => View::make('admin.users.list', compact('users'))->render(),
-//                'paginationHtml' => '' . $users->appends($request->all())->render(),
-//            ]);
-//        } else {
-//            return view('admin.users.index', compact('users'));
-//        }
+        if ($request->ajax()) {
+            return response()->json([
+                'usersHtml' => View::make('admin.users.list', compact('users'))->render(),
+                'paginationHtml' => '' . $users->appends($request->all())->render(),
+            ]);
+        } else {
+            return view('admin.users.index', compact('users'));
+        }
     }
 
     /**
@@ -793,6 +787,16 @@ class UserController extends Controller
         return response()->json([
             'status' => 'success'
         ]);
+    }
+    public function getAutocomplete(Request $request) {
+        $usersQuery = User::where(function($query) use($request) {
+            $query->where(DB::raw("concat(first_name, ' ', last_name)"), 'like', "%$request->term%")
+                ->orWhere('email', 'like', "%$request->term%");
+        })->limit(20);
+        $users = $usersQuery->get();
+        return $users->map(function($user) {
+            return ['value' => $user->id, 'label' => "$user->full_name ($user->email)"];
+        });
     }
 
 }

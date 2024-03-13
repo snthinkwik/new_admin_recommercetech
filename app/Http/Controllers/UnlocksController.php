@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Commands\Unlocks\Emails\OwnStock\NewOrder;
 use App\Commands\Unlocks\Emails\OwnStock\OrderPaymentReceived;
 use App\Jobs\Unlocks\Emails\UnknownNetwork;
-use App\Commands\Unlocks\Emails\Unlocked;
 use App\Commands\Unlocks\InvoiceUnlockCreate;
 use App\Contracts\Invoicing;
 use App\Http\Requests\ImeiRequest;
@@ -22,6 +21,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\View;
+use App\Jobs\Unlocks\Emails\Unlocked;
+use Cache;
 
 class UnlocksController extends Controller
 {
@@ -44,17 +45,6 @@ class UnlocksController extends Controller
             }
             $unlocks->where('stock_id', 'like', "%$ref%");
         }
-
-        /*if($request->source && $request->source == 'retail_orders') {
-            $unlocks->has('orders.retailOrder');
-        } elseif($request->source && $request->source == 'stock') {
-            $unlocks->where(function($q) {
-                $q->doesntHave('orders');
-                $q->orWhere(function($o) {
-                    $o->whereDoesntHave('orders.retailOrder');
-                });
-            });
-        }*/
 
         $unlocks = $unlocks->paginate(config('app.pagination'))
             ->appends($request->all());
@@ -124,6 +114,7 @@ class UnlocksController extends Controller
 
     public function getAdd(Request $request)
     {
+
         $imeiMessages = session('stock.imei_check_messages');
         return view(
             'unlocks.add-as-' . (Auth::user()->type !== 'user' ? 'admin' : 'user'),
@@ -344,8 +335,6 @@ class UnlocksController extends Controller
 
     public function postAddAsAdmin(ImeiRequest $request)
     {
-
-
         $imeis = $request->imeis;
         $unlocks = Unlock::whereIn('imei', $imeis)->get()->keyBy('imei');
         $stock = Stock::whereIn('imei', $imeis)->get()->keyBy('imei');
@@ -546,7 +535,9 @@ class UnlocksController extends Controller
     {
         $unlock = Unlock::findOrFail($request->id);
         $unlock->status = Unlock::STATUS_UNLOCKED;
-        Queue::pushOn('emails', new Unlocked($unlock));
+      //  Queue::pushOn('emails', new Unlocked($unlock));
+       dispatch(new Unlocked($unlock));
+
         $unlock->save();
         return back()->with('messages.success', "IMEI '$unlock->imei' marked as unlocked.");
     }

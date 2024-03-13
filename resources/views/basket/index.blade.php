@@ -93,8 +93,8 @@
 											<span class="text-danger">Quantity in stock is less than quantity you want to buy.</span>
 										@endif
 									</td>
-									<td>{{ money_format(config('app.money_format'), $item->part->sale_price) }}</td>
-									<td>{{ money_format(config('app.money_format'), $item->part_total_amount) }}</td>
+									<td>{{ money_format($item->part->sale_price) }}</td>
+									<td>{{ money_format($item->part_total_amount) }}</td>
 									<td>
 										{!! BsForm::open(['method' => 'post', 'route' => 'part-basket.delete']) !!}
 										{!! BsForm::hidden('id', $item->part->id) !!}

@@ -1,8 +1,8 @@
 <?php
 
-use App\Part;
+use App\Models\Part;
 
-$types = ['' => ''] + Part::select('type')->groupBy('type')->get()->lists('type', 'type');
+$types = ['' => ''] + Part::select('type')->groupBy('type')->get()->pluck('type', 'type')->toArray();
 ?>
 {!! BsForm::open(['id' => 'universal-search-form', 'class' => 'form-inline mb15', 'method' => 'get']) !!}
 <div class="form-group">

@@ -36,8 +36,8 @@ class Order extends Model
 
     public function getAmountFormattedAttribute()
     {
-        return $this->amount;
-        //return money_format(config('app.money_format'), $this->amount);
+
+        return money_format($this->amount);
     }
 
     public function getImeisAttribute()

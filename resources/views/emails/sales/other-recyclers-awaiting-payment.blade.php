@@ -15,7 +15,7 @@
             <b>#{{ $order->recycler_order_number }} - {{ $order->recycler_name }}</b>
             @foreach($order->items as $item)
                 <br />{{ $item->item_name }},
-                {{ money_format(config('app.money_format'), $item->amount_expected) }}
+                {{ money_format($item->amount_expected) }}
             @endforeach
         </p>
     @endforeach

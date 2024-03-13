@@ -125,9 +125,7 @@ class Batch extends Model
     public function getPurchasePriceFormattedAttribute()
     {
         $price = $this->stock()->sum('purchase_price');
-
-       // return money_format(config('app.money_format'), $price);
-        return $price;
+        return money_format($price);
     }
 
     public function getWantedPriceAttribute()
@@ -141,7 +139,7 @@ class Batch extends Model
 
     public function sale()
     {
-        return $this->hasOne('App\Sale');
+        return $this->hasOne(Sale::class);
     }
 
     public function getPhotoUrlAttribute()

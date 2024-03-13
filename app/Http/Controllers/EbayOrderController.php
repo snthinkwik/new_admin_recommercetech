@@ -371,9 +371,9 @@ class EbayOrderController extends Controller
 
     public function export_ready_for_invoice_csv() {
 
-        $OrderItem = \App\EbayOrderItems::with("fees", "order", "matched_to_item")
+        $OrderItem = EbayOrderItems::with("fees", "order", "matched_to_item")
             ->has("fees", ">", 0)
-            ->where("owner", \App\EbayOrderItems::RECOMM)->whereHas('order', function ($q) {
+            ->where("owner", EbayOrderItems::RECOMM)->whereHas('order', function ($q) {
                 $q->whereNotIn('status', [EbayOrders::STATUS_REFUNDED, EbayOrders::STATUS_CANCELLED]);
             })->get();
 
@@ -387,7 +387,7 @@ class EbayOrderController extends Controller
                 'Item Number' => $item->external_id,
                 'Custom Label' => $item->item_sku,
                 'Quantity' => $item->quantity,
-                'Item Price' => money_format(config('app.money_format'), $item->individual_item_price),
+                'Item Price' => money_format($item->individual_item_price),
                 'Sale Type' => $item->sale_type,
                 'Order Status' => ucfirst($item->order->status)
             ];

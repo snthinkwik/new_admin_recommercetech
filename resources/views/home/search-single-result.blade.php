@@ -9,7 +9,7 @@
 
 					<b>Quantity Available: </b>{{ $items }}
 					@if($items > 0)
-						<br/><b>From: </b> {{ money_format(config('app.money_format'), $from) }}
+						<br/><b>From: </b> {{ money_format($from) }}
 					@endif
 
 					@if($items > 0)

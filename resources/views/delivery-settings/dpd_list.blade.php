@@ -24,7 +24,7 @@
                 <td>{{$dpd->product_description}}</td>
                 <td>{{$dpd->service_description}}</td>
                 <td>{{$dpd->delivery_post_code}}</td>
-                <td>{{money_format(config('app.money_format'), $dpd->cost)}}</td>
+                <td>{{money_format($dpd->cost)}}</td>
                 <td>{{ $dpd->owner }}</td>
                 <td>
                     @if(!is_null($dpd->matched) && $dpd->matched == "N/A")

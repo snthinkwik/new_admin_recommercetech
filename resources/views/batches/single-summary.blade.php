@@ -20,7 +20,7 @@
 						@foreach($items as $item)
 							{{ $item->quantity }}x {{ $item->name }} - {{ $item->capacity_formatted }} @if($item->network != "Not Applicable")- {{ $item->network }}@endif<br/>
 						@endforeach
-						<br/>Take All - {{ money_format(config('app.money_format'), $batch->sale_price) }}
+						<br/>Take All - {{ money_format($batch->sale_price) }}
 					</div>
 				</div>
 				<div class="col-md-6">
@@ -31,7 +31,7 @@ Device count: {{ $batch->stock()->count() }}
 		{{ $item->quantity }}x {{ $item->name }} - {{ $item->capacity_formatted }} - @if($item->network != "Not Applicable")- {{ $item->network }}@endif
 	@endforeach
 
-Take All - {{ money_format(config('app.money_format'), $batch->sale_price) }}
+Take All - {{ money_format($batch->sale_price) }}
 </textarea>
 				</div>
 			@endif

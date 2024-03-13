@@ -1,5 +1,6 @@
 <?php
-$suppliers = \App\Supplier::all();
+use App\Models\Supplier;
+$suppliers = Supplier::all();
 ?>
 @extends('app')
 

@@ -1,5 +1,5 @@
 <?php
-use App\Batch;
+use App\Models\Batch;
 
 $statuses = ['all' => 'All'] + Batch::getAvailableStatuses(true);
 ?>

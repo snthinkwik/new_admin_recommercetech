@@ -654,8 +654,8 @@ class StockController extends Controller
             StockLog::create([
                 'user_id' => Auth::user()->id,
                 'stock_id' => $item->id,
-              //  'content' => "Imported. Purchase Price: " . money_format(config('app.money_format'), $item->purchase_price),
-                'content' => "Imported. Purchase Price: " . $item->purchase_price,
+                'content' => "Imported. Purchase Price: " . money_format($item->purchase_price),
+               // 'content' => "Imported. Purchase Price: " . $item->purchase_price,
             ]);
             if ($item->make == 'Samsung') {
                 GsxCheck::create([
@@ -800,8 +800,8 @@ class StockController extends Controller
         $newDate = Carbon::createFromFormat('Y-m-d H:i:s', $currentDate->toDateTimeString())->format('d/m/y');
         $repair = Repair::find($repairItem->repair_id);
 
-       // $content = $newDate . "Internal Repair (" . $repair->Repairengineer->name . " ):" . $repairItem->parts . " - " . money_format(config('app.money_format'), $stock->part_cost);
-        $content = $newDate . "Internal Repair (" . $repair->Repairengineer->name . " ):" . $repairItem->parts . " - " . $stock->part_cost;
+        $content = $newDate . "Internal Repair (" . $repair->Repairengineer->name . " ):" . $repairItem->parts . " - " . money_format($stock->part_cost);
+
 
         StockLog::create([
             'user_id' => Auth::user()->id,
@@ -2766,8 +2766,67 @@ class StockController extends Controller
 
 
 
+    public function postChangeGrade(Request $request)
+    {
+
+        if (!$request->grade || !in_array($request->grade, Stock::getAvailableGradesWithKeys()))
+            return back()->with('messages.error', 'Invalid Grade');
+        $items = Stock::query()->whereIn('id', $request->ids)->get();
+
+        $message = "";
+
+        foreach ($items as $item) {
+            if ($item->grade != $request->grade && $request->grade == Stock::GRADE_FULLY_WORKING && !$item->grade_fully_working_available_) {
+                $message .= "<a href='" . route('stock.single', ['id' => $item->id]) . "'>$item->our_ref</a> - Battery life is $item->battery_life% and therefore this phone cannot be sold as fully working. Please replace the battery and then re-run through Phone Diagnostics.\n";
+                continue;
+            }
+            $log = "Changed grade from $item->grade to $request->grade";
+            $item->grade = $request->grade;
+            $item->save();
+          StockLog::create([
+                'stock_id' => $item->id,
+                'user_id' => Auth::user()->id,
+                'content' => $log
+            ]);
+        }
+        if ($message) {
+            return back()->with('messages.error-custom', $message);
+        }
+
+        return back()->with('messages.success', 'Grade changed: ' . count($request->ids) . ' items - ' . $request->grade);
+    }
+
+    public function getStockStats()
+    {
+        $stats = [];
+        $stats['In Stock'] = Stock::where('status', Stock::STATUS_IN_STOCK)->count();
+        $stats['In Repair'] = Stock::where('status', Stock::STATUS_REPAIR)->count();
+        $stats['Ready for Sale'] = Stock::where('status', Stock::STATUS_READY_FOR_SALE)->count();
+        $stats['Retail Stock'] = Stock::where('status', Stock::STATUS_RETAIL_STOCK)->count();
+        $stats['Listed on Auction'] = Stock::where('status', Stock::STATUS_LISTED_ON_AUCTION)->count();
+
+        return view('stock.stats', compact('stats'));
+    }
+    public function postAssignProduct(Request $request)
+    {
+        $stock = Stock::findOrFail($request->stock_id);
+        $product = Product::findOrFail($request->product_id);
+
+        if ($product->archive) {
+            return back()->with('messages.error', 'Product has been Archive So not Allowed to Assigned');
+        }
+        if (!$product->archive) {
+            $stock->product_id = $product->id;
+
+            if ($product->non_serialised) {
+                $stock->non_serialised = 1;
+            }
+            $stock->save();
+        }
 
 
+        return back()->with('messages.success', 'Product has been assigned');
+    }
 
 
 
