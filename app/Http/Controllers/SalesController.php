@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\MissingItemsTableAllCsv;
+use App\Exports\SalesSingleCsv;
 use App\Jobs\EbayRefunds\CreateCreditNote;
 use App\Models\Address;
 use App\Models\Batch;
-use App\Commands\Sales\EmailSend;
-use App\Commands\Sales\OrderImeis;
-use App\Commands\Sales\PaymentReceived;
-use App\Commands\Sales\TrackingUpdated;
 use App\Contracts\Invoicing;
 use App\Events\Sale\Cancelled;
 use App\Http\Requests\SaleChangeStatusRequest;
@@ -32,9 +30,11 @@ use Illuminate\Support\Facades\DB;
 use App\Models\CustomerReturns;
 use Illuminate\Support\Facades\Auth;
 use App\Models\DeliveryNotes;
+use Maatwebsite\Excel\Facades\Excel;
 use PDF;
 use Session;
 use App\Jobs\Sales\InvoiceCreate;
+use App\Models\Mobicode\GsxCheck;
 
 class SalesController extends Controller
 {
@@ -634,54 +634,7 @@ class SalesController extends Controller
 
     public function getExport($id)
     {
-        $sale = Sale::findOrFail($id);
-
-        $items = $sale->stock;
-
-        foreach ($items as $item) {
-            $stock[] = [
-                'RCT Ref' => $item->our_ref,
-                'Device Name' => $item->name,
-                'Capacity' => $item->capacity_formatted,
-                'Network' => $item->network,
-                'Grade' => $item->grade,
-                'IMEI' => $item->imei,
-                'Engineer Notes' => $item->notes,
-                'Sales price' => $item->sale_price_formatted
-            ];
-        }
-
-        $count = count($stock) + 1;
-
-        $filename = "Sale_items-$sale->id";
-        $rBorder = "H";
-
-        $file = Excel::create($filename, function ($excel) use ($stock, $count, $rBorder) {
-            $excel->setTitle('Sale Items');
-            $excel->sheet('Sale Items', function ($sheet) use ($stock, $count, $rBorder) {
-                $sheet->fromArray($stock);
-                $sheet->setFontSize(10);
-                // Left Border
-                $sheet->cells('A1:A' . $count, function ($cells) {
-                    $cells->setBorder('none', 'none', 'none', 'medium');
-                });
-                // Right Border
-                $sheet->cells($rBorder . '1:' . $rBorder . $count, function ($cells) {
-                    $cells->setBorder('none', 'medium', 'none', 'none');
-                });
-                // Top+Bottom border - first row
-                $sheet->row(1, function ($row) {
-                    $row->setBorder('medium', 'medium', 'medium', 'medium');
-                    $row->setFontSize(11);
-                });
-                // Bottom border - last row
-                $sheet->row($count, function ($row) {
-                    $row->setBorder('none', 'medium', 'medium', 'medium');
-                });
-            });
-        });
-
-        return $file->download();
+        return Excel::download(new SalesSingleCsv($id), 'sales-single.csv');
     }
 
     public function postSendOrderImeis(Request $request)
@@ -694,10 +647,7 @@ class SalesController extends Controller
 
     public function postCancel(Request $request, Invoicing $invoicing)
     {
-
-
         $sale = Sale::findOrFail($request->id);
-
         $productIds = [];
         try {
 
@@ -713,17 +663,11 @@ class SalesController extends Controller
 
                             if (!is_null(json_decode($item->stock_id))) {
                                 foreach (json_decode($item->stock_id) as $stockId) {
-
-
                                     if (!is_null(getStockDetatils($stockId)->product) > 0) {
-
                                         if (getStockDetatils($stockId)->product->non_serialised) {
                                             $productIds[$i . '-' . getStockDetatils($stockId)->product->id] = $item->quantity;
-
                                         }
                                     }
-
-
                                 }
                             }
 
@@ -1427,7 +1371,7 @@ class SalesController extends Controller
         if (Auth::user()->type === 'user' && ($price == 0 || count($stock) == 0)) {
             return back()->with('messages.warning', 'Something went wrong');
         }
-        return view('sales.summary-batch', compact('stock', 'request', 'customers', 'customersForAutocomplete', 'batch', 'price'));
+        return view('sales.summary-batch', compact('stock', 'request', 'customersForAutocomplete', 'batch', 'price'));
     }
 
     public function postSaveBatch(Request $request, Invoicing $invoicing)
@@ -1529,30 +1473,44 @@ class SalesController extends Controller
 
         Auth::user()->basket()->sync([]);
         if (isset($auction)) {
-            Queue::pushOn(
-                'invoices',
-                new InvoiceCreate(
-                    $sale,
+//            Queue::pushOn(
+//                'invoices',
+//                new InvoiceCreate(
+//                    $sale,
+//                    $customerUser,
+//                    $invoicing->getSaleForUser($customerUser),
+//                    $deliveryName,
+//                    $batch,
+//                    $price,
+//                    $auction
+//                )
+//            );
+
+           dispatch(new InvoiceCreate($sale,
                     $customerUser,
                     $invoicing->getSaleForUser($customerUser),
                     $deliveryName,
                     $batch,
                     $price,
-                    $auction
-                )
-            );
+                    $auction));
         } else {
-            Queue::pushOn(
-                'invoices',
-                new InvoiceCreate(
-                    $sale,
-                    $customerUser,
-                    $invoicing->getSaleForUser($customerUser),
-                    $deliveryName,
-                    $batch,
-                    $price
-                )
-            );
+//            Queue::pushOn(
+//                'invoices',
+//                new InvoiceCreate(
+//                    $sale,
+//                    $customerUser,
+//                    $invoicing->getSaleForUser($customerUser),
+//                    $deliveryName,
+//                    $batch,
+//                    $price
+//                )
+//            );
+            dispatch(new InvoiceCreate( $sale,
+                $customerUser,
+                $invoicing->getSaleForUser($customerUser),
+                $deliveryName,
+                $batch,
+                $price));
         }
         return Auth::user()->type === 'user'
             ? view('sales.select-payment-method', compact('sale'))
@@ -1891,9 +1849,9 @@ class SalesController extends Controller
 
         $i = 0;
         foreach ($sale->stock as $item) {
-            $gsxCheck = new App\Mobicode\GsxCheck();
+            $gsxCheck = new GsxCheck();
             $gsxCheck->user_id = Auth::user()->id;
-            $gsxCheck->status = App\Mobicode\GsxCheck::STATUS_NEW;
+            $gsxCheck->status = GsxCheck::STATUS_NEW;
             $gsxCheck->imei = $item->imei;
             $gsxCheck->sale_id = $sale->id;
             $gsxCheck->stock_id = $item->id;
@@ -3011,7 +2969,7 @@ class SalesController extends Controller
                         if (is_null($item->delivery_charges) || $item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100 > 0 || !$item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100 && $vatType === "Standard") {
                             $saleTotalIncCarriage = $item->amount ? $item->amount_formatted : "Replacements";
                         } else {
-                            $saleTotalIncCarriage = money_format(config('app.money_format'), $item->amount - ($item->delivery_charges * 20 / 100));
+                            $saleTotalIncCarriage = money_format($item->amount - ($item->delivery_charges * 20 / 100));
 
                         }
                     }
@@ -3022,7 +2980,7 @@ class SalesController extends Controller
                             $saleTotalIncCarriage = $item->amount ? $item->amount_formatted : "Replacements";
 
                         } else {
-                            $saleTotalIncCarriage = money_format(config('app.money_format'), $item->amount - ($item->delivery_charges * 20 / 100));
+                            $saleTotalIncCarriage = money_format($item->amount - ($item->delivery_charges * 20 / 100));
 
                         }
                     }
@@ -3032,10 +2990,10 @@ class SalesController extends Controller
                 if (count($item->ebay_orders)) {
 
                     if (count(array_unique($vatTypeList)) > 1) {
-                        $saleTotalexVatincCarriage = money_format(config('app.money_format'), $item->amount / 1.2);
+                        $saleTotalexVatincCarriage = money_format($item->amount / 1.2);
                     } else {
                         if ($item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100 > 0 || !$item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100 && $vatType === "Standard") {
-                            $saleTotalexVatincCarriage = money_format(config('app.money_format'), $item->amount / 1.2);
+                            $saleTotalexVatincCarriage = money_format($item->amount / 1.2);
                         } else {
                             $saleTotalexVatincCarriage = '-';
                         }
@@ -3044,7 +3002,7 @@ class SalesController extends Controller
 
                 } else {
                     if (isset($item->stock[0]) && $item->stock[0]->vat_type === "Standard") {
-                        $saleTotalexVatincCarriage = money_format(config('app.money_format'), $item->amount / 1.2);
+                        $saleTotalexVatincCarriage = money_format($item->amount / 1.2);
                     } else {
                         $saleTotalexVatincCarriage = '-';
                     }
@@ -3076,16 +3034,16 @@ class SalesController extends Controller
                 if (count($item->ebay_orders)) {
                     if (count(array_unique($vatTypeList)) > 1) {
 
-                        $vatMrg = money_format(config('app.money_format'), $pVatMargin);
+                        $vatMrg = money_format($pVatMargin);
                     } else {
                         if (!$item->ebay_orders[0]->EbayOrderItems[0]['tax_percentage'] * 100 && $vatType === "Margin") {
-                            $vatMrg = money_format(config('app.money_format'), $totalVatMargin);
+                            $vatMrg = money_format($totalVatMargin);
                         }
                     }
 
                 } else {
                     if (isset($item->stock[0]) && $item->stock[0]->vat_type === "Margin") {
-                        $vatMrg = money_format(config('app.money_format'), $totalVatMargin);
+                        $vatMrg = money_format($totalVatMargin);
                     } else {
                         $vatMrg = "-";
                     }
@@ -3274,21 +3232,21 @@ class SalesController extends Controller
                     $item->vat_type = $itemVatType;
                     $item->sale_carriage = $saleTotalIncCarriage;
                     $item->sale_total_ex_vat = $saleTotalexVatincCarriage;
-                    $item->total_purchase_cost = $totalPurchaseCost > 0 ? money_format(config('app.money_format'), $totalPurchaseCost) : '-';
-                    $item->profit = $itemVatType === "Mixed" ? money_format(config('app.money_format'), $ftProfit) : money_format(config('app.money_format'), $totalProfit);
+                    $item->total_purchase_cost = $totalPurchaseCost > 0 ? money_format($totalPurchaseCost) : '-';
+                    $item->profit = $itemVatType === "Mixed" ? money_format($ftProfit) : money_format($totalProfit);
                     $item->profit_per = number_format($totalProfitPer, 2) . "%";
                     $item->margin_vat = $vatMrg;
                     $item->invoice = $invoice;
-                    $item->true_profit = $itemVatType === "Mixed" ? money_format(config('app.money_format'), $ftTrueProfit) : money_format(config('app.money_format'), $totalTrueProfit);
+                    $item->true_profit = $itemVatType === "Mixed" ? money_format($ftTrueProfit) : money_format($totalTrueProfit);
                     $item->true_profit_pre = number_format($totalTrueProfitPer, 2) . "%";
 
-                    $item->est_net_profit = money_format(config('app.money_format'), $estProfit);
+                    $item->est_net_profit = money_format($estProfit);
                     //  $item->est_net_profit_pre=$totalEstProfitPre;
-                    $item->est_net_profit_non_ps = money_format(config('app.money_format'), $totalNonPsModel);
-                    $item->est_net_profit_ps = money_format(config('app.money_format'), $totalPsModel);
+                    $item->est_net_profit_non_ps = money_format($totalNonPsModel);
+                    $item->est_net_profit_ps = money_format($totalPsModel);
                     $item->items_sold_non_ps = $totalItemsSoldNonPS;
                     $item->items_sold_ps = $totalItemsSoldPS;
-                    $item->total_est_net_profit = money_format(config('app.money_format'), $totalNetProfit);
+                    $item->total_est_net_profit = money_format($totalNetProfit);
                     $item->net_profit_pre = number_format($finaNetProfit, 2) . '%';
 
                     $row = array_map(function ($field) use ($item) {

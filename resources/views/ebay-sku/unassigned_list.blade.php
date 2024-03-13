@@ -21,7 +21,7 @@ $deliverySettingsList = \App\DeliverySettings::all();
             <td>{{ $orderItem['sales_record_number'] }}</td>
             <td>{{ $orderItem['item_name'] }}</td>
             <td>{{ $orderItem['item_sku'] }}</td>
-            <td>{{money_format(config('app.money_format'),  $orderItem['individual_item_price'])}}</td>
+            <td>{{money_format($orderItem['individual_item_price'])}}</td>
         </tr>
         @endforeach
     </tbody>

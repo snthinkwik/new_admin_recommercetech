@@ -1,5 +1,5 @@
 <?php
-use App\Email;
+use App\Models\Email;
 ?>
 <div data-status="{{ $email->status }}">
 	<div>{{ $email->status }}</div>

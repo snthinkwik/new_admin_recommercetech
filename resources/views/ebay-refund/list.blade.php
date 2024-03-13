@@ -15,7 +15,7 @@
                 <td>
                     <a href="{{route('admin.ebay-orders.view',['id' => $refund->order_id])}}">{{$refund->sales_record_number}}</a>
                 </td>
-                <td>{{ money_format(config('app.money_format'), $refund->refund_amount) }}</td>
+                <td>{{ money_format($refund->refund_amount) }}</td>
 
                 <td>{{$refund->owner}}</td>
                 <td>

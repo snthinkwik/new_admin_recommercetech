@@ -104,7 +104,7 @@ $statusList = EbayOrders::getAvailableStatusWithKeys();
 {{--                        <i class="fa fa-usd" aria-hidden="true"></i>--}}
 {{--                    @endif--}}
 {{--                    {{money_format(config('app.money_format'),$ebay->total_price)}}--}}
-                    {{$ebay->total_price}}
+                    {{money_format($ebay->total_price)}}
 
                 </td>
                 <td>{{$finalVatType}}</td>

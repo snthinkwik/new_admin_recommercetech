@@ -1,13 +1,14 @@
 <?php
 use Illuminate\Support\Facades\Request;
-use App\RepairStatus;
-use App\RepairEngineer;
+use App\Models\RepairStatus;
+use App\Models\RepairEngineer;
+use App\Models\RepairsItems;
 
-$repairEngineers = ['' => 'All'] + RepairEngineer::get()->lists('name', 'id');
+$repairEngineers = ['' => 'All'] + RepairEngineer::get()->pluck('name', 'id')->toArray();
 //$repairStatuses = ['' => 'All'] + RepairStatus::get()->lists('name', 'id');
-$repairType = ['' => 'All'] + \App\RepairsItems::getTypesWithKeys();
+$repairType = ['' => 'All'] + RepairsItems::getTypesWithKeys();
 
-$repairStatuses = ['all' => 'All']+\App\RepairsItems::getStatusWithKeys();
+$repairStatuses = ['all' => 'All']+RepairsItems::getStatusWithKeys();
 
 ?>
 {!! BsForm::open(['id' => 'universal-search-form', 'class' => 'form-inline mb15', 'method' => 'get']) !!}

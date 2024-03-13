@@ -119,8 +119,8 @@ class Unlock extends Model
 
     public function getCostAddedFormattedAttribute()
     {
-        //return money_format(config('app.money_format'), $this->cost_added);
-        return $this->cost_added;
+        return money_format($this->cost_added);
+
     }
 
     /*public function getHasRetailOrderAttribute()

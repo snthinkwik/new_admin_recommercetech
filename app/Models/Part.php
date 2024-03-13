@@ -19,14 +19,14 @@ class Part extends Model
 
     public function getCostFormattedAttribute()
     {
-      //  return money_format(config('app.money_format'), $this->cost);
-        return $this->cost;
+        return money_format($this->cost);
+
     }
 
     public function getSalePriceFormattedAttribute()
     {
-       // return money_format(config('app.money_format'), $this->sale_price);
-        return $this->sale_price;
+        return money_format($this->sale_price);
+
     }
 
     public function getLongNameAttribute()

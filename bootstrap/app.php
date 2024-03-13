@@ -11,6 +11,12 @@
 |
 */
 
+umask(0);
+
+defined('MYSQL_ZERO_DATE') or define('MYSQL_ZERO_DATE', '0000-00-00 00:00:00');
+
+ini_set('memory_limit', '256M');
+
 $app = new Illuminate\Foundation\Application(
     $_ENV['APP_BASE_PATH'] ?? dirname(__DIR__)
 );

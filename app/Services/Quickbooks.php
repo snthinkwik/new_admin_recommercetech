@@ -78,6 +78,7 @@ class Quickbooks implements QuickbooksContract {
 
 	public function refreshToken()
 	{
+
 		try {
 			$dataService = $this->getOAuth2(true);
 			$OAuth2LoginHelper = $dataService->getOAuth2LoginHelper();

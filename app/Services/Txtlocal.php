@@ -166,7 +166,7 @@ class Txtlocal implements TxtlocalContract {
 		// Message details
 
 		$sender = urlencode('RCT');
-		$message = rawurlencode("You have been paid ".money_format(config('app.money_format'), $amount)." for $count of repairs. Regards, Chris @ RCT");
+		$message = rawurlencode("You have been paid ".money_format($amount)." for $count of repairs. Regards, Chris @ RCT");
 
 
 		// Prepare data for POST request

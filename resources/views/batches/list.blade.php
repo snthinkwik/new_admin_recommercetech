@@ -1,5 +1,5 @@
 <?php
-use App\Batch;
+use App\Models\Batch;
 ?>
 @if(!count($batches))
 	<div class="alert alert-info">Nothing Found</div>
@@ -25,7 +25,7 @@ use App\Batch;
 						{!! Form::checkbox('batch_ids['.$batch->id.']') !!}
 					@else
 						<i class="fa fa-info" data-toggle="tooltip" title="Custom Batch"></i>
-					@endif	
+					@endif
 				</td>
 				<td>{{ $batch->id }}</td>
 				<td>{{ $batch->stock()->count() }}</td>
@@ -40,8 +40,8 @@ use App\Batch;
 						@endif
 					@endif
 				</td>
-				<td>{{ $batch->stock->sum('total_costs') > 0 ? money_format(config('app.money_format'), $batch->stock->sum('total_costs')) : '' }}</td>
-				<td>{{ $batch->sale_price > 0 ? money_format(config('app.money_format'), $batch->sale_price) : '' }}</td>
+				<td>{{ $batch->stock->sum('total_costs') > 0 ? money_format($batch->stock->sum('total_costs')) : '' }}</td>
+				<td>{{ $batch->sale_price > 0 ? money_format($batch->sale_price) : '' }}</td>
 				<td><a href="{{ route('batches.deal-sheet', ['id' => $batch->id]) }}">{{ $batch->batch_offers()->count() }}</a></td>
 				<td><a class="btn btn-block btn-sm btn-primary" href="{{ route('batches.single', ['id' => $batch->id]) }}">Details</a></td>
 				<td>

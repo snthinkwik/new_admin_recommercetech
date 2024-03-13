@@ -26,14 +26,14 @@ class SavedBasket extends Model
 
     public function getTotalSalePriceFormattedAttribute()
     {
-      //  return money_format(config('app.money_format'), $this->total_sale_price);
-        return $this->total_sale_price;
+        return money_format($this->total_sale_price);
+
     }
 
     public function getTotalPurchasePriceFormattedAttribute()
     {
-        //return money_format(config('app.money_format'), $this->total_purchase_price);
-        return  $this->total_purchase_price;
+        return money_format($this->total_purchase_price);
+
     }
 
     public function scopeSellable($query)

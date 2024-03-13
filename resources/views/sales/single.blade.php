@@ -1,9 +1,12 @@
 <?php
-use App\Sale;
-use App\Invoice;
+use App\Models\Sale;
+use App\Models\Invoice;
+use App\Models\EbayOrders;
+use App\Models\Stock;
+use Illuminate\Support\Facades\Auth;
 
 
-$retailOrder=\App\EbayOrders::where('new_sale_id',$sale->id)->first();
+$retailOrder=EbayOrders::where('new_sale_id',$sale->id)->first();
 
 $invoicing = app('App\Contracts\Invoicing');
 if(Auth::user()->type === 'admin') {
@@ -45,7 +48,7 @@ foreach($sale->stock as $item) {
 
 	$estProfit+= $item->true_profit - $sale->platform_fee;
 
-if($item->vat_type===\App\Stock::VAT_TYPE_STD){
+if($item->vat_type===Stock::VAT_TYPE_STD){
 	$totalAmount+=$item->total_price_ex_vat;
 }else{
 	$totalAmount+=$item->sale_price;
@@ -137,20 +140,20 @@ $estNetProfitPre=$totalAmount>0 ? ($estProfit/$totalAmount)*100:0
 
 				@include('sales.item-list-table')
 				@if($sale->stock->sum('purchase_price') > 0)
-					<h5>ex Vat Carriage: {{ money_format(config('app.money_format'), $sale->delivery_charges)  }} </h5>
+					<h5>ex Vat Carriage: {{ money_format($sale->delivery_charges)  }} </h5>
                     <?php $profit_value = number_format($sale->stock->sum('total_costs')-$sale->stock->sum('purchase_price')); ?>
 					{{--<h5>Total Profit Ratio ({{ $sale->profit_amount_formatted }}): {{ $sale->profit_ratio }}</h5>--}}
-					<h5>Total Sell Price: <span @if($totalSalePrice<0) class="text-danger" @endif > {{ money_format(config('app.money_format'), $totalSalePrice)  }}</span></h5>
+					<h5>Total Sell Price: <span @if($totalSalePrice<0) class="text-danger" @endif > {{ money_format($totalSalePrice)  }}</span></h5>
 					@if($totalExVatPrice>0)
-						<h5>Sell Price Ex Vat : <span @if($totalExVatPrice<0) class="text-danger" @endif > {{ money_format(config('app.money_format'), $totalExVatPrice )  }}</span></h5>
+						<h5>Sell Price Ex Vat : <span @if($totalExVatPrice<0) class="text-danger" @endif > {{ money_format($totalExVatPrice )  }}</span></h5>
 					@endif
-					<h5>Total Profit : <span @if($totalProfit<0) class="text-danger" @endif > {{ money_format(config('app.money_format'), $totalProfit)  }}</span></h5>
+					<h5>Total Profit : <span @if($totalProfit<0) class="text-danger" @endif > {{ money_format($totalProfit)  }}</span></h5>
 					<h5>Total Profit% : <span @if($profitPercentage<0) class="text-danger" @endif > {{  $profitPercentage."%" }}</span></h5>
 					@if($sale->stock[0]['vat_type']!=="Standard")
-						<h5>True Total Profit : <span @if($totalTrueProfit<0) class="text-danger" @endif > {{  money_format(config('app.money_format'), $totalTrueProfit)  }}</span></h5>
+						<h5>True Total Profit : <span @if($totalTrueProfit<0) class="text-danger" @endif > {{  money_format($totalTrueProfit)  }}</span></h5>
 						<h5>True Total Profit% :<span @if($trueProfitPercentage<0) class="text-danger" @endif >  {{ $trueProfitPercentage."%" }}</span></h5>
 					@endif
-					<h5>Est Net Profit: <span @if($estProfit<0) class="text-danger" @endif> {{money_format(config('app.money_format'),$estProfit) }}</span></h5>
+					<h5>Est Net Profit: <span @if($estProfit<0) class="text-danger" @endif> {{money_format($estProfit) }}</span></h5>
 					<h5>Est Net Profit %: <span @if($estProfit<0) class="text-danger" @endif> {{ number_format($estNetProfitPre,2)  .'%' }}</span></h5>
 
 

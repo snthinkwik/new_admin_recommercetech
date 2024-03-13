@@ -1,3 +1,6 @@
+<?php
+use Illuminate\Support\Str;
+?>
 @if (!count($emails))
 	<div class="alert alert-warning">No emails yet.</div>
 @else
@@ -21,7 +24,7 @@
 						@include('email-sender.list-item-status')
 					</td>
 					<td>{{ $email->subject }}</td>
-					<td>{{ str_limit(strip_tags($email->body), 50) }}</td>
+					<td>{{ Str::limit(strip_tags($email->body), 50) }}</td>
 					<td>{{ $email->to }} @if($email->option) <small>{{ $email->option_formatted }}</small>@endif</td>
 					<td>{{ $email->from_full }}</td>
 					<td>{{ $email->brand ? : "Recomm" }}</td>

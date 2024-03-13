@@ -44,7 +44,7 @@
 							<div id="sage-pay" class="tab-pane fade">
 								<div class="mh20">
 									<div class="alert alert-info">
-										Payment Amount including Card Processing Fee: {{ money_format(config('app.money_format'), $sale->invoice_total_amount + $sale->invoice_total_amount*0.016+0.12) }}
+										Payment Amount including Card Processing Fee: {{ money_format($sale->invoice_total_amount + $sale->invoice_total_amount*0.016+0.12) }}
 										{!! BsForm::open(['route' => 'sales.pay']) !!}
 										{!! Form::hidden('id', $sale->id) !!}
 										{!! BsForm::groupSubmit('Pay', ['class' => 'confirmed btn-block', 'data-confirm' => 'Proceed with Sage Pay?']) !!}

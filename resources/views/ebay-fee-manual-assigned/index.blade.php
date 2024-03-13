@@ -13,7 +13,7 @@ $fee_type = \App\EbayFees::select('fee_type')->groupBy('fee_type')->get();
             <a class="btn btn-default" href="{{route('admin.ebay.ready-invoice.manually-assigned.export')}}"><i class="fa fa-download "></i> Export</a>
         </div>
         <div class="text-right d-inline-block text-bold mb-4">
-            Manual Fees: <span class="text-success mr-2">{{money_format(config('app.money_format'),  $totalManualFees)}}</span>
+            Manual Fees: <span class="text-success mr-2">{{money_format($totalManualFees)}}</span>
         </div>
     </div>
     <div class="row">

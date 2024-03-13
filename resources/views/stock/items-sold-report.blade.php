@@ -21,9 +21,9 @@
 					<tr>
 						<td>{{ $month['month'] }}</td>
 						<td>{{ $month['items_sold'] }}</td>
-						<td>{{ money_format(config('app.money_format'), $month['purchase_price']) }}</td>
-						<td>{{ money_format(config('app.money_format'), $month['sales_price']) }}</td>
-						<td>{{ money_format(config('app.money_format'), $month['profit']) }}</td>
+						<td>{{ money_format($month['purchase_price']) }}</td>
+						<td>{{ money_format($month['sales_price']) }}</td>
+						<td>{{ money_format($month['profit']) }}</td>
 					</tr>
 				@endforeach
 			</tbody>

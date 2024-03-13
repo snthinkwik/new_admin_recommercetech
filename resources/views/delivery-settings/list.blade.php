@@ -12,7 +12,7 @@
             <tr>
                 <td>{{$deliverySettings->carrier}}</td>
                 <td>{{$deliverySettings->service_name}}</td>
-                <td>{{money_format(config('app.money_format'), $deliverySettings->cost)}}</td>
+                <td>{{money_format( $deliverySettings->cost)}}</td>
             </tr>
             @endforeach
         </tbody>

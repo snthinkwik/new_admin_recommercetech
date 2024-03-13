@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Request;
 
 		<h2>Customers with Balance</h2>
 
-		<h5>Total: {{ money_format(config('app.money_format'), $customers->sum('balance_due')) }}</h5>
+		<h5>Total: {{ money_format($customers->sum('balance_due')) }}</h5>
 
 		<div class="row">
 			<div class="col-md-12">

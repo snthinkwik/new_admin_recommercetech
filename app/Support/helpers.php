@@ -11,6 +11,7 @@ use App\Models\Stock;
 use Money\Money;
 use Money\Currency;
 use \App\Models\SellerFees;
+use App\Models\RepairsItems;
 
 use Money\Currencies\ISOCurrencies;
 use Money\Parser\DecimalMoneyParser;
@@ -869,7 +870,7 @@ function getCheckValidVatType($country, $vatType, $tax_percentage)
 function getCount($id, $type)
 {
 
-    return \App\RepairsItems::where('repair_id', $id)->where('type', $type)->count();
+    return RepairsItems::where('repair_id', $id)->where('type', $type)->count();
 
 }
 
@@ -878,11 +879,11 @@ function getStatus($data)
 
     $flag = 0;
     foreach ($data as $tt) {
-        if ($tt->status === \App\RepairsItems::STATUS_OPEN) {
+        if ($tt->status === RepairsItems::STATUS_OPEN) {
             $flag++;
         }
     }
-    return $flag ? \App\RepairsItems::STATUS_OPEN : \App\RepairsItems::STATUS_CLOSE;
+    return $flag ? RepairsItems::STATUS_OPEN : RepairsItems::STATUS_CLOSE;
 }
 
 function getLastDate($data)
@@ -892,7 +893,7 @@ function getLastDate($data)
     $flag = 0;
     $closeDate = '';
     foreach ($data as $tt) {
-        if ($tt->status === \App\RepairsItems::STATUS_OPEN) {
+        if ($tt->status === RepairsItems::STATUS_OPEN) {
             $flag++;
         }
     }

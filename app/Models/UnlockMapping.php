@@ -48,7 +48,7 @@ class UnlockMapping extends Model
 
     public function getCostFormattedAttribute()
     {
-      //  return money_format(config('app.money_format'), $this->cost);
-        return $this->cost;
+        return money_format($this->cost);
+
     }
 }

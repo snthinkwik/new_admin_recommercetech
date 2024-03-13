@@ -1,5 +1,5 @@
 <?php
-use App\Sale;
+use App\Models\Sale;
 use Illuminate\Support\Facades\Request;
 $hasAvailabilityError = false;
 foreach (Request::input('items') as $id => $itemData) {
@@ -114,7 +114,7 @@ $invoicing = app('App\Contracts\Invoicing');
 							If you can't find an existing {{ $invoicing->getSystemName() }} customer, please
 							<a target="_blank" href="{{ route('admin.users') }}">add them</a> first.
 						</p>
-						@error('customer_external_id')
+						@error('customer_external_id')@enderror
 					</div>
 				</div>
 				<div class="col-md-8">

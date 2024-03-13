@@ -5,6 +5,7 @@ use Exception;
 use Form;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ViewErrorBag;
+use Illuminate\Support\Str;
 
 /**
  * This is a wrapper around the regular Form facade with extra functionality helpful in Bootstrap.
@@ -78,7 +79,7 @@ class BootstrapForm
 	public function submit($value = null, $options = [])
 	{
 		$this->appendValue($options, 'class', 'btn btn-primary', 'btn ');
-		
+
 		return Form::submit($value, $options);
 	}
 
@@ -88,19 +89,19 @@ class BootstrapForm
 
 		return Form::button($value, $options);
 	}
-	
+
 	public function textarea($name, $value = null, $options = [])
 	{
 		$this->appendValue($options, 'class', 'form-control');
-		
+
 		return Form::textarea($name, $value, $options);
 	}
-	
+
 	public function hidden($name, $value = null, $options = [])
 	{
 		return Form::hidden($name, $value, $options);
 	}
-	
+
 	public function checkbox($name, $value = 1, $checked = null, $options = [], $label = null)
 	{
 		$html = Form::checkbox($name, $value, $checked, $options);
@@ -118,25 +119,25 @@ class BootstrapForm
 		}
 		return $html;
 	}
-	
+
 	public function text($name, $value = null, $options = [])
 	{
 		$this->appendValue($options, 'class', 'form-control');
-		
+
 		return Form::text($name, $value, $options);
 	}
 
 	public function email($name, $value = null, $options = [])
 	{
 		$this->appendValue($options, 'class', 'form-control');
-		
+
 		return Form::email($name, $value, $options);
 	}
-	
+
 	public function select($name, $list = [], $selected = null, $options = [])
 	{
 		$this->appendValue($options, 'class', 'form-control');
-		
+
 		return Form::select($name, $list, $selected, $options);
 	}
 
@@ -159,7 +160,7 @@ class BootstrapForm
 		if ($unlessExists && isset($array[$propName]) && strpos($array[$propName], $unlessExists) !== false) {
 			return;
 		}
-		
+
 		if (!isset($array[$propName])) {
 			$array[$propName] = $text;
 		}
@@ -235,7 +236,7 @@ class BootstrapForm
 			$id = $arguments[$optionsIdx]['id'];
 		}
 		if (!empty($this->options['id-prefix'])) {
-			$id = $this->options['id-prefix'] . '-' . ($id ?: str_slug($elementName));
+			$id = $this->options['id-prefix'] . '-' . ($id ?: Str::limit($elementName));
 		}
 
 		if ($id) {

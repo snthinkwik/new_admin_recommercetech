@@ -50,6 +50,7 @@ use Carbon\Carbon;
 		<div class="form-group">
 			<div class="checkbox">
 				<label>
+
 					{!! BsForm::hidden('free_delivery', 0) !!}
 					{!! BsForm::checkbox('free_delivery', 1, Setting::get('free_delivery', false), ['data-toggle' => 'toggle', 'data-onstyle' => 'default']) !!}
 				</label>

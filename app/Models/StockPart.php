@@ -19,8 +19,8 @@ class StockPart extends Model
 
     public function getCostFormattedAttribute()
     {
-       // return money_format(config('app.money_format'), $this->part_cost);
-        return  $this->part_cost;
+        return money_format($this->part_cost);
+
     }
 
     public function getCreatedAtFormattedAttribute()

@@ -23,8 +23,8 @@ class BatchOffer extends Model
 
     public function getOfferFormattedAttribute()
     {
-      //  return money_format(config('app.money_format'), $this->offer);
-        return $this->offer;
+        return money_format($this->offer);
+
     }
 
 }

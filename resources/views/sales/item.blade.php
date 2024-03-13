@@ -506,16 +506,15 @@ if(count($sale->ebay_orders)>0){
 			@if(is_null($sale->delivery_charges)|| $sale->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100 > 0 ||  !$sale->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100  && $vatType==="Standard")
 				{{ $sale->amount ? $sale->amount_formatted : "Replacements" }}
 			@else
-{{--				{{  money_format(config('app.money_format'), $sale->amount) }}--}}
-                {{$sale->amount}}
+				{{ money_format($sale->amount) }}
 			@endif
 		@else
 			@if(count($sale->stock))
 				@if(is_null($sale->delivery_charges)|| $sale->stock[0]->vat_type==="Standard")
 					{{ $sale->amount ? $sale->amount_formatted : "Replacements" }}
 				@else
-{{--					{{  money_format(config('app.money_format'), $sale->amount-($sale->delivery_charges*20/100)) }}--}}
-                    {{$sale->amount-($sale->delivery_charges*20/100)}}
+					{{  money_format($sale->amount-($sale->delivery_charges*20/100)) }}
+
 				@endif
 			@endif
 		@endif
@@ -530,15 +529,15 @@ if(count($sale->ebay_orders)>0){
 		@if(count($sale->ebay_orders))
 
 			@if($sale->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100 > 0 ||  !$sale->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100  && $vatType==="Standard")
-{{--				{{money_format(config('app.money_format'),  $sale->amount/1.2) }}--}}
-                {{$sale->amount/1.2}}
+				{{money_format($sale->amount/1.2) }}
+
 			@else
 				-
 			@endif
 		@else
 			@if(isset($sale->stock[0]) && $sale->stock[0]->vat_type==="Standard")
-{{--                {{money_format(config('app.money_format'),  $sale->amount/1.2) }} --}}
-                {{$sale->amount/1.2}}
+                {{money_format($sale->amount/1.2) }}
+
             @else
                 -
             @endif
@@ -551,19 +550,15 @@ if(count($sale->ebay_orders)>0){
 
 		<?php
 		$title='';
-//		$title.="Unlock Cost:".money_format(config('app.money_format'), $totalUnlockCost) ."\n";
-//		$title .="Part Cost:".money_format(config('app.money_format'), $totalPartCost)."\n" ;
-//		$title .="Repair Cost:".money_format(config('app.money_format'), $totalRepairCost)."\n" ;
+		$title.="Unlock Cost:".money_format($totalUnlockCost) ."\n";
+		$title .="Part Cost:".money_format($totalPartCost)."\n" ;
+		$title .="Repair Cost:".money_format($totalRepairCost)."\n" ;
 
-        $title.="Unlock Cost:".$totalUnlockCost ."\n";
-        $title .="Part Cost:".$totalPartCost."\n" ;
-        $title .="Repair Cost:".$totalRepairCost."\n" ;
 
 		?>
 
 		<td @if($totalPurchaseCost < 0) class="text-danger" @endif>
-{{--			{{ money_format(config('app.money_format'), $totalPurchaseCost)  }}--}}
-            {{$totalPurchaseCost}}
+			{{ money_format($totalPurchaseCost)  }}
 			@if($totalPurchaseCost!==$purchasePrice)
 				<span><i class="fa fa-asterisk text-danger" aria-hidden="true" title="{{$title}}" style="font-size: 8px;"></i></span>
 
@@ -572,17 +567,14 @@ if(count($sale->ebay_orders)>0){
 		<td @if($totalProfit < 0) class="total-profit text-danger" @else class="total-profit" @endif>
 
 			@if(count(array_unique($vatTypeList))>1)
-{{--				{{money_format(config('app.money_format'), $ftProfit)}}--}}
-                {{$ftProfit}}
+				{{money_format($ftProfit)}}
+
 			@else
 				@if(!is_null($sale->delivery_charges))
-
-{{--					{{money_format(config('app.money_format'), $totalProfit) }}--}}
-                    {{ $totalProfit }}
-
+					{{money_format($totalProfit) }}
 				@else
-{{--					{{money_format(config('app.money_format'), $totalProfit) }}--}}
-                    {{ $totalProfit }}
+					{{money_format($totalProfit) }}
+
 				@endif
 
 			@endif
@@ -629,19 +621,16 @@ if(count($sale->ebay_orders)>0){
 	<td @if($totalVatMargin < 0) class="vat-margin text-danger" @else class="vat-margin" @endif>
 
 		@if(count(array_unique($vatTypeList))>1)
-{{--			{{  money_format(config('app.money_format'), $psTotalVat)}}--}}
-            {{$psTotalVat}}
-
+			{{ money_format($psTotalVat)}}
 		@else
 				@if(count($sale->ebay_orders))
 					@if(!$sale->ebay_orders[0]->EbayOrderItems[0]['tax_percentage']*100  && $vatType==="Margin")
-{{--						{{money_format(config('app.money_format'), $totalVatMargin) }}--}}
-                        {{$totalVatMargin}}
+						{{money_format($totalVatMargin) }}
+
 					@endif
 				@else
 					@if(isset($sale->stock[0]) && $sale->stock[0]->vat_type==="Margin")
-{{--                    {{money_format(config('app.money_format'), $totalVatMargin) }}--}}
-                        {{$totalVatMargin}}
+                    {{money_format($totalVatMargin) }}
                 @else - @endif
 
 				@endif
@@ -650,11 +639,11 @@ if(count($sale->ebay_orders)>0){
 
 	<td @if($totalTrueProfit < 0) class="true-profit text-danger" @else class="true-profit" @endif>
 		@if(count(array_unique($vatTypeList))>1)
-{{--			{{money_format(config('app.money_format'), $ftTrueProfit)  }}--}}
-            {{$ftTrueProfit}}
+			{{money_format($ftTrueProfit)  }}
+
 		@else
-{{--		{{money_format(config('app.money_format'), $totalTrueProfit)  }}--}}
-            {{$totalTrueProfit}}
+		{{money_format($totalTrueProfit)  }}
+
 		@endif
 
 	</td>
@@ -782,32 +771,32 @@ if(count($sale->ebay_orders)>0){
 
 	?>
 	<td @if($estProfit < 0) class="estProfit text-danger" @else class="estProfit" @endif>
-{{--		{{ money_format(config('app.money_format'), $estProfit) }}--}}
-        {{$estProfit}}
+		{{ money_format($estProfit) }}
+
 	</td>
 	<td class="estProfitPre">
 
 		@if(abs($estProfitSPModel)>0)
 			@if(abs($estProfitNonSPModel) >0)
-{{--				{{money_format(config('app.money_format'),$estProfitNonSPModel+ $sale->delivery_charges) }}--}}
-                {{$estProfitNonSPModel+ $sale->delivery_charges}}
+				{{money_format($estProfitNonSPModel+ $sale->delivery_charges) }}
+
 			@else
 				N/A
 			@endif
 		@else
-            {{$estProfit}}
-{{--			{{money_format(config('app.money_format'),$estProfit)}}--}}
+
+			{{money_format($estProfit)}}
 		@endif
 	</td>
 	<td>
 		@if(abs($estProfitSPModel)>0)
 
 			@if($totalItemsSoldPS && !$totalItemsSoldNonPS)
-{{--				{{money_format(config('app.money_format'),($estProfit *$supplierPre)/100)}}--}}
-                {{($estProfit *$supplierPre)/100}}
+				{{money_format(($estProfit *$supplierPre)/100)}}
+
 			@else
-{{--				{{money_format(config('app.money_format'),($estProfitSPModel + $sale->delivery_charges)- $sale->shipping_cost)}}--}}
-                {{($estProfitSPModel + $sale->delivery_charges)- $sale->shipping_cost}}
+				{{money_format($estProfitSPModel + $sale->delivery_charges- $sale->shipping_cost)}}
+
 			@endif
 
 		@else
@@ -842,17 +831,15 @@ if(count($sale->ebay_orders)>0){
 		@if($estProfitSPModel>0)
 
 			@if($totalItemsSoldPS && !$totalItemsSoldNonPS)
-{{--				{{money_format(config('app.money_format'),($estProfit *$supplierPre)/100)}}--}}
-                {{($estProfit *$supplierPre)/100}}
-			@else
+				{{money_format(($estProfit *$supplierPre)/100)}}
 
-{{--				{{money_format(config('app.money_format'),($psNonModel) + ($psModel))}}--}}
-                {{($psNonModel) + ($psModel)}}
+			@else
+				{{money_format(($psNonModel) + ($psModel))}}
 			@endif
 
 		@else
-{{--			{{money_format(config('app.money_format'),$estProfit)}}--}}
-            {{$estProfit}}
+			{{money_format($estProfit)}}
+
 		@endif
 	</td>
 	<?php

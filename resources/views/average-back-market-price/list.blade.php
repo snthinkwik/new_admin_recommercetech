@@ -128,15 +128,15 @@
                       No
                   @endif
               </td>
-              <td >{{ money_format(config('app.money_format'),$data->price_for_buybox) }}</td>
+              <td >{{ money_format($data->price_for_buybox) }}</td>
 {{--              <td width="10%">{{ money_format(config('app.money_format'),$data->price)  }}</td>--}}
               @if($data->maxPrice)
-              <td >{{ money_format(config('app.money_format'),$data->maxPrice->max_price)  }}</td>
+              <td >{{ money_format($data->maxPrice->max_price)  }}</td>
               @else
                   <td>-</td>
               @endif
               @if($data->maxPrice)
-                  <td >{{ money_format(config('app.money_format'),$data->maxPrice->min_price)  }}</td>
+                  <td >{{ money_format($data->maxPrice->min_price)  }}</td>
               @else
                   <td>-</td>
               @endif

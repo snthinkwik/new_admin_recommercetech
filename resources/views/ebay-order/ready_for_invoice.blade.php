@@ -35,7 +35,7 @@
                     @endif
                 </td>
                 <td>{{$item->quantity}}</td>
-                <td>{{ money_format(config('app.money_format'), $item->individual_item_price)}}</td>
+                <td>{{ money_format($item->individual_item_price)}}</td>
                 <td>{{$item->sale_type}}</td>
                 <td>{{ucfirst($item->order->status)}}</td>
                 <td>
@@ -70,7 +70,7 @@
 					@if(!$item->order->fees_invoice_number)
 						<i class="fa fa-times text-danger" data-toggle="tooltip" title="Fees Invoice"></i>
 					@else
-						<a href="{{ route('admin.ebay.invoice-fees', ['id' => $item->order->fees_invoice_number]) }}" target="_blank" data-toggle="tooltip" title="Fees Invoice"><i class="fa fa-check text-success"></i></a>	
+						<a href="{{ route('admin.ebay.invoice-fees', ['id' => $item->order->fees_invoice_number]) }}" target="_blank" data-toggle="tooltip" title="Fees Invoice"><i class="fa fa-check text-success"></i></a>
 					@endif
                 </td>
             </tr>

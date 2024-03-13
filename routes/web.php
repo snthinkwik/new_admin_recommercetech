@@ -27,6 +27,20 @@ use App\Http\Controllers\CustomerReturnsController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\NotificationsController;
+use App\Http\Controllers\RepairController;
+use App\Http\Controllers\BatchesController;
+use App\Http\Controllers\SuppliersController;
+use App\Http\Controllers\UnlocksCostController;
+use App\Http\Controllers\UnlockMappingController;
+use App\Http\Controllers\ColourController;
+use App\Http\Controllers\EmailSenderController;
+use App\Http\Controllers\TestingResultController;
+use App\Http\Controllers\EbaySellerController;
+use App\Http\Controllers\RepairEngineerController;
+use App\Http\Controllers\StockTakeController;
+use App\Http\Controllers\ExceptionLogController;
+use App\Http\Controllers\AveragePriceBackMarketController;
+use App\Http\Controllers\MobicodeController;
 
 
 
@@ -57,14 +71,15 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/stats', ['middleware' => 'admin', 'as' => 'stats', function () {
         return view('stats');
     }]);
-    Route::get('/stock-stats', ['middleware' => 'admin', 'as' => 'stock-stats', 'uses' => 'StockController@getStockStats']);
+    Route::get('/stock-stats', ['middleware' => 'admin', 'as' => 'stock-stats' ,StockController::class,'getStockStats'])->name('stock-stats');
+
     //Route::get('/trade-in-stats', ['middleware' => 'admin', 'uses' => 'Trg\TradeInsController@getStats', 'as' => 'trade-in-stats']);
     Route::get('/items-sold-report', ['middleware' => 'admin', 'as' => 'items-sold-report', 'uses' => 'StockController@getItemsSoldReport']);
 
     Route::group(['prefix' => 'unlock-mapping', 'middleware' => ['admin']], function () {
-        Route::get('/', ['uses' => 'UnlockMappingController@getindex', 'as' => 'unlock-mapping']);
-        Route::post('/add', ['uses' => 'UnlockMappingController@postAdd', 'as' => 'unlock-mapping.add']);
-        Route::post('/delete', ['uses' => 'UnlockMappingController@postDelete', 'as' => 'unlock-mapping.delete']);
+        Route::get('/', [UnlockMappingController::class,'getindex'])->name('unlock-mapping');
+        Route::post('/add', [UnlockMappingController::class,'postAdd'])->name('unlock-mapping.add');
+        Route::post('/delete', [UnlockMappingController::class,'postDelete'])->name('unlock-mapping.delete');
     });
 
     // Home
@@ -81,24 +96,24 @@ Route::group(['middleware' => ['auth']], function () {
 
     // Repairs
     Route::group(['prefix' => 'repairs', 'middleware' => ['admin']], function () {
-        Route::get('/', ['uses' => 'RepairController@getIndex', 'as' => 'repairs']);
-        // Route::get('/external', ['uses' => 'RepairController@getExternalIndex', 'as' => 'repairs.external.single']);
-        Route::get('/external/{id}', ['uses' => 'RepairController@getExternalSingle', 'as' => 'repairs.external.single'])->where('id', '[0-9]+');
-        Route::get('/internal/{id}', ['uses' => 'RepairController@getSingle', 'as' => 'repairs.single'])->where('id', '[0-9]+');
-        Route::post('import', ['uses' => 'RepairController@postImport', 'as' => 'repairs.import']);
-        Route::post('get-faults', ['uses' => 'RepairController@getfaults', 'as' => 'repairs.faults']);
-        Route::post('update-cost', ['uses' => 'RepairController@updateRepairCost', 'as' => 'repairs.update.cost']);
-        Route::get('external-export/{id}', ['uses' => 'RepairController@getExternalRepairConstExport', 'as' => 'repairs.external.export']);
-        Route::post('add-external-repair', ['uses' => 'RepairController@addNewExternalRepair', 'as' => 'repairs.external.add']);
-        Route::get('export-repair-template', ['uses' => 'RepairController@getTemplate', 'as' => 'repairs.download.template']);
-        Route::post('external-delete', ['uses' => 'RepairController@deleteExternal', 'as' => 'repairs.external.delete']);
-        Route::post('close-repair', ['uses' => 'RepairController@closeRepair', 'as' => 'repairs.close']);
+        Route::get('/', [RepairController::class,'getIndex'])->name('repairs');
+        Route::get('/external/{id}', [RepairController::class,'getExternalSingle'])->where('id', '[0-9]+')->name('repairs.external.single');
+        Route::get('/internal/{id}', [RepairController::class,'getSingle'])->where('id', '[0-9]+')->name('repairs.single');
+
+        Route::post('import', [RepairController::class,'postImport'])->name('repairs.import');
+        Route::post('get-faults', [RepairController::class,'getfaults'])->name('repairs.faults');
+        Route::post('update-cost', [RepairController::class,'updateRepairCost'])->name('repairs.update.cost');
+        Route::get('external-export/{id}', [RepairController::class,'getExternalRepairConstExport'])->name('repairs.external.export');
+        Route::post('add-external-repair', [RepairController::class,'addNewExternalRepair'])->name('repairs.external.add');
+        Route::get('export-repair-template', [RepairController::class,'getTemplate'])->name('repairs.download.template');
+        Route::post('external-delete', [RepairController::class,'deleteExternal'])->name('repairs.external.delete');
+        Route::post('close-repair', [RepairController::class,'closeRepair'])->name('repairs.close');
     });
 
     // Exception Logs
     Route::group(['prefix' => 'exception-logs', 'middleware' => ['admin']], function () {
-        Route::get('/', ['uses' => 'ExceptionLogController@getIndex', 'as' => 'exception-logs']);
-        Route::get('/{id}', ['uses' => 'ExceptionLogController@getSingle', 'as' => 'exception-logs.single']);
+        Route::get('/', [ExceptionLogController::class,'getIndex'])->name('exception-logs');
+        Route::get('/{id}', [ExceptionLogController::class,'getSingle'])->name('exception-logs.single');
     });
 
     /*Route::group(['prefix' => 'back-market', 'middleware' => ['admin']], function() {
@@ -126,17 +141,17 @@ Route::group(['middleware' => ['auth']], function () {
 
     // Stock Take
     Route::group(['prefix' => 'stock-take', 'middleware' => ['admin', 'not_staff']], function () {
-        Route::get('/', ['uses' => 'StockTakeController@getIndex', 'as' => 'stock-take']);
-        Route::post('/mark-as-seen', ['uses' => 'StockTakeController@postMarkAsSeen', 'as' => 'stock-take.mark-as-seen']);
-        Route::get('/missing-items', ['uses' => 'StockTakeController@getMissingItems', 'as' => 'stock-take.missing-items']);
-        Route::get('/missing-items-table-all', ['uses' => 'StockTakeController@getMissingItemsTableAll', 'as' => 'stock-take.missing-items-table-all']);
-        Route::get('/mark-as-lost', ['uses' => 'StockTakeController@getMarkAsLost', 'as' => 'stock-take.mark-as-lost']);
-        Route::post('/mark-as-lost', ['uses' => 'StockTakeController@postMarkAsLost', 'as' => 'stock-take.mark-as-lost-submit']);
-        Route::get('/view-lost-items', ['uses' => 'StockTakeController@getViewLostItems', 'as' => 'stock-take.view-lost-items']);
-        Route::get('/view-lost-items-export', ['uses' => 'StockTakeController@getViewLostItemsExport', 'as' => 'stock-take.view-lost-items-export']);
-        Route::get('/view-deleted-items', ['uses' => 'StockTakeController@getViewDeletedItems', 'as' => 'stock-take.view-deleted-items']);
-        Route::get('/scanner', ['uses' => 'StockTakeController@getScanner', 'as' => 'stock-take.scanner']);
-        Route::post('/delete-all-stock-take-records', ['uses' => 'StockTakeController@postDeleteAllStockTakeRecords', 'as' => 'stock-take.delete-all-stock-take-records']);
+        Route::get('/', [StockTakeController::class,'getIndex', 'as' => ''])->name('stock-take');
+        Route::post('/mark-as-seen', [StockTakeController::class,'postMarkAsSeen'])->name('stock-take.mark-as-seen');
+        Route::get('/missing-items', [StockTakeController::class,'getMissingItems'])->name('stock-take.missing-items');
+        Route::get('/missing-items-table-all', [StockTakeController::class,'getMissingItemsTableAll'])->name('stock-take.missing-items-table-all');
+        Route::get('/mark-as-lost', [StockTakeController::class,'getMarkAsLost'])->name('stock-take.mark-as-lost');
+        Route::post('/mark-as-lost', [StockTakeController::class,'postMarkAsLost'])->name('stock-take.mark-as-lost-submit');
+        Route::get('/view-lost-items', [StockTakeController::class,'getViewLostItems'])->name('stock-take.view-lost-items');
+        Route::get('/view-lost-items-export', [StockTakeController::class,'getViewLostItemsExport'])->name('stock-take.view-lost-items-export');
+        Route::get('/view-deleted-items', [StockTakeController::class,'getViewDeletedItems'])->name('stock-take.view-deleted-items');
+        Route::get('/scanner', [StockTakeController::class,'getScanner'])->name('stock-take.scanner');
+        Route::post('/delete-all-stock-take-records', [StockTakeController::class,'postDeleteAllStockTakeRecords'])->name('stock-take.delete-all-stock-take-records');
     });
 
     // Parts
@@ -187,32 +202,32 @@ Route::group(['middleware' => ['auth']], function () {
 
     // Purchases/Suppliers (without using TRG namespace)
     Route::group(['prefix' => 'purchases/suppliers', 'middleware' => ['admin', 'not_staff']], function () {
-        Route::get('/', ['uses' => 'SuppliersController@getIndex', 'as' => 'suppliers']);
-        Route::post('/add', ['uses' => 'SuppliersController@postAdd', 'as' => 'suppliers.add']);
-        Route::get('/returns', ['uses' => 'SuppliersController@getSupplierReturns', 'as' => 'suppliers.returns']);
-        Route::get('/redirect', ['uses' => 'SuppliersController@getRedirect', 'as' => 'suppliers.redirect']);
-        Route::get('/return-create', ['uses' => 'SuppliersController@getSupplierReturnCreate', 'as' => 'suppliers.return-create']);
-        Route::get('/returns/{id}', ['uses' => 'SuppliersController@getSupplierReturnSingle', 'as' => 'suppliers.return-single']);
-        Route::get('/returns/{id}/export', ['uses' => 'SuppliersController@getSupplierReturnSingleExport', 'as' => 'suppliers.return-single-export']);
-        Route::get('/returns/{id}/export/rma', ['uses' => 'SuppliersController@getSupplierReturnSingleExportRMA', 'as' => 'suppliers.return-single-export-rma']);
-        Route::post('/return-update', ['uses' => 'SuppliersController@postSupplierReturnUpdate', 'as' => 'suppliers.return-update']);
-        Route::post('/return-remove-item', ['uses' => 'SuppliersController@postSupplierReturnRemoveItem', 'as' => 'suppliers.return-remove-item']);
-        Route::post('/return-update-item', ['uses' => 'SuppliersController@postSupplierReturnUpdateItem', 'as' => 'suppliers.return-update-item']);
-        Route::post('/return-update-tracking-courier', ['uses' => 'SuppliersController@postSupplierReturnUpdateTrackingCourier', 'as' => 'suppliers.return-update-tracking-courier']);
-        Route::get('/{id}', ['uses' => 'SuppliersController@getSingle', 'as' => 'suppliers.single']);
-        Route::post('/update', ['uses' => 'SuppliersController@postUpdate', 'as' => 'suppliers.update']);
-        Route::get('/delete/{id}', ['uses' => 'SuppliersController@removeSupplier', 'as' => 'suppliers.delete']);
-        Route::post('/grade-mapping', ['uses' => 'SuppliersController@updateGradeMapping', 'as' => 'suppliers.grade-mapping']);
+        Route::get('/', [SuppliersController::class,'getIndex'])->name('suppliers');
+        Route::post('/add', [SuppliersController::class,'postAdd'])->name('suppliers.add');
+        Route::get('/returns', [SuppliersController::class,'getSupplierReturns'])->name('suppliers.returns');
+        Route::get('/redirect', [SuppliersController::class,'getRedirect'])->name('suppliers.redirect');
+        Route::get('/return-create', [SuppliersController::class,'getSupplierReturnCreate'])->name('suppliers.return-create');
+        Route::get('/returns/{id}', [SuppliersController::class,'getSupplierReturnSingle'])->name('suppliers.return-single');
+        Route::get('/returns/{id}/export', [SuppliersController::class,'getSupplierReturnSingleExport'])->name('suppliers.return-single-export');
+        Route::get('/returns/{id}/export/rma', [SuppliersController::class,'getSupplierReturnSingleExportRMA'])->name('suppliers.return-single-export-rma');
+        Route::post('/return-update', [SuppliersController::class,'postSupplierReturnUpdate'])->name('suppliers.return-update');
+        Route::post('/return-remove-item', [SuppliersController::class,'postSupplierReturnRemoveItem'])->name('suppliers.return-remove-item');
+        Route::post('/return-update-item', [SuppliersController::class,'postSupplierReturnUpdateItem'])->name('suppliers.return-update-item');
+        Route::post('/return-update-tracking-courier', [SuppliersController::class,'postSupplierReturnUpdateTrackingCourier'])->name('suppliers.return-update-tracking-courier');
+        Route::get('/{id}', [SuppliersController::class,'getSingle'])->name('suppliers.single');
+        Route::post('/update', [SuppliersController::class,'postUpdate'])->name('suppliers.update');
+        Route::get('/delete/{id}', [SuppliersController::class,'removeSupplier'])->name('suppliers.delete');
+        Route::post('/grade-mapping', [SuppliersController::class,'updateGradeMapping'])->name('suppliers.grade-mapping');
 
-        Route::post('/grade-mapping', ['uses' => 'SuppliersController@updateGradeMapping', 'as' => 'suppliers.grade-mapping']);
-        Route::post('/ps-model', ['uses' => 'SuppliersController@updatePSModelPercentage', 'as' => 'suppliers.ps-percentage']);
+        Route::post('/grade-mapping', [SuppliersController::class,'updateGradeMapping'])->name('suppliers.grade-mapping');
+        Route::post('/ps-model', [SuppliersController::class,'updatePSModelPercentage'])->name('suppliers.ps-percentage');
     });
 
     // Outbound - UserContact
 
     // Mobicode
     Route::group(['prefix' => 'mobicode', 'middleware' => ['admin']], function () {
-        Route::post('/check-gsx', ['uses' => 'MobicodeController@postGSXcheck', 'as' => 'mobicode.gsx-check']);
+        Route::post('/check-gsx', [MobicodeController::class,'postGSXcheck'])->name('mobicode.gsx-check');
     });
 
     // Static pages
@@ -408,35 +423,35 @@ Route::group(['middleware' => ['auth']], function () {
             Route::post('/dpd-shipping/status', [SettingsController::class, 'dpdShippingStatus'])->name('admin.dpd-shipping.status');
         });
 
-        Route::get('/testing-results', ['uses' => 'TestingResultController@index', 'as' => 'admin.testing-result']);
+        Route::get('/testing-results', [TestingResultController::class,'index'])->name('admin.testing-result');
 
     });
 
     // Batches
     Route::group(['prefix' => 'batches', 'middleware' => ['admin']], function () {
-        Route::get('/', ['uses' => 'BatchesController@getIndex', 'as' => 'batches']);
-        Route::get('/{id}', ['uses' => 'BatchesController@getSingle', 'as' => 'batches.single'])->where('id', '[0-9]+');;
-        Route::post('/delete', ['uses' => 'BatchesController@postDelete', 'as' => 'batches.delete']);
-        Route::post('/update', ['uses' => 'BatchesController@postUpdate', 'as' => 'batches.update']);
-        Route::get('/{id}/deal-sheet', ['uses' => 'BatchesController@getDealSheet', 'as' => 'batches.deal-sheet']);
-        Route::get('/{id}/overview', ['uses' => 'BatchesController@getOverview', 'as' => 'batches.overview']);
-        Route::get('/{id}/summary', ['uses' => 'BatchesController@getSingleSummary', 'as' => 'batches.single-summary']);
-        Route::get('/{id}/summary-export', ['uses' => 'BatchesController@getSingleSummaryExport', 'as' => 'batches.single-summary-export']);
-        Route::get('/{id}/export/{option}/{email?}', ['uses' => 'BatchesController@getExport', 'as' => 'batches.export']);
-        Route::get('/new/custom', ['uses' => 'BatchesController@getNewCustom', 'as' => 'batches.new-custom']);
-        Route::post('/new/custom-submit', ['uses' => 'BatchesController@postNewCustomSubmit', 'as' => 'batches.new-custom-submit']);
-        Route::get('/summary', ['uses' => 'BatchesController@getSummary', 'as' => 'batches.summary']);
-        Route::post('/clear-notes', ['uses' => 'BatchesController@postClearNotes', 'as' => 'batches.clear-notes']);
-        Route::post('/update-notes', ['uses' => 'BatchesController@postUpdateNotes', 'as' => 'batches.update-notes']);
-        Route::post('/deal-sheet-submit', ['uses' => 'BatchesController@postDealSheetSubmit', 'as' => 'batches.deal-sheet-submit']);
-        Route::post('/deal-sheet-notify-best-price', ['uses' => 'BatchesController@postDealSheetNotifyBestPrice', 'as' => 'batches.deal-sheet-notify-best-price']);
-        Route::post('/deal-sheet-delete-offer', ['uses' => 'BatchesController@postDealSheetDeleteOffer', 'as' => 'batches.deal-sheet-delete-offer']);
-        Route::post('/deal-sheet-mark-as-seen', ['uses' => 'BatchesController@postDealSheetMarkAsSeen', 'as' => 'batches.deal-sheet-mark-as-seen']);
-        Route::post('/deal-sheet-mark-all-as-seen', ['uses' => 'BatchesController@postDealSheetMarkAllAsSeen', 'as' => 'batches.deal-sheet-mark-all-as-seen']);
-        Route::post('/send', ['uses' => 'BatchesController@postSend', 'as' => 'batches.send']);
-        Route::post('/send-to-user', ['uses' => 'BatchesController@postSendToUser', 'as' => 'batches.send-to-user']);
-        Route::post('/merge', ['uses' => 'BatchesController@postMerge', 'as' => 'batches.merge']);
-        Route::post('/send-batches', ['uses' => 'BatchesController@postSendBatches', 'as' => 'batches.send-batches']);
+        Route::get('/', [BatchesController::class,'getIndex'])->name('batches');
+        Route::get('/{id}', [BatchesController::class,'getSingle'])->where('id', '[0-9]+')->name('batches.single');
+        Route::post('/delete', [BatchesController::class,'postDelete'])->name('batches.delete');
+        Route::post('/update', [BatchesController::class,'postUpdate'])->name('batches.update');
+        Route::get('/{id}/deal-sheet', [BatchesController::class,'getDealSheet'])->name('batches.deal-sheet');
+        Route::get('/{id}/overview', [BatchesController::class,'getOverview'])->name('batches.overview');
+        Route::get('/{id}/summary', [BatchesController::class,'getSingleSummary'])->name('batches.single-summary');
+        Route::get('/{id}/summary-export', [BatchesController::class,'getSingleSummaryExport'])->name('batches.single-summary-export');
+        Route::get('/{id}/export/{option}/{email?}', [BatchesController::class,'getExport'])->name('batches.export');
+        Route::get('/new/custom', [BatchesController::class,'getNewCustom'])->name('batches.new-custom');
+        Route::post('/new/custom-submit', [BatchesController::class,'postNewCustomSubmit'])->name('batches.new-custom-submit');
+        Route::get('/summary', [BatchesController::class,'getSummary'])->name('batches.summary');
+        Route::post('/clear-notes', [BatchesController::class,'postClearNotes'])->name('batches.clear-notes');
+        Route::post('/update-notes', [BatchesController::class,'postUpdateNotes'])->name('batches.update-notes');
+        Route::post('/deal-sheet-submit', [BatchesController::class,'postDealSheetSubmit'])->name('batches.deal-sheet-submit');
+        Route::post('/deal-sheet-notify-best-price', [BatchesController::class,'postDealSheetNotifyBestPrice'])->name('batches.deal-sheet-notify-best-price');
+        Route::post('/deal-sheet-delete-offer', [BatchesController::class,'postDealSheetDeleteOffer'])->name('batches.deal-sheet-delete-offer');
+        Route::post('/deal-sheet-mark-as-seen', [BatchesController::class,'postDealSheetMarkAsSeen'])->name('batches.deal-sheet-mark-as-seen');
+        Route::post('/deal-sheet-mark-all-as-seen', [BatchesController::class,'postDealSheetMarkAllAsSeen'])->name('batches.deal-sheet-mark-all-as-seen');
+        Route::post('/send', [BatchesController::class,'postSend'])->name('batches.send');
+        Route::post('/send-to-user', [BatchesController::class,'postSendToUser'])->name('batches.send-to-user');
+        Route::post('/merge', [BatchesController::class,'postMerge'])->name('batches.merge');
+        Route::post('/send-batches', [BatchesController::class,'postSendBatches'])->name('batches.send-batches');
     });
 
     // Stock
@@ -647,10 +662,10 @@ Route::group(['middleware' => ['auth']], function () {
 
     // Unlocks Cost
     Route::group(['prefix' => 'unlocks-cost', 'middleware' => ['admin']], function () {
-        Route::get('/', ['uses' => 'UnlocksCostController@getIndex', 'as' => 'unlocks-cost']);
-        Route::post('/add', ['uses' => 'UnlocksCostController@postAdd', 'as' => 'unlocks-cost.add']);
-        Route::post('/update', ['uses' => 'UnlocksCostController@postUpdate', 'as' => 'unlocks-cost.update']);
-        Route::post('/delete', ['uses' => 'UnlocksCostController@postDelete', 'as' => 'unlocks-cost.delete']);
+        Route::get('/', [UnlocksCostController::class,'getIndex'])->name('unlocks-cost');
+        Route::post('/add', [UnlocksCostController::class,'postAdd'])->name('unlocks-cost.add');
+        Route::post('/update', [UnlocksCostController::class,'postUpdate'])->name('unlocks-cost.update');
+        Route::post('/delete', [UnlocksCostController::class,'postDelete'])->name('unlocks-cost.delete');
     });
 
     // Unlocks
@@ -694,24 +709,24 @@ Route::group(['middleware' => ['auth']], function () {
 
     // Emails
     Route::group(['prefix' => 'emails', 'middleware' => ['admin', 'not_staff']], function () {
-        Route::get('/', ['uses' => 'EmailSenderController@getIndex', 'as' => 'emails']);
-        Route::get('/create-form/{draft?}', ['uses' => 'EmailSenderController@getCreate', 'as' => 'emails.create-form']);
-        Route::post('/save', ['uses' => 'EmailSenderController@postSave', 'as' => 'emails.save']);
-        Route::post('/preview', ['uses' => 'EmailSenderController@postPreview', 'as' => 'emails.preview']);
-        Route::get('/single/{id}', ['uses' => 'EmailSenderController@getSingle', 'as' => 'emails.single']);
-        Route::get('/single/{id}/delivery-summary', ['uses' => 'EmailSenderController@getSingleDeliverySummary', 'as' => 'emails.single-delivery-summary']);
-        Route::get('/check-statuses', ['uses' => 'EmailSenderController@getStatuses', 'as' => 'emails.check-statuses']);
-        Route::post('/test-send', ['uses' => 'EmailSenderController@postTestSend', 'as' => 'emails.test-send']);
-        Route::post('/save-draft', ['uses' => 'EmailSenderController@postSaveDraft', 'as' => 'emails.save-draft']);
-        Route::get('/drafts', ['uses' => 'EmailSenderController@getDraftsIndex', 'as' => 'emails.drafts']);
-        Route::delete('/delete-draft', ['uses' => 'EmailSenderController@deleteDraft', 'as' => 'emails.delete-draft']);
+        Route::get('/', [EmailSenderController::class,'getIndex', 'as' => ''])->name('emails');
+        Route::get('/create-form/{draft?}', [EmailSenderController::class,'getCreate', 'as' => ''])->name('emails.create-form');
+        Route::post('/save', [EmailSenderController::class,'postSave'])->name('emails.save');
+        Route::post('/preview', [EmailSenderController::class,'postPreview'])->name('emails.preview');
+        Route::get('/single/{id}', [EmailSenderController::class,'getSingle'])->name('emails.single');
+        Route::get('/single/{id}/delivery-summary', [EmailSenderController::class,'getSingleDeliverySummary'])->name('emails.single-delivery-summary');
+        Route::get('/check-statuses', [EmailSenderController::class,'getStatuses'])->name('emails.check-statuses');
+        Route::post('/test-send', [EmailSenderController::class,'postTestSend'])->name('emails.test-send');
+        Route::post('/save-draft', [EmailSenderController::class,'postSaveDraft'])->name('emails.save-draft');
+        Route::get('/drafts', [EmailSenderController::class,'getDraftsIndex'])->name('emails.drafts');
+        Route::delete('/delete-draft', [EmailSenderController::class,'deleteDraft'])->name('emails.delete-draft');
     });
 
 
     Route::group(['prefix' => 'engineer', 'middleware' => ['admin', 'not_staff']], function () {
-        Route::get('/', ['uses' => 'RepairEngineerController@getIndex', 'as' => 'engineer.index']);
-        Route::post('/save', ['uses' => 'RepairEngineerController@postSave', 'as' => 'engineer.save']);
-        Route::post('/data', ['uses' => 'RepairEngineerController@getEngineer', 'as' => 'engineer.data']);
+        Route::get('/', [RepairEngineerController::class,'getIndex'])->name('engineer.index');
+        Route::post('/save', [RepairEngineerController::class,'postSave'])->name('engineer.save');
+        Route::post('/data', [RepairEngineerController::class,'getEngineer'])->name('engineer.data');
 
 
     });
@@ -734,17 +749,17 @@ Route::group(['middleware' => ['auth']], function () {
     //Colour
 
     Route::group(['prefix' => 'colour', 'middleware' => ['admin', 'not_staff']], function () {
-        Route::get('/', ['uses' => 'ColourController@index', 'as' => 'colour.index']);
-        Route::get('/{id}', ['uses' => 'ColourController@update', 'as' => 'colour.update']);
-        Route::get('/create', ['uses' => 'ColourController@create', 'as' => 'colour.create']);
-        Route::post('/create/save', ['uses' => 'ColourController@postSave', 'as' => 'colour.save']);
+        Route::get('/', [ColourController::class,'index'])->name('colour.index');
+        Route::get('/{id}', [ColourController::class,'update'])->name('colour.update');
+        Route::get('/create', [ColourController::class,'create'])->name('colour.create');
+        Route::post('/create/save', [ColourController::class,'postSave'])->name('colour.save');
     });
     Route::group(['prefix' => 'ebay-seller', 'middleware' => ['admin', 'not_staff']], function () {
-        Route::get('/', ['uses' => 'EbaySellerController@index', 'as' => 'ebay-seller.index']);
-        Route::get('/delete/{id}', ['uses' => 'EbaySellerController@delete', 'as' => 'ebay-seller.delete']);
-        Route::get('/{id}', ['uses' => 'EbaySellerController@update', 'as' => 'ebay-seller.update']);
-        Route::get('/create', ['uses' => 'EbaySellerController@create', 'as' => 'ebay-seller.create']);
-        Route::post('/create/save', ['uses' => 'EbaySellerController@postSave', 'as' => 'ebay-seller.save']);
+        Route::get('/', [EbaySellerController::class,'index'])->name('ebay-seller.index');
+        Route::get('/delete/{id}', [EbaySellerController::class,'delete'])->name('ebay-seller.delete');
+        Route::get('/{id}', [EbaySellerController::class,'update'])->name('ebay-seller.update');
+        Route::get('/create', [EbaySellerController::class,'create'])->name('ebay-seller.create');
+        Route::post('/create/save', [EbaySellerController::class,'postSave'])->name('ebay-seller.save');
 //    Route::get('cron-job/assigned',['uses'=>'CategoryController@eBayCategoryIdAssignedCronJob','as'=>'cron-job.assigned']);
     });
 
