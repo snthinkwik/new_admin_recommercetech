@@ -41,7 +41,12 @@ use App\Http\Controllers\StockTakeController;
 use App\Http\Controllers\ExceptionLogController;
 use App\Http\Controllers\AveragePriceBackMarketController;
 use App\Http\Controllers\MobicodeController;
-
+use App\Http\Controllers\EbayFeesController;
+use App\Http\Controllers\EbaySkuController;
+use App\Http\Controllers\ZendeskController;
+use App\Http\Controllers\SageController;
+use App\Http\Controllers\PhoneCheckController;
+use App\Http\Controllers\EmailWebhooksController;
 
 
 
@@ -67,27 +72,27 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 
 Route::group(['middleware' => ['auth']], function () {
 
-    Route::get('/deleted-sales', ['middleware' => 'admin', CustomerReturnController::class,'getDeleteSaleData'])->name('repairs');
+    Route::get('/deleted-sales', ['middleware' => 'admin', CustomerReturnController::class, 'getDeleteSaleData'])->name('repairs');
     Route::get('/stats', ['middleware' => 'admin', 'as' => 'stats', function () {
         return view('stats');
     }]);
-    Route::get('/stock-stats', ['middleware' => 'admin', 'as' => 'stock-stats' ,StockController::class,'getStockStats'])->name('stock-stats');
+    Route::get('/stock-stats', ['middleware' => 'admin', 'as' => 'stock-stats', StockController::class, 'getStockStats'])->name('stock-stats');
 
     //Route::get('/trade-in-stats', ['middleware' => 'admin', 'uses' => 'Trg\TradeInsController@getStats', 'as' => 'trade-in-stats']);
     Route::get('/items-sold-report', ['middleware' => 'admin', 'as' => 'items-sold-report', 'uses' => 'StockController@getItemsSoldReport']);
 
     Route::group(['prefix' => 'unlock-mapping', 'middleware' => ['admin']], function () {
-        Route::get('/', [UnlockMappingController::class,'getindex'])->name('unlock-mapping');
-        Route::post('/add', [UnlockMappingController::class,'postAdd'])->name('unlock-mapping.add');
-        Route::post('/delete', [UnlockMappingController::class,'postDelete'])->name('unlock-mapping.delete');
+        Route::get('/', [UnlockMappingController::class, 'getindex'])->name('unlock-mapping');
+        Route::post('/add', [UnlockMappingController::class, 'postAdd'])->name('unlock-mapping.add');
+        Route::post('/delete', [UnlockMappingController::class, 'postDelete'])->name('unlock-mapping.delete');
     });
 
     // Home
     Route::group(['prefix' => 'home'], function () {
-        Route::get('/', [HomeController::class,'getIndex'])->name('home');
-        Route::get('/products/{name}', [HomeController::class,'getSingleProduct'])->name('home.single-product');
-        Route::get('/search', [HomeController::class,'getSingleProductSearch'])->name('home.single-search');
-        Route::post('/add-to-basket', [HomeController::class,'postAddToBasket'])->name('home.add-to-basket');
+        Route::get('/', [HomeController::class, 'getIndex'])->name('home');
+        Route::get('/products/{name}', [HomeController::class, 'getSingleProduct'])->name('home.single-product');
+        Route::get('/search', [HomeController::class, 'getSingleProductSearch'])->name('home.single-search');
+        Route::post('/add-to-basket', [HomeController::class, 'postAddToBasket'])->name('home.add-to-basket');
 
         Route::group(['middleware' => ['admin']], function () {
             Route::post('/bulk-update-price', ['uses' => 'HomeController@postBulkUpdatePrice', 'as' => 'home.bulk-update-price']);
@@ -96,24 +101,24 @@ Route::group(['middleware' => ['auth']], function () {
 
     // Repairs
     Route::group(['prefix' => 'repairs', 'middleware' => ['admin']], function () {
-        Route::get('/', [RepairController::class,'getIndex'])->name('repairs');
-        Route::get('/external/{id}', [RepairController::class,'getExternalSingle'])->where('id', '[0-9]+')->name('repairs.external.single');
-        Route::get('/internal/{id}', [RepairController::class,'getSingle'])->where('id', '[0-9]+')->name('repairs.single');
+        Route::get('/', [RepairController::class, 'getIndex'])->name('repairs');
+        Route::get('/external/{id}', [RepairController::class, 'getExternalSingle'])->where('id', '[0-9]+')->name('repairs.external.single');
+        Route::get('/internal/{id}', [RepairController::class, 'getSingle'])->where('id', '[0-9]+')->name('repairs.single');
 
-        Route::post('import', [RepairController::class,'postImport'])->name('repairs.import');
-        Route::post('get-faults', [RepairController::class,'getfaults'])->name('repairs.faults');
-        Route::post('update-cost', [RepairController::class,'updateRepairCost'])->name('repairs.update.cost');
-        Route::get('external-export/{id}', [RepairController::class,'getExternalRepairConstExport'])->name('repairs.external.export');
-        Route::post('add-external-repair', [RepairController::class,'addNewExternalRepair'])->name('repairs.external.add');
-        Route::get('export-repair-template', [RepairController::class,'getTemplate'])->name('repairs.download.template');
-        Route::post('external-delete', [RepairController::class,'deleteExternal'])->name('repairs.external.delete');
-        Route::post('close-repair', [RepairController::class,'closeRepair'])->name('repairs.close');
+        Route::post('import', [RepairController::class, 'postImport'])->name('repairs.import');
+        Route::post('get-faults', [RepairController::class, 'getfaults'])->name('repairs.faults');
+        Route::post('update-cost', [RepairController::class, 'updateRepairCost'])->name('repairs.update.cost');
+        Route::get('external-export/{id}', [RepairController::class, 'getExternalRepairConstExport'])->name('repairs.external.export');
+        Route::post('add-external-repair', [RepairController::class, 'addNewExternalRepair'])->name('repairs.external.add');
+        Route::get('export-repair-template', [RepairController::class, 'getTemplate'])->name('repairs.download.template');
+        Route::post('external-delete', [RepairController::class, 'deleteExternal'])->name('repairs.external.delete');
+        Route::post('close-repair', [RepairController::class, 'closeRepair'])->name('repairs.close');
     });
 
     // Exception Logs
     Route::group(['prefix' => 'exception-logs', 'middleware' => ['admin']], function () {
-        Route::get('/', [ExceptionLogController::class,'getIndex'])->name('exception-logs');
-        Route::get('/{id}', [ExceptionLogController::class,'getSingle'])->name('exception-logs.single');
+        Route::get('/', [ExceptionLogController::class, 'getIndex'])->name('exception-logs');
+        Route::get('/{id}', [ExceptionLogController::class, 'getSingle'])->name('exception-logs.single');
     });
 
     /*Route::group(['prefix' => 'back-market', 'middleware' => ['admin']], function() {
@@ -125,10 +130,10 @@ Route::group(['middleware' => ['auth']], function () {
 
     // Zendesk
     Route::group(['prefix' => 'zendesk', 'middleware' => ['admin']], function () {
-        Route::get('/', ['uses' => 'ZendeskController@getIndex', 'as' => 'zendesk']);
-        Route::get('/ticket/{id}', ['uses' => 'ZendeskController@getTicket', 'as' => 'zendesk.ticket']);
-        Route::get('/tags', ['uses' => 'ZendeskController@getTags', 'as' => 'zendesk.tags']);
-        Route::get('/ticket-comments/{id}', ['uses' => 'ZendeskController@getTicketComments', 'as' => 'zendesk.ticket-comments']);
+        Route::get('/', [ZendeskController::class,'getIndex'])->name('zendesk');
+        Route::get('/ticket/{id}', [ZendeskController::class,'getTicket'])->name('zendesk.ticket');
+        Route::get('/tags', [ZendeskController::class,'getTags'])->name('zendesk.tags');
+        Route::get('/ticket-comments/{id}', [ZendeskController::class,'getTicketComments'])->name('zendesk.ticket-comments');
     });
 
     // Channel Grabber
@@ -141,17 +146,17 @@ Route::group(['middleware' => ['auth']], function () {
 
     // Stock Take
     Route::group(['prefix' => 'stock-take', 'middleware' => ['admin', 'not_staff']], function () {
-        Route::get('/', [StockTakeController::class,'getIndex', 'as' => ''])->name('stock-take');
-        Route::post('/mark-as-seen', [StockTakeController::class,'postMarkAsSeen'])->name('stock-take.mark-as-seen');
-        Route::get('/missing-items', [StockTakeController::class,'getMissingItems'])->name('stock-take.missing-items');
-        Route::get('/missing-items-table-all', [StockTakeController::class,'getMissingItemsTableAll'])->name('stock-take.missing-items-table-all');
-        Route::get('/mark-as-lost', [StockTakeController::class,'getMarkAsLost'])->name('stock-take.mark-as-lost');
-        Route::post('/mark-as-lost', [StockTakeController::class,'postMarkAsLost'])->name('stock-take.mark-as-lost-submit');
-        Route::get('/view-lost-items', [StockTakeController::class,'getViewLostItems'])->name('stock-take.view-lost-items');
-        Route::get('/view-lost-items-export', [StockTakeController::class,'getViewLostItemsExport'])->name('stock-take.view-lost-items-export');
-        Route::get('/view-deleted-items', [StockTakeController::class,'getViewDeletedItems'])->name('stock-take.view-deleted-items');
-        Route::get('/scanner', [StockTakeController::class,'getScanner'])->name('stock-take.scanner');
-        Route::post('/delete-all-stock-take-records', [StockTakeController::class,'postDeleteAllStockTakeRecords'])->name('stock-take.delete-all-stock-take-records');
+        Route::get('/', [StockTakeController::class, 'getIndex', 'as' => ''])->name('stock-take');
+        Route::post('/mark-as-seen', [StockTakeController::class, 'postMarkAsSeen'])->name('stock-take.mark-as-seen');
+        Route::get('/missing-items', [StockTakeController::class, 'getMissingItems'])->name('stock-take.missing-items');
+        Route::get('/missing-items-table-all', [StockTakeController::class, 'getMissingItemsTableAll'])->name('stock-take.missing-items-table-all');
+        Route::get('/mark-as-lost', [StockTakeController::class, 'getMarkAsLost'])->name('stock-take.mark-as-lost');
+        Route::post('/mark-as-lost', [StockTakeController::class, 'postMarkAsLost'])->name('stock-take.mark-as-lost-submit');
+        Route::get('/view-lost-items', [StockTakeController::class, 'getViewLostItems'])->name('stock-take.view-lost-items');
+        Route::get('/view-lost-items-export', [StockTakeController::class, 'getViewLostItemsExport'])->name('stock-take.view-lost-items-export');
+        Route::get('/view-deleted-items', [StockTakeController::class, 'getViewDeletedItems'])->name('stock-take.view-deleted-items');
+        Route::get('/scanner', [StockTakeController::class, 'getScanner'])->name('stock-take.scanner');
+        Route::post('/delete-all-stock-take-records', [StockTakeController::class, 'postDeleteAllStockTakeRecords'])->name('stock-take.delete-all-stock-take-records');
     });
 
     // Parts
@@ -174,60 +179,60 @@ Route::group(['middleware' => ['auth']], function () {
 
     // Saved Baskets
     Route::group(['prefix' => 'saved-baskets', 'middleware' => ['admin']], function () {
-        Route::get('/', [SavedBasketController::class,'getIndex'])->name('saved-baskets');
-        Route::get('/{id}', [SavedBasketController::class,'getSingle'])->name('saved-baskets.single');
-        Route::post('/create-sale', [SavedBasketController::class,'postCreateSale'])->name('saved-baskets.create-sale');
-        Route::post('/delete', [SavedBasketController::class,'postDelete'])->name('saved-baskets.delete');
-        Route::post('/delete-from-basket', [SavedBasketController::class,'postDeleteFromBasket'])->name('saved-baskets.delete-from-basket');
+        Route::get('/', [SavedBasketController::class, 'getIndex'])->name('saved-baskets');
+        Route::get('/{id}', [SavedBasketController::class, 'getSingle'])->name('saved-baskets.single');
+        Route::post('/create-sale', [SavedBasketController::class, 'postCreateSale'])->name('saved-baskets.create-sale');
+        Route::post('/delete', [SavedBasketController::class, 'postDelete'])->name('saved-baskets.delete');
+        Route::post('/delete-from-basket', [SavedBasketController::class, 'postDeleteFromBasket'])->name('saved-baskets.delete-from-basket');
     });
 
     // Products
     Route::group(['prefix' => 'products', 'middleware' => ['admin']], function () {
-        Route::get('/', [ProductsController::class,'getIndex'])->name('products');
-        Route::get('export-data', [ProductsController::class,'getAllExport'])->name('product.export-data');
-        Route::get('create', [ProductsController::class,'create'])->name('product.create');
-        Route::get('/{id}/{page?}', [ProductsController::class,'getSingle'])->name('products.single');
-        Route::post('/save', [ProductsController::class,'postCreate'])->name('products.save');
-        Route::post('/update', [ProductsController::class,'postUpdate'])->name('products.update');
-        Route::get('image/remove/{id}', [ProductsController::class,'removeImage'])->name('image.remove');
-        Route::get('deleted/{id}', [ProductsController::class,'deletedProduct'])->name('product.delete');
-        Route::post('/import', [ProductsController::class,'importCsv'])->name('product.import');
+        Route::get('/', [ProductsController::class, 'getIndex'])->name('products');
+        Route::get('export-data', [ProductsController::class, 'getAllExport'])->name('product.export-data');
+        Route::get('create', [ProductsController::class, 'create'])->name('product.create');
+        Route::get('/{id}/{page?}', [ProductsController::class, 'getSingle'])->name('products.single');
+        Route::post('/save', [ProductsController::class, 'postCreate'])->name('products.save');
+        Route::post('/update', [ProductsController::class, 'postUpdate'])->name('products.update');
+        Route::get('image/remove/{id}', [ProductsController::class, 'removeImage'])->name('image.remove');
+        Route::get('deleted/{id}', [ProductsController::class, 'deletedProduct'])->name('product.delete');
+        Route::post('/import', [ProductsController::class, 'importCsv'])->name('product.import');
 
     });
 
     // Notifications
     Route::group(['prefix' => 'notifications', 'middleware' => ['admin']], function () {
-        Route::get('/', [NotificationsController::class,'getIndex'])->name('notifications');
+        Route::get('/', [NotificationsController::class, 'getIndex'])->name('notifications');
     });
 
     // Purchases/Suppliers (without using TRG namespace)
     Route::group(['prefix' => 'purchases/suppliers', 'middleware' => ['admin', 'not_staff']], function () {
-        Route::get('/', [SuppliersController::class,'getIndex'])->name('suppliers');
-        Route::post('/add', [SuppliersController::class,'postAdd'])->name('suppliers.add');
-        Route::get('/returns', [SuppliersController::class,'getSupplierReturns'])->name('suppliers.returns');
-        Route::get('/redirect', [SuppliersController::class,'getRedirect'])->name('suppliers.redirect');
-        Route::get('/return-create', [SuppliersController::class,'getSupplierReturnCreate'])->name('suppliers.return-create');
-        Route::get('/returns/{id}', [SuppliersController::class,'getSupplierReturnSingle'])->name('suppliers.return-single');
-        Route::get('/returns/{id}/export', [SuppliersController::class,'getSupplierReturnSingleExport'])->name('suppliers.return-single-export');
-        Route::get('/returns/{id}/export/rma', [SuppliersController::class,'getSupplierReturnSingleExportRMA'])->name('suppliers.return-single-export-rma');
-        Route::post('/return-update', [SuppliersController::class,'postSupplierReturnUpdate'])->name('suppliers.return-update');
-        Route::post('/return-remove-item', [SuppliersController::class,'postSupplierReturnRemoveItem'])->name('suppliers.return-remove-item');
-        Route::post('/return-update-item', [SuppliersController::class,'postSupplierReturnUpdateItem'])->name('suppliers.return-update-item');
-        Route::post('/return-update-tracking-courier', [SuppliersController::class,'postSupplierReturnUpdateTrackingCourier'])->name('suppliers.return-update-tracking-courier');
-        Route::get('/{id}', [SuppliersController::class,'getSingle'])->name('suppliers.single');
-        Route::post('/update', [SuppliersController::class,'postUpdate'])->name('suppliers.update');
-        Route::get('/delete/{id}', [SuppliersController::class,'removeSupplier'])->name('suppliers.delete');
-        Route::post('/grade-mapping', [SuppliersController::class,'updateGradeMapping'])->name('suppliers.grade-mapping');
+        Route::get('/', [SuppliersController::class, 'getIndex'])->name('suppliers');
+        Route::post('/add', [SuppliersController::class, 'postAdd'])->name('suppliers.add');
+        Route::get('/returns', [SuppliersController::class, 'getSupplierReturns'])->name('suppliers.returns');
+        Route::get('/redirect', [SuppliersController::class, 'getRedirect'])->name('suppliers.redirect');
+        Route::get('/return-create', [SuppliersController::class, 'getSupplierReturnCreate'])->name('suppliers.return-create');
+        Route::get('/returns/{id}', [SuppliersController::class, 'getSupplierReturnSingle'])->name('suppliers.return-single');
+        Route::get('/returns/{id}/export', [SuppliersController::class, 'getSupplierReturnSingleExport'])->name('suppliers.return-single-export');
+        Route::get('/returns/{id}/export/rma', [SuppliersController::class, 'getSupplierReturnSingleExportRMA'])->name('suppliers.return-single-export-rma');
+        Route::post('/return-update', [SuppliersController::class, 'postSupplierReturnUpdate'])->name('suppliers.return-update');
+        Route::post('/return-remove-item', [SuppliersController::class, 'postSupplierReturnRemoveItem'])->name('suppliers.return-remove-item');
+        Route::post('/return-update-item', [SuppliersController::class, 'postSupplierReturnUpdateItem'])->name('suppliers.return-update-item');
+        Route::post('/return-update-tracking-courier', [SuppliersController::class, 'postSupplierReturnUpdateTrackingCourier'])->name('suppliers.return-update-tracking-courier');
+        Route::get('/{id}', [SuppliersController::class, 'getSingle'])->name('suppliers.single');
+        Route::post('/update', [SuppliersController::class, 'postUpdate'])->name('suppliers.update');
+        Route::get('/delete/{id}', [SuppliersController::class, 'removeSupplier'])->name('suppliers.delete');
+        Route::post('/grade-mapping', [SuppliersController::class, 'updateGradeMapping'])->name('suppliers.grade-mapping');
 
-        Route::post('/grade-mapping', [SuppliersController::class,'updateGradeMapping'])->name('suppliers.grade-mapping');
-        Route::post('/ps-model', [SuppliersController::class,'updatePSModelPercentage'])->name('suppliers.ps-percentage');
+        Route::post('/grade-mapping', [SuppliersController::class, 'updateGradeMapping'])->name('suppliers.grade-mapping');
+        Route::post('/ps-model', [SuppliersController::class, 'updatePSModelPercentage'])->name('suppliers.ps-percentage');
     });
 
     // Outbound - UserContact
 
     // Mobicode
     Route::group(['prefix' => 'mobicode', 'middleware' => ['admin']], function () {
-        Route::post('/check-gsx', [MobicodeController::class,'postGSXcheck'])->name('mobicode.gsx-check');
+        Route::post('/check-gsx', [MobicodeController::class, 'postGSXcheck'])->name('mobicode.gsx-check');
     });
 
     // Static pages
@@ -240,8 +245,8 @@ Route::group(['middleware' => ['auth']], function () {
 
     // Customers
     Route::group(['prefix' => 'customers', 'middleware' => ['admin']], function () {
-        Route::get('/get-details', [CustomersController::class,'getDetails'])->name('customers.details');
-        Route::post('/save', [CustomersController::class,'postSave'])->name('customers.save');
+        Route::get('/get-details', [CustomersController::class, 'getDetails'])->name('customers.details');
+        Route::post('/save', [CustomersController::class, 'postSave'])->name('customers.save');
     });
 
     // Administration
@@ -315,63 +320,63 @@ Route::group(['middleware' => ['auth']], function () {
         });
 
         Route::group(['prefix' => 'fees'], function () {
-            Route::get('/', ['uses' => 'EbayFeesController@index', 'as' => 'ebay-fee.index']);
-            Route::get('template', ['uses' => 'EbayFeesController@getTemplate', 'as' => 'ebay-fee.template']);
-            Route::post('import', ['uses' => 'EbayFeesController@postImport', 'as' => 'ebay-fee.import']);
-            Route::post('status-update', ['uses' => 'EbayOrderController@updateStatus', 'as' => 'status-update']);
-            Route::get('match-fee', ['uses' => 'EbayFeesController@updateEbayFeeUsername', 'as' => 'ebay-fee.update-username']);
-            Route::get('edit/{id}', ['uses' => 'EbayFeesController@edit', 'as' => 'ebay-fee.update-fees']);
-            Route::put('edit/{id}', ['uses' => 'EbayFeesController@edit', 'as' => 'ebay-fee.update-fees']);
-            Route::get('history', ['uses' => 'EbayFeesController@eBayFeesHistory', 'as' => 'ebay-fee.history']);
-            Route::get('export-unmatched', ['uses' => 'EbayFeesController@getUnmatchedExport', 'as' => 'ebay-fee.export-unmatched']);
-            Route::post('manual-fee-assignment', ['uses' => 'EbayFeesController@addInManualEbayFeeAssignment', 'as' => 'fee-manual-fee-assignment']);
+            Route::get('/', [EbayFeesController::class, 'index'])->name('ebay-fee.index');
+            Route::get('template', [EbayFeesController::class, 'getTemplate'])->name('ebay-fee.template');
+            Route::post('import', [EbayFeesController::class, 'postImport'])->name('ebay-fee.import');
+            Route::post('status-update', [EbayOrderController::class, 'updateStatus'])->name('status-update');
+            Route::get('match-fee', [EbayFeesController::class, 'updateEbayFeeUsername'])->name('ebay-fee.update-username');
+            Route::get('edit/{id}', [EbayFeesController::class, 'edit'])->name('ebay-fee.update-fees');
+            Route::put('edit/{id}', [EbayFeesController::class, 'edit'])->name('ebay-fee.update-fees');
+            Route::get('history', [EbayFeesController::class, 'eBayFeesHistory'])->name('ebay-fee.history');
+            Route::get('export-unmatched', [EbayFeesController::class, 'getUnmatchedExport'])->name('ebay-fee.export-unmatched');
+            Route::post('manual-fee-assignment', [EbayFeesController::class, 'addInManualEbayFeeAssignment'])->name('fee-manual-fee-assignment');
         });
 
         Route::group(['prefix' => 'users'], function () {
             Route::get('/', [UserController::class, 'getIndex'])->name('admin.users');
-            Route::get('/unregistered', [UserController::class,'getUnregistered'])->name('admin.users.unregistered');
+            Route::get('/unregistered', [UserController::class, 'getUnregistered'])->name('admin.users.unregistered');
 
-            Route::delete('/unregistered/delete', [UserController::class,'deleteUnregistered'])->name('admin.users.unregistered-delete');
-            Route::get('/new', [UserController::class,'getNewUserForm'])->name('admin.users.new-user');
-            Route::post('/new-create', [UserController::class,'postCreateNewUser'])->name('admin.users.new-user-create');
-            Route::post('/add/product', [UserController::class,'addQuickBooksProductService'])->name('admin.user.quick_books.product.add');
-            Route::post('/save', [UserController::class,'postSave'])->name('admin.users.save');
-            Route::post('/update-address', [UserController::class,'postUpdateAddress'])->name('admin.users.update-address');
-            Route::post('/update-billing-address', [UserController::class,'postUpdateBillingAddress'])->name('admin.users.update-billing-address');
-            Route::post('/login', [UserController::class,'postLogin'])->name('admin.users.login');
-            Route::get('/autocomplete', [UserController::class,'getAutocomplete'])->name('admin.users.autocomplete');
-            Route::get('/bulk-add-form', [UserController::class,'getBulkAdd'])->name('admin.users.bulk-add-form');
-            Route::post('/bulk-add', [UserController::class,'postBulkAdd'])->name('admin.users.bulk-add');
-            Route::get('/export', [UserController::class,'getExport', 'as' => 'admin.users.export'])->name('');
-            Route::post('/register', [UserController::class,'postRegisterUnregisteredForm'])->name('admin.users.register');
-            Route::post('/register/save', [UserController::class,'postRegisterUnregistered'])->name('admin.users.register-save');
-            Route::post('/suspend-user', [UserController::class,'postSuspendUser'])->name('admin.users.suspend-user');
-            Route::post('/update-notes', [UserController::class,'postUpdateNotes'])->name('admin.users.update-notes');
-            Route::post('/marketing-emails', [UserController::class,'postMarketingEmails'])->name('admin.users.marketing-emails');
-            Route::post('/create-quickbooks-customer', [UserController::class,'postCreateQuickbooksCustomer'])->name('admin.users.create-quickbooks-customer');
-            Route::get('/whats-app-users', [UserController::class,'getWhatsAppUsers'])->name('admin.users.whats-app-users');
-            Route::post('/whats-app-users-added', [UserController::class,'postWhatsAppUsersAdded'])->name('admin.users.whats-app-users-added');
-            Route::get('/customers-with-balance', [UserController::class,'getCustomersWithBalance'])->name('admin.users.customers-with-balance');
-            Route::post('/update-balance-due-date', [UserController::class,'postUpdateBalanceDueDate'])->name('admin.users.update-balance-due-date');
-            Route::post('/customers-with-balance-reminders', [UserController::class,'postCustomersWithBalanceReminders'])->name('admin.users.customers-with-balance-reminders');
-            Route::post('/customers-with-balance-hide', [UserController::class,'postCustomersWithBalanceHide'])->name('admin.users.customers-with-balance-hide');
-            Route::get('/recommercetech-users', [UserController::class,'getRecommercetechUsers'])->name('admin.users.recommercetech-users');
-            Route::post('/update-admin-type', [UserController::class,'postUpdateAdminType'])->name('admin.users.update-admin-type');
-            Route::post('/create-admin', [UserController::class,'postCreateAdmin'])->name('admin.users.create-admin');
-            Route::post('/delete-admin', [UserController::class,'postDeleteAdmin'])->name('admin.users.delete-admin');
-            Route::post('/update-station-id', [UserController::class,'postUpdateStationId'])->name('admin.users.update-station-id');
+            Route::delete('/unregistered/delete', [UserController::class, 'deleteUnregistered'])->name('admin.users.unregistered-delete');
+            Route::get('/new', [UserController::class, 'getNewUserForm'])->name('admin.users.new-user');
+            Route::post('/new-create', [UserController::class, 'postCreateNewUser'])->name('admin.users.new-user-create');
+            Route::post('/add/product', [UserController::class, 'addQuickBooksProductService'])->name('admin.user.quick_books.product.add');
+            Route::post('/save', [UserController::class, 'postSave'])->name('admin.users.save');
+            Route::post('/update-address', [UserController::class, 'postUpdateAddress'])->name('admin.users.update-address');
+            Route::post('/update-billing-address', [UserController::class, 'postUpdateBillingAddress'])->name('admin.users.update-billing-address');
+            Route::post('/login', [UserController::class, 'postLogin'])->name('admin.users.login');
+            Route::get('/autocomplete', [UserController::class, 'getAutocomplete'])->name('admin.users.autocomplete');
+            Route::get('/bulk-add-form', [UserController::class, 'getBulkAdd'])->name('admin.users.bulk-add-form');
+            Route::post('/bulk-add', [UserController::class, 'postBulkAdd'])->name('admin.users.bulk-add');
+            Route::get('/export', [UserController::class, 'getExport', 'as' => 'admin.users.export'])->name('');
+            Route::post('/register', [UserController::class, 'postRegisterUnregisteredForm'])->name('admin.users.register');
+            Route::post('/register/save', [UserController::class, 'postRegisterUnregistered'])->name('admin.users.register-save');
+            Route::post('/suspend-user', [UserController::class, 'postSuspendUser'])->name('admin.users.suspend-user');
+            Route::post('/update-notes', [UserController::class, 'postUpdateNotes'])->name('admin.users.update-notes');
+            Route::post('/marketing-emails', [UserController::class, 'postMarketingEmails'])->name('admin.users.marketing-emails');
+            Route::post('/create-quickbooks-customer', [UserController::class, 'postCreateQuickbooksCustomer'])->name('admin.users.create-quickbooks-customer');
+            Route::get('/whats-app-users', [UserController::class, 'getWhatsAppUsers'])->name('admin.users.whats-app-users');
+            Route::post('/whats-app-users-added', [UserController::class, 'postWhatsAppUsersAdded'])->name('admin.users.whats-app-users-added');
+            Route::get('/customers-with-balance', [UserController::class, 'getCustomersWithBalance'])->name('admin.users.customers-with-balance');
+            Route::post('/update-balance-due-date', [UserController::class, 'postUpdateBalanceDueDate'])->name('admin.users.update-balance-due-date');
+            Route::post('/customers-with-balance-reminders', [UserController::class, 'postCustomersWithBalanceReminders'])->name('admin.users.customers-with-balance-reminders');
+            Route::post('/customers-with-balance-hide', [UserController::class, 'postCustomersWithBalanceHide'])->name('admin.users.customers-with-balance-hide');
+            Route::get('/recommercetech-users', [UserController::class, 'getRecommercetechUsers'])->name('admin.users.recommercetech-users');
+            Route::post('/update-admin-type', [UserController::class, 'postUpdateAdminType'])->name('admin.users.update-admin-type');
+            Route::post('/create-admin', [UserController::class, 'postCreateAdmin'])->name('admin.users.create-admin');
+            Route::post('/delete-admin', [UserController::class, 'postDeleteAdmin'])->name('admin.users.delete-admin');
+            Route::post('/update-station-id', [UserController::class, 'postUpdateStationId'])->name('admin.users.update-station-id');
 
 
             Route::get('/{id}', [UserController::class, 'getSingle'])->name('admin.users.single');
-            Route::get('/lcd-user/{id}', [UserController::class,'getLCDUserSingle'])->name('admin.lcd-users.single');
-            Route::get('/{id}/emails', [UserController::class,'getUserEmails'])->name('admin.users.single.emails');
-            Route::post('/emails/preview', [UserController::class,'postUserEmailPreview'])->name('admin.users.emails.preview');
-            Route::post('/emails/send', [UserController::class,'postUserEmailSend'])->name('admin.users.emails.send');
-            Route::post('/api-generate-key', [UserController::class,'postApiGenerateKey'])->name('admin.users.api.generate-key');
-            Route::post('/send-email', [UserController::class,'sendEmail'])->name('admin.users.send-email');
-            Route::post('/delete', [UserController::class,'removeDeleted'])->name('admin.users.remove-user');
-            Route::post('/save/sub-admin', [UserController::class,'addSubAdmin'])->name('sub-admin.add');
-            Route::get('/delete/sub-admin/{id}', [UserController::class,'removeSubAdmin'])->name('sub-admin.remove');
+            Route::get('/lcd-user/{id}', [UserController::class, 'getLCDUserSingle'])->name('admin.lcd-users.single');
+            Route::get('/{id}/emails', [UserController::class, 'getUserEmails'])->name('admin.users.single.emails');
+            Route::post('/emails/preview', [UserController::class, 'postUserEmailPreview'])->name('admin.users.emails.preview');
+            Route::post('/emails/send', [UserController::class, 'postUserEmailSend'])->name('admin.users.emails.send');
+            Route::post('/api-generate-key', [UserController::class, 'postApiGenerateKey'])->name('admin.users.api.generate-key');
+            Route::post('/send-email', [UserController::class, 'sendEmail'])->name('admin.users.send-email');
+            Route::post('/delete', [UserController::class, 'removeDeleted'])->name('admin.users.remove-user');
+            Route::post('/save/sub-admin', [UserController::class, 'addSubAdmin'])->name('sub-admin.add');
+            Route::get('/delete/sub-admin/{id}', [UserController::class, 'removeSubAdmin'])->name('sub-admin.remove');
         });
 
 
@@ -410,7 +415,7 @@ Route::group(['middleware' => ['auth']], function () {
             Route::post('/ignore-sku/remove', [SettingsController::class, 'postIgnoreSkuRemove'])->name('admin.settings.ignore-sku-remove');
             Route::post('/change-ebay-shown-to-none', [SettingsController::class, 'postChangeEbayShownToNone'])->name('admin.settings.ebay-shown-to-none');
 
-            Route::get('/quickbooks/query', ['uses' => 'QuickbooksController@getQuery'])->name('admin.quickbooks.query');
+            Route::get('/quickbooks/query', [QuickbooksController::class,'getQuery'])->name('admin.quickbooks.query');
 
 
             Route::get('/update-stock', [SettingsController::class, 'updateStock'])->name('admin.settings.update-stock');
@@ -423,35 +428,35 @@ Route::group(['middleware' => ['auth']], function () {
             Route::post('/dpd-shipping/status', [SettingsController::class, 'dpdShippingStatus'])->name('admin.dpd-shipping.status');
         });
 
-        Route::get('/testing-results', [TestingResultController::class,'index'])->name('admin.testing-result');
+        Route::get('/testing-results', [TestingResultController::class, 'index'])->name('admin.testing-result');
 
     });
 
     // Batches
     Route::group(['prefix' => 'batches', 'middleware' => ['admin']], function () {
-        Route::get('/', [BatchesController::class,'getIndex'])->name('batches');
-        Route::get('/{id}', [BatchesController::class,'getSingle'])->where('id', '[0-9]+')->name('batches.single');
-        Route::post('/delete', [BatchesController::class,'postDelete'])->name('batches.delete');
-        Route::post('/update', [BatchesController::class,'postUpdate'])->name('batches.update');
-        Route::get('/{id}/deal-sheet', [BatchesController::class,'getDealSheet'])->name('batches.deal-sheet');
-        Route::get('/{id}/overview', [BatchesController::class,'getOverview'])->name('batches.overview');
-        Route::get('/{id}/summary', [BatchesController::class,'getSingleSummary'])->name('batches.single-summary');
-        Route::get('/{id}/summary-export', [BatchesController::class,'getSingleSummaryExport'])->name('batches.single-summary-export');
-        Route::get('/{id}/export/{option}/{email?}', [BatchesController::class,'getExport'])->name('batches.export');
-        Route::get('/new/custom', [BatchesController::class,'getNewCustom'])->name('batches.new-custom');
-        Route::post('/new/custom-submit', [BatchesController::class,'postNewCustomSubmit'])->name('batches.new-custom-submit');
-        Route::get('/summary', [BatchesController::class,'getSummary'])->name('batches.summary');
-        Route::post('/clear-notes', [BatchesController::class,'postClearNotes'])->name('batches.clear-notes');
-        Route::post('/update-notes', [BatchesController::class,'postUpdateNotes'])->name('batches.update-notes');
-        Route::post('/deal-sheet-submit', [BatchesController::class,'postDealSheetSubmit'])->name('batches.deal-sheet-submit');
-        Route::post('/deal-sheet-notify-best-price', [BatchesController::class,'postDealSheetNotifyBestPrice'])->name('batches.deal-sheet-notify-best-price');
-        Route::post('/deal-sheet-delete-offer', [BatchesController::class,'postDealSheetDeleteOffer'])->name('batches.deal-sheet-delete-offer');
-        Route::post('/deal-sheet-mark-as-seen', [BatchesController::class,'postDealSheetMarkAsSeen'])->name('batches.deal-sheet-mark-as-seen');
-        Route::post('/deal-sheet-mark-all-as-seen', [BatchesController::class,'postDealSheetMarkAllAsSeen'])->name('batches.deal-sheet-mark-all-as-seen');
-        Route::post('/send', [BatchesController::class,'postSend'])->name('batches.send');
-        Route::post('/send-to-user', [BatchesController::class,'postSendToUser'])->name('batches.send-to-user');
-        Route::post('/merge', [BatchesController::class,'postMerge'])->name('batches.merge');
-        Route::post('/send-batches', [BatchesController::class,'postSendBatches'])->name('batches.send-batches');
+        Route::get('/', [BatchesController::class, 'getIndex'])->name('batches');
+        Route::get('/{id}', [BatchesController::class, 'getSingle'])->where('id', '[0-9]+')->name('batches.single');
+        Route::post('/delete', [BatchesController::class, 'postDelete'])->name('batches.delete');
+        Route::post('/update', [BatchesController::class, 'postUpdate'])->name('batches.update');
+        Route::get('/{id}/deal-sheet', [BatchesController::class, 'getDealSheet'])->name('batches.deal-sheet');
+        Route::get('/{id}/overview', [BatchesController::class, 'getOverview'])->name('batches.overview');
+        Route::get('/{id}/summary', [BatchesController::class, 'getSingleSummary'])->name('batches.single-summary');
+        Route::get('/{id}/summary-export', [BatchesController::class, 'getSingleSummaryExport'])->name('batches.single-summary-export');
+        Route::get('/{id}/export/{option}/{email?}', [BatchesController::class, 'getExport'])->name('batches.export');
+        Route::get('/new/custom', [BatchesController::class, 'getNewCustom'])->name('batches.new-custom');
+        Route::post('/new/custom-submit', [BatchesController::class, 'postNewCustomSubmit'])->name('batches.new-custom-submit');
+        Route::get('/summary', [BatchesController::class, 'getSummary'])->name('batches.summary');
+        Route::post('/clear-notes', [BatchesController::class, 'postClearNotes'])->name('batches.clear-notes');
+        Route::post('/update-notes', [BatchesController::class, 'postUpdateNotes'])->name('batches.update-notes');
+        Route::post('/deal-sheet-submit', [BatchesController::class, 'postDealSheetSubmit'])->name('batches.deal-sheet-submit');
+        Route::post('/deal-sheet-notify-best-price', [BatchesController::class, 'postDealSheetNotifyBestPrice'])->name('batches.deal-sheet-notify-best-price');
+        Route::post('/deal-sheet-delete-offer', [BatchesController::class, 'postDealSheetDeleteOffer'])->name('batches.deal-sheet-delete-offer');
+        Route::post('/deal-sheet-mark-as-seen', [BatchesController::class, 'postDealSheetMarkAsSeen'])->name('batches.deal-sheet-mark-as-seen');
+        Route::post('/deal-sheet-mark-all-as-seen', [BatchesController::class, 'postDealSheetMarkAllAsSeen'])->name('batches.deal-sheet-mark-all-as-seen');
+        Route::post('/send', [BatchesController::class, 'postSend'])->name('batches.send');
+        Route::post('/send-to-user', [BatchesController::class, 'postSendToUser'])->name('batches.send-to-user');
+        Route::post('/merge', [BatchesController::class, 'postMerge'])->name('batches.merge');
+        Route::post('/send-batches', [BatchesController::class, 'postSendBatches'])->name('batches.send-batches');
     });
 
     // Stock
@@ -570,102 +575,102 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['prefix' => 'sales'], function () {
         Route::group(['middleware' => ['admin']], function () {
 
-            Route::get('/accessories', [SalesController::class,'getSalesAccessories'])->name('sales.accessories');
-            Route::get('accessories/{id}', [SalesController::class,'getSalesAccessoriesSingle'])->name('sales.accessories.single');
-            Route::post('/accessories/update', [SalesController::class,'postSalesAccessoriesUpdate'])->name('sales.accessories.update');
-            Route::post('/accessories/create', [SalesController::class,'postSalesAccessoriesCreate'])->name('sales.accessories.create');
-            Route::match(['get', 'post'], '/create', [SalesController::class,'getCreate'])->name('sales.new');
-            Route::post('/change-status', [SalesController::class,'postChangeStatus'])->name('sales.change-status');
-            Route::post('/single-change-status', [SalesController::class,'postSingleChangeStatus'])->name('sales.single-change-status');
-            Route::post('/single-tracking-number', [SalesController::class,'postSingleTrackingNumber'])->name('sales.single-tracking-number');
-            Route::post('/checkPaid', [SalesController::class,'postCheckPaid'])->name('sales.check-paid');
-            Route::post('/delete', [SalesController::class,'postDelete'])->name('sales.delete');
-            Route::post('/tracking-number', [SalesController::class,'postTrackingNumber'])->name('sales.tracking-number');
-            Route::get('/modify-order', [SalesController::class,'getModify'])->name('sales.modify');
-            Route::post('/swap-item', [SalesController::class,'postSwapItem'])->name('sales.swap-item');
-            Route::post('/remove-item', [SalesController::class,'postRemoveItem'])->name('sales.remove-item');
-            Route::post('/summary-auction-batch', [SalesController::class,'postSummaryAuctionBatch'])->name('sales.summary-auction-batch');
-            Route::get('/summary-other', [SalesController::class,'getSummaryOther'])->name('sales.summary-other');
-            Route::any('/save-other', [SalesController::class,'postSaveOther'])->name('sales.save-other');
-            Route::post('/other-change-recycler', [SalesController::class,'postOtherChangeRecycler'])->name('sales.other-change-recycler');
-            Route::post('/other-remove-item', [SalesController::class,'postOtherRemoveItem'])->name('sales.other-remove-item');
-            Route::post('/other-change-price', [SalesController::class,'postOtherChangePrice'])->name('sales.other-change-price');
-            Route::post('/send-order-imeis', [SalesController::class,'postSendOrderImeis'])->name('sales.send-order-imeis');
-            Route::get('/print-receipt', [SalesController::class,'getPrintReceipt'])->name('sales.print-receipt');
-            Route::get('/{id}/export', [SalesController::class,'getExport'])->name('sales.export');
-            Route::get('/custom-order', [SalesController::class,'getCustomOrder'])->name('sales.custom-order');
-            Route::post('/custom-order-create', [SalesController::class,'postCustomOrderCreate'])->name('sales.custom-order-create');
-            Route::post('/re-create-invoice', [SalesController::class,'postReCreateInvoice'])->name('sales.re-create-invoice');
-            Route::post('/remove-item-from-sale', [SalesController::class,'postRemoveItemFromSale'])->name('sales.remove-item-from-sale');
-            Route::post('/change-item-sale-price', [SalesController::class,'postChangeItemSalePrice'])->name('sales.change-item-sale-price');
-            Route::post('/change-multiple-item-sale-price', [SalesController::class,'postMultipleChangeItemSalePrice'])->name('sales.change-multiple-item-sale-price');
-            Route::post('/check-all-networks', [SalesController::class,'postCheckAllNetworks'])->name('sales.check-all-networks');
-            Route::post('/update-tracking', [SalesController::class,'postUpdateTracking'])->name('sales.update-tracking');
-            Route::post('/bulk-update-sale-price', [SalesController::class,'postBulkUpdateSalePrice'])->name('sales.bulk-update-sale-price');
-            Route::post('/update-price', [SalesController::class,'updatePrice'])->name('sales.update-price');
-            Route::post('/shipping_cost', [SalesController::class,'updateShippingCost'])->name('sales.shipping_cost');
-            Route::get('/dashboard', [SalesController::class,'getDashboard'])->name('sales.dashboard');
+            Route::get('/accessories', [SalesController::class, 'getSalesAccessories'])->name('sales.accessories');
+            Route::get('accessories/{id}', [SalesController::class, 'getSalesAccessoriesSingle'])->name('sales.accessories.single');
+            Route::post('/accessories/update', [SalesController::class, 'postSalesAccessoriesUpdate'])->name('sales.accessories.update');
+            Route::post('/accessories/create', [SalesController::class, 'postSalesAccessoriesCreate'])->name('sales.accessories.create');
+            Route::match(['get', 'post'], '/create', [SalesController::class, 'getCreate'])->name('sales.new');
+            Route::post('/change-status', [SalesController::class, 'postChangeStatus'])->name('sales.change-status');
+            Route::post('/single-change-status', [SalesController::class, 'postSingleChangeStatus'])->name('sales.single-change-status');
+            Route::post('/single-tracking-number', [SalesController::class, 'postSingleTrackingNumber'])->name('sales.single-tracking-number');
+            Route::post('/checkPaid', [SalesController::class, 'postCheckPaid'])->name('sales.check-paid');
+            Route::post('/delete', [SalesController::class, 'postDelete'])->name('sales.delete');
+            Route::post('/tracking-number', [SalesController::class, 'postTrackingNumber'])->name('sales.tracking-number');
+            Route::get('/modify-order', [SalesController::class, 'getModify'])->name('sales.modify');
+            Route::post('/swap-item', [SalesController::class, 'postSwapItem'])->name('sales.swap-item');
+            Route::post('/remove-item', [SalesController::class, 'postRemoveItem'])->name('sales.remove-item');
+            Route::post('/summary-auction-batch', [SalesController::class, 'postSummaryAuctionBatch'])->name('sales.summary-auction-batch');
+            Route::get('/summary-other', [SalesController::class, 'getSummaryOther'])->name('sales.summary-other');
+            Route::any('/save-other', [SalesController::class, 'postSaveOther'])->name('sales.save-other');
+            Route::post('/other-change-recycler', [SalesController::class, 'postOtherChangeRecycler'])->name('sales.other-change-recycler');
+            Route::post('/other-remove-item', [SalesController::class, 'postOtherRemoveItem'])->name('sales.other-remove-item');
+            Route::post('/other-change-price', [SalesController::class, 'postOtherChangePrice'])->name('sales.other-change-price');
+            Route::post('/send-order-imeis', [SalesController::class, 'postSendOrderImeis'])->name('sales.send-order-imeis');
+            Route::get('/print-receipt', [SalesController::class, 'getPrintReceipt'])->name('sales.print-receipt');
+            Route::get('/{id}/export', [SalesController::class, 'getExport'])->name('sales.export');
+            Route::get('/custom-order', [SalesController::class, 'getCustomOrder'])->name('sales.custom-order');
+            Route::post('/custom-order-create', [SalesController::class, 'postCustomOrderCreate'])->name('sales.custom-order-create');
+            Route::post('/re-create-invoice', [SalesController::class, 'postReCreateInvoice'])->name('sales.re-create-invoice');
+            Route::post('/remove-item-from-sale', [SalesController::class, 'postRemoveItemFromSale'])->name('sales.remove-item-from-sale');
+            Route::post('/change-item-sale-price', [SalesController::class, 'postChangeItemSalePrice'])->name('sales.change-item-sale-price');
+            Route::post('/change-multiple-item-sale-price', [SalesController::class, 'postMultipleChangeItemSalePrice'])->name('sales.change-multiple-item-sale-price');
+            Route::post('/check-all-networks', [SalesController::class, 'postCheckAllNetworks'])->name('sales.check-all-networks');
+            Route::post('/update-tracking', [SalesController::class, 'postUpdateTracking'])->name('sales.update-tracking');
+            Route::post('/bulk-update-sale-price', [SalesController::class, 'postBulkUpdateSalePrice'])->name('sales.bulk-update-sale-price');
+            Route::post('/update-price', [SalesController::class, 'updatePrice'])->name('sales.update-price');
+            Route::post('/shipping_cost', [SalesController::class, 'updateShippingCost'])->name('sales.shipping_cost');
+            Route::get('/dashboard', [SalesController::class, 'getDashboard'])->name('sales.dashboard');
 
-            Route::get('/customer_return', [CustomerReturnsController::class,'getIndex'])->name('sales.customer_return');
-            Route::get('/customer_return/create', [CustomerReturnsController::class,'create'])->name('sales.customer_return.create');
-            Route::post('/customer_return/save', [CustomerReturnsController::class,'postSave'])->name('sales.customer_return.save');
-            Route::get('/customer_return/{id}', [CustomerReturnsController::class,'getCustomerReturn'])->name('sales.customer_return.single');
+            Route::get('/customer_return', [CustomerReturnsController::class, 'getIndex'])->name('sales.customer_return');
+            Route::get('/customer_return/create', [CustomerReturnsController::class, 'create'])->name('sales.customer_return.create');
+            Route::post('/customer_return/save', [CustomerReturnsController::class, 'postSave'])->name('sales.customer_return.save');
+            Route::get('/customer_return/{id}', [CustomerReturnsController::class, 'getCustomerReturn'])->name('sales.customer_return.single');
 
-            Route::post('/export/csv', [SalesController::class,'exportCsv'])->name('sales.export.filter');
+            Route::post('/export/csv', [SalesController::class, 'exportCsv'])->name('sales.export.filter');
         });
 
-        Route::get('/', [SalesController::class,'getIndex'])->name('sales');
-        Route::get('/set-items', [SalesController::class,'getRedirect'])->name('sales.redirect');
+        Route::get('/', [SalesController::class, 'getIndex'])->name('sales');
+        Route::get('/set-items', [SalesController::class, 'getRedirect'])->name('sales.redirect');
 
         Route::group(['middleware' => ['suspended']], function () {
-            Route::match(['get', 'post'], '/summary', [SalesController::class,'getSummary'])->name('sales.summary');
-            Route::post('/summary-batch', [SalesController::class,'postSummaryBatch'])->name('sales.summary-batch');
-            Route::post('/save-batch', [SalesController::class,'postSaveBatch'])->name('sales.save-batch');
-            Route::post('/save', [SalesController::class,'postSave'])->name('sales.save');
+            Route::match(['get', 'post'], '/summary', [SalesController::class, 'getSummary'])->name('sales.summary');
+            Route::post('/summary-batch', [SalesController::class, 'postSummaryBatch'])->name('sales.summary-batch');
+            Route::post('/save-batch', [SalesController::class, 'postSaveBatch'])->name('sales.save-batch');
+            Route::post('/save', [SalesController::class, 'postSave'])->name('sales.save');
         });
 
-        Route::post('/select-payment-method', [SalesController::class,'postSelectPaymentMethod'])->name('sales.select-payment-method');
-        Route::get('/pay', [SalesController::class,'getPay'])->name('sales.pay');
-        Route::post('/pay', [SalesController::class,'postPay'])->name('sales.pay-submit');
-        Route::post('/payment-complete', [SalesController::class,'postPaymentComplete'])->name('sales.payment-complete');
-        Route::post('/cancel', [SalesController::class,'postCancel'])->name('sales.cancel');
-        Route::get('/status-check', [SalesController::class,'getStatusCheck'])->name('sales.status-check');
-        Route::get('/{id}/invoice', [SalesController::class,'getInvoice'])->name('sales.invoice');
-        Route::get('/{id}', [SalesController::class,'getSingle'])->name('sales.single');
+        Route::post('/select-payment-method', [SalesController::class, 'postSelectPaymentMethod'])->name('sales.select-payment-method');
+        Route::get('/pay', [SalesController::class, 'getPay'])->name('sales.pay');
+        Route::post('/pay', [SalesController::class, 'postPay'])->name('sales.pay-submit');
+        Route::post('/payment-complete', [SalesController::class, 'postPaymentComplete'])->name('sales.payment-complete');
+        Route::post('/cancel', [SalesController::class, 'postCancel'])->name('sales.cancel');
+        Route::get('/status-check', [SalesController::class, 'getStatusCheck'])->name('sales.status-check');
+        Route::get('/{id}/invoice', [SalesController::class, 'getInvoice'])->name('sales.invoice');
+        Route::get('/{id}', [SalesController::class, 'getSingle'])->name('sales.single');
 
-        Route::get('/delivery-note/{id}', [SalesController::class,'deliveryNoteDownload'])->name('sales.delivery-note');
+        Route::get('/delivery-note/{id}', [SalesController::class, 'deliveryNoteDownload'])->name('sales.delivery-note');
 
 
     });
 
     // Basket
     Route::group(['prefix' => 'basket'], function () {
-        Route::get('/', [BasketController::class,'getIndex'])->name('basket');
-        Route::post('/toggle', [BasketController::class,'postToggle'])->name('basket.toggle');
-        Route::post('/delete', [BasketController::class,'postDelete'])->name('basket.delete');
-        Route::get('/delete-item', [BasketController::class,'getDeleteItem'])->name('basket.delete-item');
-        Route::post('/empty', [BasketController::class,'postEmpty'])->name('basket.empty');
-        Route::get('/get-html', [BasketController::class,'getHtml'])->name('basket.get-html');
+        Route::get('/', [BasketController::class, 'getIndex'])->name('basket');
+        Route::post('/toggle', [BasketController::class, 'postToggle'])->name('basket.toggle');
+        Route::post('/delete', [BasketController::class, 'postDelete'])->name('basket.delete');
+        Route::get('/delete-item', [BasketController::class, 'getDeleteItem'])->name('basket.delete-item');
+        Route::post('/empty', [BasketController::class, 'postEmpty'])->name('basket.empty');
+        Route::get('/get-html', [BasketController::class, 'getHtml'])->name('basket.get-html');
     });
 
     // Account
     Route::group(['prefix' => 'my-account'], function () {
-        Route::get('/', [AccountController::class,'getIndex'])->name('account');
-        Route::post('/', [AccountController::class,'postIndex'])->name('account.save');
-        Route::get('/settings', [AccountController::class,'getSettings'])->name('account.settings');
-        Route::post('/settings', [AccountController::class,'postSettings'])->name('account.settings.save');
-        Route::get('/balance', [AccountController::class,'getBalance'])->name('account.balance');
-        Route::get('/api', [AccountController::class,'getApi'])->name('account.api');
-        Route::post('/api-generate-key', [AccountController::class,'postApiGenerateKey'])->name('account.api.generate-key');
-        Route::post('/change-password', [AccountController::class,'postChangePassword'])->name('account.change-password');
+        Route::get('/', [AccountController::class, 'getIndex'])->name('account');
+        Route::post('/', [AccountController::class, 'postIndex'])->name('account.save');
+        Route::get('/settings', [AccountController::class, 'getSettings'])->name('account.settings');
+        Route::post('/settings', [AccountController::class, 'postSettings'])->name('account.settings.save');
+        Route::get('/balance', [AccountController::class, 'getBalance'])->name('account.balance');
+        Route::get('/api', [AccountController::class, 'getApi'])->name('account.api');
+        Route::post('/api-generate-key', [AccountController::class, 'postApiGenerateKey'])->name('account.api.generate-key');
+        Route::post('/change-password', [AccountController::class, 'postChangePassword'])->name('account.change-password');
     });
 
     // Unlocks Cost
     Route::group(['prefix' => 'unlocks-cost', 'middleware' => ['admin']], function () {
-        Route::get('/', [UnlocksCostController::class,'getIndex'])->name('unlocks-cost');
-        Route::post('/add', [UnlocksCostController::class,'postAdd'])->name('unlocks-cost.add');
-        Route::post('/update', [UnlocksCostController::class,'postUpdate'])->name('unlocks-cost.update');
-        Route::post('/delete', [UnlocksCostController::class,'postDelete'])->name('unlocks-cost.delete');
+        Route::get('/', [UnlocksCostController::class, 'getIndex'])->name('unlocks-cost');
+        Route::post('/add', [UnlocksCostController::class, 'postAdd'])->name('unlocks-cost.add');
+        Route::post('/update', [UnlocksCostController::class, 'postUpdate'])->name('unlocks-cost.update');
+        Route::post('/delete', [UnlocksCostController::class, 'postDelete'])->name('unlocks-cost.delete');
     });
 
     // Unlocks
@@ -704,29 +709,29 @@ Route::group(['middleware' => ['auth']], function () {
 
     // Sage
     Route::group(['prefix' => 'sage'], function () {
-        Route::get('/complete/{type}', ['uses' => 'SageController@getComplete', 'as' => 'sage.complete']);
+        Route::get('/complete/{type}', [SageController::class,'getComplete'])->name('sage.complete');
     });
 
     // Emails
     Route::group(['prefix' => 'emails', 'middleware' => ['admin', 'not_staff']], function () {
-        Route::get('/', [EmailSenderController::class,'getIndex', 'as' => ''])->name('emails');
-        Route::get('/create-form/{draft?}', [EmailSenderController::class,'getCreate', 'as' => ''])->name('emails.create-form');
-        Route::post('/save', [EmailSenderController::class,'postSave'])->name('emails.save');
-        Route::post('/preview', [EmailSenderController::class,'postPreview'])->name('emails.preview');
-        Route::get('/single/{id}', [EmailSenderController::class,'getSingle'])->name('emails.single');
-        Route::get('/single/{id}/delivery-summary', [EmailSenderController::class,'getSingleDeliverySummary'])->name('emails.single-delivery-summary');
-        Route::get('/check-statuses', [EmailSenderController::class,'getStatuses'])->name('emails.check-statuses');
-        Route::post('/test-send', [EmailSenderController::class,'postTestSend'])->name('emails.test-send');
-        Route::post('/save-draft', [EmailSenderController::class,'postSaveDraft'])->name('emails.save-draft');
-        Route::get('/drafts', [EmailSenderController::class,'getDraftsIndex'])->name('emails.drafts');
-        Route::delete('/delete-draft', [EmailSenderController::class,'deleteDraft'])->name('emails.delete-draft');
+        Route::get('/', [EmailSenderController::class, 'getIndex', 'as' => ''])->name('emails');
+        Route::get('/create-form/{draft?}', [EmailSenderController::class, 'getCreate', 'as' => ''])->name('emails.create-form');
+        Route::post('/save', [EmailSenderController::class, 'postSave'])->name('emails.save');
+        Route::post('/preview', [EmailSenderController::class, 'postPreview'])->name('emails.preview');
+        Route::get('/single/{id}', [EmailSenderController::class, 'getSingle'])->name('emails.single');
+        Route::get('/single/{id}/delivery-summary', [EmailSenderController::class, 'getSingleDeliverySummary'])->name('emails.single-delivery-summary');
+        Route::get('/check-statuses', [EmailSenderController::class, 'getStatuses'])->name('emails.check-statuses');
+        Route::post('/test-send', [EmailSenderController::class, 'postTestSend'])->name('emails.test-send');
+        Route::post('/save-draft', [EmailSenderController::class, 'postSaveDraft'])->name('emails.save-draft');
+        Route::get('/drafts', [EmailSenderController::class, 'getDraftsIndex'])->name('emails.drafts');
+        Route::delete('/delete-draft', [EmailSenderController::class, 'deleteDraft'])->name('emails.delete-draft');
     });
 
 
     Route::group(['prefix' => 'engineer', 'middleware' => ['admin', 'not_staff']], function () {
-        Route::get('/', [RepairEngineerController::class,'getIndex'])->name('engineer.index');
-        Route::post('/save', [RepairEngineerController::class,'postSave'])->name('engineer.save');
-        Route::post('/data', [RepairEngineerController::class,'getEngineer'])->name('engineer.data');
+        Route::get('/', [RepairEngineerController::class, 'getIndex'])->name('engineer.index');
+        Route::post('/save', [RepairEngineerController::class, 'postSave'])->name('engineer.save');
+        Route::post('/data', [RepairEngineerController::class, 'getEngineer'])->name('engineer.data');
 
 
     });
@@ -735,13 +740,13 @@ Route::group(['middleware' => ['auth']], function () {
     //Category
 
     Route::group(['prefix' => 'category', 'middleware' => ['admin', 'not_staff']], function () {
-        Route::get('/', [CategoryController::class,'index'])->name('category.index');
-        Route::get('/delete/{id}', [CategoryController::class,'removeCategory'])->name('category.delete');
-        Route::get('/{id}', [CategoryController::class,'update'])->name('category.update');
-        Route::get('/create', [CategoryController::class,'create'])->name('category.create');
-        Route::post('/create/save', [CategoryController::class,'postSave'])->name('category.save');
-        Route::get('cron-job/assigned', [CategoryController::class,'eBayCategoryIdAssignedCronJob'])->name('cron-job.assigned');
-        Route::post('update-validation', [CategoryController::class,'updateValidation'])->name('update.validation');
+        Route::get('/', [CategoryController::class, 'index'])->name('category.index');
+        Route::get('/delete/{id}', [CategoryController::class, 'removeCategory'])->name('category.delete');
+        Route::get('/{id}', [CategoryController::class, 'update'])->name('category.update');
+        Route::get('/create', [CategoryController::class, 'create'])->name('category.create');
+        Route::post('/create/save', [CategoryController::class, 'postSave'])->name('category.save');
+        Route::get('cron-job/assigned', [CategoryController::class, 'eBayCategoryIdAssignedCronJob'])->name('cron-job.assigned');
+        Route::post('update-validation', [CategoryController::class, 'updateValidation'])->name('update.validation');
 
 
     });
@@ -749,77 +754,77 @@ Route::group(['middleware' => ['auth']], function () {
     //Colour
 
     Route::group(['prefix' => 'colour', 'middleware' => ['admin', 'not_staff']], function () {
-        Route::get('/', [ColourController::class,'index'])->name('colour.index');
-        Route::get('/{id}', [ColourController::class,'update'])->name('colour.update');
-        Route::get('/create', [ColourController::class,'create'])->name('colour.create');
-        Route::post('/create/save', [ColourController::class,'postSave'])->name('colour.save');
+        Route::get('/', [ColourController::class, 'index'])->name('colour.index');
+        Route::get('/{id}', [ColourController::class, 'update'])->name('colour.update');
+        Route::get('/create', [ColourController::class, 'create'])->name('colour.create');
+        Route::post('/create/save', [ColourController::class, 'postSave'])->name('colour.save');
     });
     Route::group(['prefix' => 'ebay-seller', 'middleware' => ['admin', 'not_staff']], function () {
-        Route::get('/', [EbaySellerController::class,'index'])->name('ebay-seller.index');
-        Route::get('/delete/{id}', [EbaySellerController::class,'delete'])->name('ebay-seller.delete');
-        Route::get('/{id}', [EbaySellerController::class,'update'])->name('ebay-seller.update');
-        Route::get('/create', [EbaySellerController::class,'create'])->name('ebay-seller.create');
-        Route::post('/create/save', [EbaySellerController::class,'postSave'])->name('ebay-seller.save');
+        Route::get('/', [EbaySellerController::class, 'index'])->name('ebay-seller.index');
+        Route::get('/delete/{id}', [EbaySellerController::class, 'delete'])->name('ebay-seller.delete');
+        Route::get('/{id}', [EbaySellerController::class, 'update'])->name('ebay-seller.update');
+        Route::get('/create', [EbaySellerController::class, 'create'])->name('ebay-seller.create');
+        Route::post('/create/save', [EbaySellerController::class, 'postSave'])->name('ebay-seller.save');
 //    Route::get('cron-job/assigned',['uses'=>'CategoryController@eBayCategoryIdAssignedCronJob','as'=>'cron-job.assigned']);
     });
 
 // Average Price
 
     Route::group(['prefix' => 'average-price', 'middleware' => ['admin', 'not_staff']], function () {
-        Route::get('/ebay', [AveragePriceController::class,'getEbayIndex'])->name('average_price.ebay');
-        Route::get('/back-market', [AveragePriceController::class,'getBackMarketIndex'])->name('average_price.back_market');
-        Route::get('remove-data', [AveragePriceController::class,'removeAllDataFromTable'])->name('ebay.remove-all');
-        Route::get('/ebay/{id}', [AveragePriceController::class,'getSoldItem'])->name('average_price.ebay.single');
-        Route::get('/back-market', [AveragePriceBackMarket::class,'ontroller@index'])->name('average_price.back-market.single');
-        Route::get('/remove-tablet', [AveragePriceController::class,'removeTabletAndComputer'])->name('average_price.remove-tablet');
-        Route::get('/remove-back-market', [AveragePriceBackMarket::class,'ontroller@removeAllDataFromTable'])->name('average_price.back-market.remove-tablet');
-        Route::post('/advanced-search', [AveragePriceController::class,'advancedSearch'])->name('advance.search');
+        Route::get('/ebay', [AveragePriceController::class, 'getEbayIndex'])->name('average_price.ebay');
+        Route::get('/back-market', [AveragePriceController::class, 'getBackMarketIndex'])->name('average_price.back_market');
+        Route::get('remove-data', [AveragePriceController::class, 'removeAllDataFromTable'])->name('ebay.remove-all');
+        Route::get('/ebay/{id}', [AveragePriceController::class, 'getSoldItem'])->name('average_price.ebay.single');
+        Route::get('/back-market', [AveragePriceBackMarket::class, 'ontroller@index'])->name('average_price.back-market.single');
+        Route::get('/remove-tablet', [AveragePriceController::class, 'removeTabletAndComputer'])->name('average_price.remove-tablet');
+        Route::get('/remove-back-market', [AveragePriceBackMarket::class, 'ontroller@removeAllDataFromTable'])->name('average_price.back-market.remove-tablet');
+        Route::post('/advanced-search', [AveragePriceController::class, 'advancedSearch'])->name('advance.search');
 
-        Route::get('/master', [MasterAverageController::class,'index'])->name('average_price.master');
+        Route::get('/master', [MasterAverageController::class, 'index'])->name('average_price.master');
 
-        Route::post('/master/edit-diff-percentage', [MasterAverageController::class,'editDiffPercentage'])->name('average_price.master.edit');
+        Route::post('/master/edit-diff-percentage', [MasterAverageController::class, 'editDiffPercentage'])->name('average_price.master.edit');
 
-        Route::post('/search-product-info', [AveragePriceController::class,'searchProductInfo'])->name('average_price.search-info');
+        Route::post('/search-product-info', [AveragePriceController::class, 'searchProductInfo'])->name('average_price.search-info');
 
-        Route::get('/master/remove-data', [MasterAverageController::class,'removeMasterData'])->name('average_price.master.remove');
+        Route::get('/master/remove-data', [MasterAverageController::class, 'removeMasterData'])->name('average_price.master.remove');
 
-        Route::get('/master/back-market/raw-data', [AveragePriceBackMarketController::class,'getRawData'])->name('average_price.back_market.raw-data');
+        Route::get('/master/back-market/raw-data', [AveragePriceBackMarketController::class, 'getRawData'])->name('average_price.back_market.raw-data');
     });
 
 
     //Seller Fees
 
     Route::group(['prefix' => 'seller_fees', 'middleware' => ['admin', 'not_staff']], function () {
-        Route::get('/', [SellerFeesController::class,'getIndex'])->name('seller_fees.index');
-        Route::get('/create', [SellerFeesController::class,'getCreate'])->name('seller_fees.create');
-        Route::post('/save', [SellerFeesController::class,'postSave'])->name('seller_fees.save');
-        Route::get('/{id}', [SellerFeesController::class,'getSellerFees'])->name('seller_fees.single');
+        Route::get('/', [SellerFeesController::class, 'getIndex'])->name('seller_fees.index');
+        Route::get('/create', [SellerFeesController::class, 'getCreate'])->name('seller_fees.create');
+        Route::post('/save', [SellerFeesController::class, 'postSave'])->name('seller_fees.save');
+        Route::get('/{id}', [SellerFeesController::class, 'getSellerFees'])->name('seller_fees.single');
 
     });
 
-    Route::get('/customer-return', [CustomerReturnController::class,'index'])->name('customer.return.index');
-    Route::get('/customer-return/create', [CustomerReturnController::class,'create'])->name('customer.return.create');
-    Route::get('/customer-return/items/{id}', [CustomerReturnController::class,'getCustomerReturnItem'])->name('customer.return.single');
-    Route::get('/customer-return/change-status/{id}', [CustomerReturnController::class,'changeStockStatus'])->name('customer.return.change-status');
-    Route::get('/customer-return/view/{id}', [CustomerReturnController::class,'customerReturnSingle'])->name('customer.return.view');
-    Route::get('/customer-return/data/sold', [CustomerReturnController::class,'getSoldDate'])->name('customer.return.data');
-    Route::post('/customer-return/update', [CustomerReturnController::class,'customerReturnUpdate'])->name('customer.return.update');
-    Route::post('/create/customer-return/save', [CustomerReturnController::class,'customerReturnCreate'])->name('customer.return.save');
-    Route::get('/export/customer-return', [CustomerReturnController::class,'exportCsv'])->name('customer.export');
+    Route::get('/customer-return', [CustomerReturnController::class, 'index'])->name('customer.return.index');
+    Route::get('/customer-return/create', [CustomerReturnController::class, 'create'])->name('customer.return.create');
+    Route::get('/customer-return/items/{id}', [CustomerReturnController::class, 'getCustomerReturnItem'])->name('customer.return.single');
+    Route::get('/customer-return/change-status/{id}', [CustomerReturnController::class, 'changeStockStatus'])->name('customer.return.change-status');
+    Route::get('/customer-return/view/{id}', [CustomerReturnController::class, 'customerReturnSingle'])->name('customer.return.view');
+    Route::get('/customer-return/data/sold', [CustomerReturnController::class, 'getSoldDate'])->name('customer.return.data');
+    Route::post('/customer-return/update', [CustomerReturnController::class, 'customerReturnUpdate'])->name('customer.return.update');
+    Route::post('/create/customer-return/save', [CustomerReturnController::class, 'customerReturnCreate'])->name('customer.return.save');
+    Route::get('/export/customer-return', [CustomerReturnController::class, 'exportCsv'])->name('customer.export');
 });
 
-Route::get('/', [HomeController::class,'getRedirect', 'as' => ''])->name('home.redirect');
+Route::get('/', [HomeController::class, 'getRedirect', 'as' => ''])->name('home.redirect');
 
-Route::get('/tv', [HomeController::class,'getTvStats'])->name('home.tv-stats');
-Route::get('/tv2', [HomeController::class,'getTv2Stats'])->name('home.tv2-stats');
-Route::get('/tv3', [HomeController::class,'getTv3Stats'])->name('home.tv3-stats');
-Route::get('/tv4', [HomeController::class,'getTv4Stats'])->name('home.tv4-stats');
-Route::get('/tv5', [HomeController::class,'getTv5Stats'])->name('home.tv5-stats');
+Route::get('/tv', [HomeController::class, 'getTvStats'])->name('home.tv-stats');
+Route::get('/tv2', [HomeController::class, 'getTv2Stats'])->name('home.tv2-stats');
+Route::get('/tv3', [HomeController::class, 'getTv3Stats'])->name('home.tv3-stats');
+Route::get('/tv4', [HomeController::class, 'getTv4Stats'])->name('home.tv4-stats');
+Route::get('/tv5', [HomeController::class, 'getTv5Stats'])->name('home.tv5-stats');
 Route::get('/unsubscribe/{id?}', ['uses' => 'EmailSenderController@unSubscribe', 'as' => 'emails.unsubscribe']);
 
 // PhoneCheck
 Route::group(['prefix' => 'phonecheck'], function () {
-    Route::any('/api/imei', ['uses' => 'PhoneCheckController@postApiImei', 'as' => 'phonecheck.api-imei']);
+    Route::any('/api/imei', [PhoneCheckController::class,'postApiImei'])->name('phonecheck.api-imei');
 });
 
 
@@ -832,46 +837,46 @@ Route::group([], function () {
     }]);
 });
 
-Route::post('/quickbooks/webhook', ['uses' => 'QuickbooksController@postWebhook', 'as' => 'quickbooks.webhook']);
+Route::post('/quickbooks/webhook', [QuickbooksController::class,'postWebhook'])->name('quickbooks.webhook');
 
-Route::post('/email-webhooks/webhook', ['uses' => 'EmailWebhooksController@postWebhook', 'as' => 'email-webhooks.webhook']);
+Route::post('/email-webhooks/webhook', [EmailWebhooksController::class,'postWebhook'])->name('email-webhooks.webhook');
 
 // Sage (no login)
 Route::group(['prefix' => 'sage'], function () {
-    Route::any('/notify', ['uses' => 'SageController@anyNotify', 'as' => 'sage.notify']);
+    Route::any('/notify', [SageController::class,'anyNotify'])->name('sage.notify');
 });
 
 // Account routes (no login)
 Route::group(['prefix' => 'my-account'], function () {
     Route::get(
         '/disable-notifications',
-        [AccountController::class,'getDisableNotifications'])->name('account.disable-notifications');
+        [AccountController::class, 'getDisableNotifications'])->name('account.disable-notifications');
     Route::post(
         '/disable-notifications',
-        [AccountController::class,'postDisableNotifications']
+        [AccountController::class, 'postDisableNotifications']
     )->name('account.disable-notifications.save');
     Route::get('/registered-disable-notifications',
-        [AccountController::class,'getRegisteredDisableNotifications'])->name('account.registered-disable-notifications');
+        [AccountController::class, 'getRegisteredDisableNotifications'])->name('account.registered-disable-notifications');
     Route::post('/registered-disable-notifications',
-        [AccountController::class,'postRegisteredDisableNotifications'])->name('account.registered-disable-notifications.save');
+        [AccountController::class, 'postRegisteredDisableNotifications'])->name('account.registered-disable-notifications.save');
     Route::any('/stripe-webhook', ['uses' => 'AccountController@anyStripeWebhook'])->name('account.stripe-webhook');
 });
 
 // API
 Route::group(['prefix' => 'api', 'middleware' => 'api', 'namespace' => 'Api'], function () {
     Route::group(['prefix' => 'stock'], function () {
-        Route::get('/', ['uses' => 'StockController@getIndex', 'as' => 'api.stock']);
+        Route::get('/', [StockController::class,'getIndex'])->name('api.stock');
     });
     Route::group(['prefix' => 'sales'], function () {
-        Route::get('/', ['uses' => 'SalesController@getIndex', 'as' => 'api.sales']);
-        Route::post('/save', ['uses' => 'SalesController@postSave', 'as' => 'api.sales.save']);
+        Route::get('/', [SalesController::class,'getIndex'])->name('api.sales');
+        Route::post('/save', [SalesController::class,'postSave'])->name('api.sales.save');
     });
     Route::group(['prefix' => 'unlocks'], function () {
-        Route::get('/', ['uses' => 'UnlocksController@getIndex', 'as' => 'api.unlocks']);
-        Route::post('/own-stock-new-order', ['uses' => 'UnlocksController@postOwnStockNewOrder', 'as' => 'api.unlocks.own-stock.new-order-save']);
+        Route::get('/', [UnlocksController::class,'getIndex'])->name('api.unlocks');
+        Route::post('/own-stock-new-order', [UnlocksController::class,'postOwnStockNewOrder'])->name('api.unlocks.own-stock.new-order-save');
     });
     Route::group(['prefix' => 'my-account'], function () {
-        Route::get('/get-balance', ['uses' => 'AccountController@getBalance', 'as' => 'api.account.get-balance']);
+        Route::get('/get-balance', [AccountController::class,'getBalance'])->name('api.account.get-balance');
     });
 });
 
@@ -909,15 +914,15 @@ Route::group(['prefix' => 'phone-check-report'], function () {
 
 Route::group(['prefix' => 'processing-image'], function () {
 
-    Route::get('access/{id}', ['uses' => 'StockController@processingImageAccess', 'as' => 'access-processing-image']);
+    Route::get('access/{id}', [StockController::class,'processingImageAccess'])->name('access-processing-image');
 
 
 });
 
 
-Route::get('phone-check', ['uses' => 'PhoneCheckController@getData']);
+Route::get('phone-check', [PhoneCheckController::class,'getData']);
 
-Route::get('/all-customer-return', [CustomerReturnController::class,'getAllCustomerReturn']);
+Route::get('/all-customer-return', [CustomerReturnController::class, 'getAllCustomerReturn']);
 
 
 
