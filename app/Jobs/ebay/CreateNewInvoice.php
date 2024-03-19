@@ -160,7 +160,7 @@ class CreateNewInvoice implements ShouldQueue
 
 
 
-            $this->sale->platform=$result['platform'];;
+            $this->sale->platform=$result['platform'];
             if($result['platform']===Stock::PLATFROM_MOBILE_ADVANTAGE){
 
 
@@ -518,10 +518,10 @@ class CreateNewInvoice implements ShouldQueue
 
 
             if($this->auction!=null){
-                dispatch(new EmailSend($this->sale,EmailSend::EMAIL_CREATED,$newCustomer,$invoicePath));
+               // dispatch(new EmailSend($this->sale,EmailSend::EMAIL_CREATED,$newCustomer,$invoicePath));
                // Queue::pushOn('emails', new EmailSend($this->sale, EmailSend::EMAIL_CREATED, $this->auction));
             } else {
-               dispatch(new EmailSend($this->sale,EmailSend::EMAIL_CREATED,$newCustomer,$invoicePath));
+              // dispatch(new EmailSend($this->sale,EmailSend::EMAIL_CREATED,$newCustomer,$invoicePath));
               //  Queue::pushOn('emails', new EmailSend($this->sale, EmailSend::EMAIL_CREATED));
             }
         }
@@ -546,6 +546,21 @@ class CreateNewInvoice implements ShouldQueue
             }
 
         }
+    }
+    public function failed(\Exception $e){
+
+
+        $this->sale->invoice_creation_status = Invoice::CREATION_STATUS_ERROR;
+        $this->sale->invoice_description = $e->getMessage();
+        $this->sale->save();
+
+        if ($this->job) {
+            $this->job->delete();
+        }
+
+        return false;
+
+
     }
 
 }

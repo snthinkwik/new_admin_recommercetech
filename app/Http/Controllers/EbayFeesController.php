@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Commands\ebayFees\ImportEbayFees;
 use App\Models\EbayFees;
 use App\Models\EbayFeesHistory;
 use App\Models\EbayFeesLog;
@@ -11,6 +10,9 @@ use App\Models\ManualEbayFeeAssignment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+//EbayOrderItems
+use App\Models\EbayOrderItems;
+
 
 class EbayFeesController extends Controller
 {
@@ -108,7 +110,7 @@ class EbayFeesController extends Controller
 
     public function exportCSVManualEbayFeeAssignment() {
 
-        $ebayFee = ManualEbayFeeAssignment::where('owner', \App\EbayOrderItems::RECOMM)->get();
+        $ebayFee = ManualEbayFeeAssignment::where('owner', EbayOrderItems::RECOMM)->get();
 
         $manualAssignmentList = [];
         foreach ($ebayFee as $item) {
@@ -216,7 +218,7 @@ class EbayFeesController extends Controller
 
         }, 'ISO-8859-1')->get();
 
-        Queue::pushOn('ebay_fee', new ImportEbayFees($data, $userEmail, $userName, $fileName));
+        dispatch(new \App\Jobs\ebayFees\ImportEbayFees($data, $userEmail, $userName, $fileName));
         return back()->with('messages.success', 'Fees are now importing. You will receive an email once complete.');
     }
 
