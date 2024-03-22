@@ -47,6 +47,7 @@ use App\Http\Controllers\ZendeskController;
 use App\Http\Controllers\SageController;
 use App\Http\Controllers\PhoneCheckController;
 use App\Http\Controllers\EmailWebhooksController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 
 
 
@@ -79,7 +80,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/stock-stats', ['middleware' => 'admin', 'as' => 'stock-stats', StockController::class, 'getStockStats'])->name('stock-stats');
 
     //Route::get('/trade-in-stats', ['middleware' => 'admin', 'uses' => 'Trg\TradeInsController@getStats', 'as' => 'trade-in-stats']);
-    Route::get('/items-sold-report', ['middleware' => 'admin', 'as' => 'items-sold-report', 'uses' => 'StockController@getItemsSoldReport']);
+    Route::get('/items-sold-report', ['middleware' => 'admin', StockController::class,'getItemsSoldReport'])->name('items-sold-report');
 
     Route::group(['prefix' => 'unlock-mapping', 'middleware' => ['admin']], function () {
         Route::get('/', [UnlockMappingController::class, 'getindex'])->name('unlock-mapping');
@@ -95,7 +96,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/add-to-basket', [HomeController::class, 'postAddToBasket'])->name('home.add-to-basket');
 
         Route::group(['middleware' => ['admin']], function () {
-            Route::post('/bulk-update-price', ['uses' => 'HomeController@postBulkUpdatePrice', 'as' => 'home.bulk-update-price']);
+            Route::post('/bulk-update-price', [HomeController::class,'postBulkUpdatePrice'])->name('home.bulk-update-price');
         });
     });
 
@@ -281,8 +282,8 @@ Route::group(['middleware' => ['auth']], function () {
 
 
                 Route::group(['prefix' => 'dpd'], function () {
-                    Route::get('/', ['uses' => 'DeliverySettingsController@getDpd', 'as' => 'admin.delivery-settings.dpd']);
-                    Route::get('matched', ['uses' => 'DeliverySettingsController@matchedDPD', 'as' => 'admin.delivery-settings.dpd.matched']);
+                    Route::get('/', [DeliverySettingsController::class,'getDpd'])->name('admin.delivery-settings.dpd');
+                    Route::get('matched', [DeliverySettingsController::class,'matchedDPD'])->name('admin.delivery-settings.dpd.matched');
                 });
             });
 
@@ -896,12 +897,19 @@ Route::group(['prefix' => 'auth'], function () {
 });
 
 // Password reset
-Route::group(['prefix' => 'password'], function () {
-    Route::get('email', [PasswordController::class, 'getEmail']);
-    Route::post('email', [PasswordController::class, 'postEmail']);
-    Route::get('reset/{token}', [PasswordController::class, 'getReset']);
-    Route::post('reset', [PasswordController::class, 'postReset']);
-});
+//Route::group(['prefix' => 'password'], function () {
+//    Route::get('email', [PasswordController::class, 'getEmail']);
+//    Route::post('email', [PasswordController::class, 'postEmail']);
+//    Route::get('reset/{token}', [PasswordController::class, 'getReset']);
+//    Route::post('reset', [PasswordController::class, 'postReset']);
+//});
+
+
+
+Route::get('password/reset', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+Route::post('password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+Route::get('password/reset/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+Route::post('password/reset', [ResetPasswordController::class, 'reset'])->name('password.update');
 
 
 Route::group(['prefix' => 'phone-check-report'], function () {
