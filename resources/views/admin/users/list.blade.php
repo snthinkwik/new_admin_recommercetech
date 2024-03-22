@@ -128,7 +128,7 @@
                 {!! BsForm::close() !!}
 
 
-                <a href="{{route('admin.users.remove-user')}}" > <i class="fa fa-trash-o text-danger" aria-hidden="true"></i></a>
+
             </td>
         </tr>
     @endforeach
