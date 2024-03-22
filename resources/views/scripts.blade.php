@@ -1,5 +1,6 @@
 <?php
 use Illuminate\Support\Arr;
+
 if (!is_array($required)) {
     $required = [$required];
 }
@@ -12,15 +13,20 @@ $scriptSpecs = [
         'section' => 'pre-scripts',
         'path' => 'js/canvasjs/dist/canvasjs.js'
     ]
-]
+];
+print_r($required);
 ?>
 
 @foreach ($required as $script)
     @if (!Arr::get($GLOBALS, 'javascripts-added.' . $script))
         <?php
-        Arr::set($GLOBALS, 'javascripts-added.' . $script, true);
+            echo 'javascripts-added.' . $script;
+       // Arr::set($GLOBALS, 'javascripts-added.' . $script, true);
         $scriptSpec = $scriptSpecs[$script];
+
         ?>
+
+
         @section($scriptSpec['section'])
             @parent
             <script src="{{ asset($scriptSpec['path']) }}"></script>
