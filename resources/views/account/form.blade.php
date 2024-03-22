@@ -1,8 +1,9 @@
 <?php
-use App\User;
-use App\Country;
+use App\Models\User;
+use App\Models\Country;
 $countries = Country::orderBy('name')->get();
-$countriesForSelect = ['' => "Please select"] + array_combine($countries->lists('name'), $countries->lists('name'));
+$countriesForSelect = ['' => "Please select"] + array_combine($countries->pluck('name')->toArray(), $countries->pluck('name')->toArray());
+
 ?>
 {!! BsForm::model($user->load('address'), [], ['id-prefix' => 'account']) !!}
 	{!! BsForm::groupText('first_name', null, ['disabled']) !!}

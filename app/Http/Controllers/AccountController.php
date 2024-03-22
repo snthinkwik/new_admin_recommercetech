@@ -9,6 +9,9 @@ use App\Models\User;
 use App\Models\User\Address;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
+use Session;
+use Hash;
 
 class AccountController extends Controller
 {
@@ -36,6 +39,7 @@ class AccountController extends Controller
 
     public function postIndex(UserFullUpdateRequest $request, Invoicing $invoicing)
     {
+
         $user = Auth::user();
         $user->fill($request->only(['email', 'phone', 'location']));
         $user->save();

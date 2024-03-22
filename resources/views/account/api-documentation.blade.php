@@ -1,7 +1,7 @@
 <?php
-use App\Invoice;
-use App\Stock;
-use App\Unlock\Pricing;
+use App\Models\Invoice;
+use App\Models\Stock;
+use App\Models\Unlock\Pricing;
 $apiParams = ['key' => Auth::user()->api_key ?: 'xxx'];
 $apiParamsPaged = ['key' => Auth::user()->api_key ?: 'xxx', 'per_page' => 10];
 ?>

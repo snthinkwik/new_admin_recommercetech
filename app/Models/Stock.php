@@ -1391,7 +1391,7 @@ class Stock extends Model
     public static function getAvailableNetworks()
     {
         if (!self::$availableNetworks) {
-            self::$availableNetworks = Network::customOrder()->lists('pr_network');
+            self::$availableNetworks = Network::customOrder()->pluck('pr_network')->toArray();
         }
 
         return self::$availableNetworks;
