@@ -40,7 +40,7 @@ class Pricing extends Model
     public static function getAvailableNetworks()
     {
         if (!self::$availableNetworks) {
-            self::$availableNetworks = Pricing::distinct('network')->orderBy('network')->lists('network');
+            self::$availableNetworks = Pricing::distinct('network')->orderBy('network')->pluck('network')->toArray();
         }
 
         return self::$availableNetworks;
@@ -49,7 +49,7 @@ class Pricing extends Model
     public static function getAvailableModels()
     {
         if (!self::$availableModels) {
-            self::$availableModels = Pricing::distinct('models')->orderBy('models')->lists('models');
+            self::$availableModels = Pricing::distinct('models')->orderBy('models')->pluck('models')->toArray();
         }
 
         return self::$availableModels;

@@ -28,13 +28,13 @@
 						{!! BsForm::open(['method' => 'post', 'route' => 'account.change-password']) !!}
 							{!! Form::label('current_password', 'Current Password') !!}
 							{!! Form::Password('current_password', ['placeholder' => 'Current Password', 'class' => 'form-control', 'required' => 'required']) !!}
-							@error('current_password')
+							@error('current_password') @enderror
 							{!! Form::label('password', 'New Password') !!}
 							{!! Form::Password('password', ['placeholder' => 'New Password', 'class' => 'form-control', 'required' => 'required']) !!}
-							@error('password')
+							@error('password') @enderror
 							{!! Form::label('password_confirmation', 'Confirm Password') !!}
 							{!! Form::Password('password_confirmation', ['placeholder' => 'Confirm Password', 'class' => 'form-control', 'required' => 'required']) !!}
-							@error('password_confirmation')
+							@error('password_confirmation') @enderror
 							{!! BsForm::submit('Change Password', ['class' => 'btn-block btn-default btn-sm']) !!}
 						{!! BsForm::close() !!}
 					</div>
