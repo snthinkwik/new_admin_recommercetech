@@ -1,0 +1,7 @@
+Name,Third party ref, Capacity, Colour, Grade, Network,IMEI, Purchase date, Purchase price,Sale price,Notes
+LG G6,ABC123, 128GB,Silver,Fully Working, T-Mobile,, 2017-05-05,£ 200.00,£250,Notes here
+Samsung Galaxy S8,XYZ456,64,Black,Good, T-Mobile,200200200200200, ,£250,300,"They can span
+over multiple lines."
+Huawei P10,,,,Major Fault,Orange,,,,,
+Motorola Moto Z,,32GB,White,,O2,,,90,,
+Blackberry KeyOne,,64,Silver,iCloud Locked,T-Mobile,20020020020020,2017-05-18,80,100,

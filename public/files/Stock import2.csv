@@ -1,0 +1,7 @@
+Name,Make,Third party ref, Capacity, Colour,Condition, Grade,LCD Status, Network,Location,Serial,IMEI, Purchase date, Purchase price,Sale price,Notes,Purchase order number,Product Type
+G6,LG,ABC123, 128GB,Silver,A,Fully Working,Bad LCD - Broken Glass, T-Mobile,ba003,A1BC2CDE456,100100100100100, 2017-05-05,£ 200.00,£250,Notes here,123,Mobile Phone
+Galaxy S8,Samsung,BCD234,64,Black,B,Minor Fault,Bad LCD - Good Glass, T-Mobile,cd004,A1BC2CDE567,200200200200200,2017-06-01,£250,300,"They can span
+over multiple lines.",123,Tablet
+P10,Huawei,CDE345,64,Blue,C,Major Fault,Good LCD - Good Glass,Orange,,A1BC2CDE678,300300300300300,2017-05-10,123,,,2345,Desktop
+Moto Z,Motorola,DEF456,32GB,White,B,No Signs of Life,,O2,ab002,A1BC2CDE789,400400400400400,2017-05-11,90,,,2345,Computer
+KeyOne,Blackberry,EFG567,64,Silver,C,iCloud Locked,Good LCD - Broken Glass,T-Mobile,,A1BC2CDE890,500500500500500,2017-05-18,80,100,,2345,Accessories
