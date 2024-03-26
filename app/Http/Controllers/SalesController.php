@@ -2935,7 +2935,7 @@ class SalesController extends Controller
                     $itemName = "Batch no " . $item->stock()->first()->batch->id . '-' . $item->stock()->first()->batch->name;
 
                 } else {
-                    $itemName = implode(', ', str_replace(array('@rt'), ' GB', $item->stock->lists('name')));
+                    $itemName = implode(', ', str_replace(array('@rt'), ' GB', $item->stock->pluck('name')->toArray()));
                 }
 //                if($item->item_name){
 //                    $itemName= str_replace( array('GB'), '@rt', $item->item_name);
