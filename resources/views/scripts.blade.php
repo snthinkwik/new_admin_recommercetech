@@ -14,13 +14,13 @@ $scriptSpecs = [
         'path' => 'js/canvasjs/dist/canvasjs.js'
     ]
 ];
-print_r($required);
+
 ?>
 
 @foreach ($required as $script)
     @if (!Arr::get($GLOBALS, 'javascripts-added.' . $script))
         <?php
-            echo 'javascripts-added.' . $script;
+
        // Arr::set($GLOBALS, 'javascripts-added.' . $script, true);
         $scriptSpec = $scriptSpecs[$script];
 

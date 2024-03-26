@@ -1,18 +1,21 @@
 <?php
-$colours = \App\Colour::orderBy('pr_colour')->lists('pr_colour', 'pr_colour');
+use App\Models\Colour;
+use App\Models\Category;
+use App\Models\Stock;
+$colours = Colour::orderBy('pr_colour')->pluck('pr_colour', 'pr_colour')->toArray();
 
-$category=\App\Category::select('name')->get();
+$category=Category::select('name')->get();
 $categoryList=[];
 foreach ($category as $key=>$category){
     $categoryList[$category['name']]=$category['name'];
 }
 
 
-$makes=\App\Stock::getMake();
+$makes=Stock::getMake();
 
 $makeList=[''=>'Please Select Make'];
 
-foreach (\App\Stock::getMake() as $key=>$make){
+foreach (Stock::getMake() as $key=>$make){
     $makeList[$make['make']]=$make['make'];
 }
 
