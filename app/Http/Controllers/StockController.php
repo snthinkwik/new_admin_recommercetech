@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Contracts\ImeiCheck;
 use App\Exports\InventoryExport;
 use App\Exports\ReadyForSaleExport;
 use App\Exports\RetailStockExport;
@@ -2863,6 +2864,85 @@ class StockController extends Controller
         return back()->with('messages.success', 'Product has been assigned');
     }
 
+    public function postReceive(Request $request, ImeiCheck $imeiCheck)
+    {
+
+        if ($request->id) {
+            $item =Stock::findOrFail($request->id);
+        } else {
+            $item = Stock::where('imei', trim($request->ref))->first() ?:
+                Stock::where('third_party_ref', trim($request->ref))->first();
+        }
+
+        if (!$item) {
+            return response()->json(['status' => 'error', 'message' => 'Stock item not found.']);
+        }
+        if ($item->status !== Stock::STATUS_INBOUND) {
+            $message = "Item already in stock.";
+            if (!$request->exists('session_flash') || $request->session_flash) {
+                Session::flash('messages.success', $message);
+            }
+            return response()->json([
+                'status' => 'success',
+                'ref' => $item->our_ref,
+                'message' => $message,
+                'redirect' => route('stock.single', $item->id),
+            ]);
+        }
+
+        if (!$request->skip_check) {
+            $checkResult = $imeiCheck->checkImei($item->imei);
+
+            if (!$checkResult) {
+                // Save error, but continue.
+                if ($imeiCheck->getLastErrorType() === ImeiCheck::ERROR_API) {
+                    error_save('imei_api', "Could not get IMEI data for value\"$request->ref\".");
+                } else {
+                    return response()->json([
+                        'status' => 'error',
+                        'ref' => $item->our_ref,
+                        'message' => $imeiCheck->getLastError(),
+                    ]);
+                }
+            } else if ($checkResult['serial']) {
+                $item->serial = $checkResult['serial'];
+            }
+
+            $item->save();
+
+            if ($checkResult && $checkResult['locked']) {
+                return response()->json([
+                    'status' => 'error',
+                    'ref' => $item->our_ref,
+                    'message' => "This item is iCloud locked, please return to the supplier.",
+                ]);
+            }
+
+            foreach (['colour', 'capacity'] as $propName) {
+                if (!empty($checkResult[$propName])) {
+                    $item->$propName = $checkResult[$propName];
+                }
+            }
+        }
+
+        $item->status = Stock::STATUS_IN_STOCK;
+        $item->save();
+
+        $message = "Item has been moved to \"In stock\". ";
+        if (!$request->skip_check) {
+            $message .= "Its colour and capacity fields have been updated.";
+        }
+
+        if (!$request->exists('session_flash') || $request->session_flash) {
+            Session::flash('messages.success', $message);
+        }
+        return response()->json([
+            'status' => 'success',
+            'ref' => $item->our_ref,
+            'message' => $message,
+            'redirect' => route('stock.single', $item->id),
+        ]);
+    }
 
 
 }
