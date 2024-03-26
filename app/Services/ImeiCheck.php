@@ -99,7 +99,7 @@ class ImeiCheck implements ImeiCheckContract {
 		}
 
 		list(, $code) = explode(' ', $http_response_header[0]);
-		if (!$code || intval($code{0}) !== 2) {
+		if (!$code || intval($code[0]) !== 2) {
 			$this->error = 'API returned error.';
 			$this->errorType = self::ERROR_API;
 			if ($this->cacheTime) {
