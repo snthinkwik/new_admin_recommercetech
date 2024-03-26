@@ -1,7 +1,7 @@
 <?php
-use App\Email;
-use App\Batch;
-$batchIds = Batch::has('stock')->orderBy('id')->lists('id');
+use App\Models\Email;
+use App\Models\Batch;
+$batchIds = Batch::has('stock')->orderBy('id')->pluck('id')->toArray();
 
 ?>
 @include('scripts', ['required' => 'ckeditor'])
@@ -40,7 +40,7 @@ $batchIds = Batch::has('stock')->orderBy('id')->lists('id');
 	<div class="form-group hide @hasError('file')" data-attachment-type="{{ Email::ATTACHMENT_FILE }}">
 		<label>Attachment file</label>
 		{!! BsForm::file('file') !!}
-		@error('file')
+		@error('file') @enderror
 	</div>
 	<div class="form-group hide" data-attachment-type="{{ Email::ATTACHMENT_BATCH }}">
 		<label>Batch</label>

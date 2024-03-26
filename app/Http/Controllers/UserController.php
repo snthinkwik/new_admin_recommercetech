@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Requests\EmailRequest;
+use App\Models\Email;
 use App\Models\EmailTracking;
 use App\Http\Requests\UserRequest;
 use App\Models\Batch;
@@ -16,6 +18,9 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Message;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -798,5 +803,78 @@ class UserController extends Controller
             return ['value' => $user->id, 'label' => "$user->full_name ($user->email)"];
         });
     }
+    public function getUserEmails($id, Request $request) {
+        $user = User::findOrFail($id);
+        $emailsQuery = EmailTracking::where('user_id', $user->id)->orderBy('created_at', 'desc');
+        if ($request->term) {
+            $emailsQuery->where(function($subQuery) use ($request) {
+                $subQuery->where('from', 'like', "%$request->term%");
+                $subQuery->orWhere('from_name', 'like', "%$request->term%");
+                $subQuery->orWhere('to', 'like', "%$request->term%");
+                $subQuery->orWhere('to_name', 'like', "%$request->term%");
+                $subQuery->orWhere('subject', 'like', "%$request->term%");
+            });
+        }
+        if ($request->type) {
+            $emailsQuery->where('type', $request->type);
+        }
+
+        $emails = $emailsQuery->get();
+
+        //two collections so duplicate ids are shown
+        $e1 = collect($emails);
+        $emails = $e1;
+        foreach ($emails as $email) {
+            if (!$email->email_date) {
+                $email->email_date = $email->created_at;
+            }
+        }
+        $emails->sortByDesc('email_date');
+
+        $perPage = 10;
+        $page = (Paginator::resolveCurrentPage() ? : 1);
+        $emails = Collection::make($emails);
+        $emails = new LengthAwarePaginator($emails->forPage($page, $perPage), $emails->count(), $perPage, $page, [
+            'path' => Paginator::resolveCurrentPath()
+        ]);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'emailsHtml' => View::make('admin.users.emails-list', compact('emails'))->render(),
+                'emailsPaginationHtml' => '' . $emails->appends($request->all())->render(),
+            ]);
+        }
+
+        return view('admin.users.emails', compact('user', 'emails') + ['email' => new Email()]);
+    }
+
+    public function postUserEmailSend(EmailRequest $request) {
+        $user = User::findOrFail($request->user_id);
+        $template = 'emails.email-sender.marketing-message';
+        if (!filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
+            return back()->with('messages.error', 'Email addres validation failed');
+        }
+        Mail::send($template, ['body' => Email::getBodyHtml($request->body, $user), 'fromName' => $request->from_name, 'user' => $user], function (Message $message) use($request, $user) {
+            $message->from($request->from_email, $request->from_name)
+                ->to($user->email, $user->full_name)
+                ->subject($request->subject);
+            if ($request->attachment === Email::ATTACHMENT_FILE && $request->hasFile('file')) {
+                $message->attach($request->file('file')->getRealPath(), [
+                    'as' => $request->file('file')->getClientOriginalName(),
+                    'mime' => $request->file('file')->getMimeType()
+                ]);
+            } elseif ($request->attachment === Email::ATTACHMENT_BATCH) {
+                $storagePath = base_path('public/files/tmpSend/');
+                $batch = Batch::findOrFail($request->batch_id);
+                $xls = $batch->getXls('batch');
+                $xls->store('xls', $storagePath);
+                $message->attach($storagePath . $xls->filename . '.' . $xls->ext, ['as' => "Batch.$xls->ext"]);
+            }
+        }
+        );
+
+        return back()->with('messages.success', 'Email was successfully sent');
+    }
+
 
 }
