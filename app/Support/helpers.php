@@ -2452,7 +2452,7 @@ function getProductBaseOnProductName($searchProductName, $productName, $category
 
 function getCategoryValidation($name)
 {
-    $category = \App\Category::where('name', $name)->first();
+    $category =\App\Models\Category::where('name', $name)->first();
     return $category->validation;
 }
 
