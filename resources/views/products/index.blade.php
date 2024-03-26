@@ -1,7 +1,8 @@
 <?php
+use App\Models\Category;
 $vatTypeList=[''=>'Select Vat Type','Margin'=>'Margin','Standard'=>'Standard'];
 $non_Serialised=[''=>'Select Non Serialised','1'=>'Yes','0'=>'No'];
-$category=\App\Category::select('name')->get();
+$category=Category::select('name')->get();
 $categoryList=[];
 foreach ($category as $key=>$category){
     $categoryList[$category['name']]=$category['name'];

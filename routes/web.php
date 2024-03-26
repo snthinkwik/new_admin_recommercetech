@@ -192,11 +192,11 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/', [ProductsController::class, 'getIndex'])->name('products');
         Route::get('export-data', [ProductsController::class, 'getAllExport'])->name('product.export-data');
         Route::get('create', [ProductsController::class, 'create'])->name('product.create');
+        Route::get('deleted/{id}', [ProductsController::class, 'deletedProduct'])->name('product.delete');
         Route::get('/{id}/{page?}', [ProductsController::class, 'getSingle'])->name('products.single');
         Route::post('/save', [ProductsController::class, 'postCreate'])->name('products.save');
         Route::post('/update', [ProductsController::class, 'postUpdate'])->name('products.update');
         Route::get('image/remove/{id}', [ProductsController::class, 'removeImage'])->name('image.remove');
-        Route::get('deleted/{id}', [ProductsController::class, 'deletedProduct'])->name('product.delete');
         Route::post('/import', [ProductsController::class, 'importCsv'])->name('product.import');
 
     });
