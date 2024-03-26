@@ -639,7 +639,7 @@ class EbayOrderController extends Controller
                     $customerUser = User::where('invoice_api_id', env('QuickBookEbayEUId'))->firstOrFail();
                 }
             }else if($data->platform===Stock::PLATFROM_MOBILE_ADVANTAGE){
-                $customerUser = User::where('invoice_api_id', env('QuickBookMobileAdvantage'))->firstOrFail();
+                $customerUser = User::where('invoice_api_id',config('services.quickbooks.userid.mobileadvantage'))->firstOrFail();
             } else{
                 if($data->platform===Stock::PLATFROM_RECOMM){
                     $user=User::find($data->user_id);

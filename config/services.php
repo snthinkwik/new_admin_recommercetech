@@ -62,7 +62,10 @@ return [
             'backmarket'=>[
                 'uk'=>env('QuickBookBackMarketUk'),
                 'eu'=>env('QuickBookBackMarketEU')
-            ]
+            ],
+            'mobileadvantage'=> env('QuickBookMobileAdvantage')
+
+
         ]
     ],
 
