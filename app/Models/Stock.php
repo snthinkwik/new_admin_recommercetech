@@ -246,7 +246,8 @@ class Stock extends Model
                                 $subWhere->orWhere($field, 'like', "%" . substr($token, 3) . "%");
                             }
                             else {
-                                $subWhere->orWhere($field,'REGEXP','[[:<:]]'.$token.'[[:>:]]');
+                               // $subWhere->orWhere($field,'REGEXP','[[:<:]]'.$token.'[[:>:]]');
+                                $subWhere->orWhere($field,'like','%'.$token.'%');
                             }
                         }
                     });
