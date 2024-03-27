@@ -38,17 +38,17 @@ class QueueWorkersCheck extends Command
 //            'php artisan queue:work dpd-shipping --tries=2',
 //            'php artisan queue:listen recomme-shipping --tries=2'
 //        ];
-        $workerCommands = [
-            'php artisan queue:work --tries=3',
-
-        ];
-        $processInfo = `ps aux`;
-        foreach ($workerCommands as $workerCommand) {
-            if (strpos($processInfo, $workerCommand) === false) {
-                $this->comment("Starting `$workerCommand`");
-                $cmd = "$workerCommand >/dev/null 2>/dev/null &";
-                exec($cmd);
-            }
-        }
+//        $workerCommands = [
+//            'php artisan queue:work --tries=3',
+//
+//        ];
+//        $processInfo = `ps aux`;
+//        foreach ($workerCommands as $workerCommand) {
+//            if (strpos($processInfo, $workerCommand) === false) {
+//                $this->comment("Starting `$workerCommand`");
+//                $cmd = "$workerCommand >/dev/null 2>/dev/null &";
+//                exec($cmd);
+//            }
+//        }
     }
 }
